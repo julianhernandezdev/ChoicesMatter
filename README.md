@@ -1,13 +1,10 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Choices Matter" width="100%">
+</p>
+
 # Choices Matter
 
-```text
-   ___ _          _              __  __      _   _
-  / __| |_  ___(_)__ ___ ___  |  \/  |__ _| |_| |_ ___ _ _
- | (__| ' \/ _ \ / _/ -_|_-< | |\/| / _` | _| _/ -_) '_|
-  \___|_||_\___/_\__\___/__/ |_|  |_\__,_|\__|\_\_\___|_|
-```
-
-*every choice leaves a mark*
+**Every choice leaves a mark. Every ending remembers.**
 
 A Python CLI text adventure engine. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
 
