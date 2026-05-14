@@ -3,6 +3,9 @@
     "color": "cyan",
     "dim": true,
     "italic": true,
+    "bold": false,
+    "underline": false,
+    "strike": false,
     "prefix": "✦ "
   }
 }

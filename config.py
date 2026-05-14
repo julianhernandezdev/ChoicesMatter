@@ -8,6 +8,9 @@ _DEFAULTS: dict = {
         "color": "cyan",
         "dim": True,
         "italic": True,
+        "bold": False,
+        "underline": False,
+        "strike": False,
         "prefix": "✦ ",
     }
 }

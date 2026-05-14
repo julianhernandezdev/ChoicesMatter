@@ -121,11 +121,8 @@ class Display:
 
     def _render_overlay(self, text: str) -> None:
         cfg = self._cfg["overlay"]
-        parts = []
-        if cfg.get("dim"):
-            parts.append("dim")
-        if cfg.get("italic"):
-            parts.append("italic")
+        _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
+        parts = [m for m in _MODIFIERS if cfg.get(m)]
         color = cfg.get("color", "cyan")
         style = f"{' '.join(parts)} {color}".strip()
         prefix = cfg.get("prefix", "✦ ")
