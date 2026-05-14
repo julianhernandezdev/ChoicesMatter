@@ -70,8 +70,6 @@ class Display:
                     stats = f"{node_count} nodes · {ending_count} endings · {est_time}"
                     self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
-        self.console.print(f"  [dim]Q.[/dim]  [dim]Quit[/dim]")
-        self.console.print()
 
     def show_picker_error(self, name: str, message: str) -> None:
         self.console.print(
