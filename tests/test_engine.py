@@ -213,6 +213,72 @@ def test_state_saved_and_restored(saves_dir: Path, flag_story: Story) -> None:
     assert display.show_ending.call_args.args[0] == "Good."
 
 
+def test_overlay_with_unmet_requires_not_passed_to_show_node(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Here.",
+            choices=[Choice(label="Go", next="end")],
+            overlays=[Overlay(text="Secret.", requires={"secret_flag": True}, position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call_args = display.show_node.call_args_list[0]
+    after = call_args.kwargs.get("after_overlays") or call_args.args[3] if len(call_args.args) > 3 else []
+    assert after == [] or after is None
+
+
+def test_overlay_with_met_requires_passed_to_show_node(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Here.",
+            choices=[
+                Choice(label="Set flag", next="mid", sets={"secret_flag": True}),
+            ],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="End", next="end")],
+            overlays=[Overlay(text="Secret revealed.", requires={"secret_flag": True}, position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_node.call_args_list[1]
+    after = mid_call.args[3] if len(mid_call.args) > 3 else mid_call.kwargs.get("after_overlays", [])
+    assert after == ["Secret revealed."]
+
+
+def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Scene.",
+            choices=[Choice(label="Go", next="end")],
+            overlays=[
+                Overlay(text="Before whisper.", position="before"),
+                Overlay(text="After whisper.", position="after"),
+            ],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call = display.show_node.call_args_list[0]
+    before = call.args[2] if len(call.args) > 2 else call.kwargs.get("before_overlays", [])
+    after  = call.args[3] if len(call.args) > 3 else call.kwargs.get("after_overlays", [])
+    assert before == ["Before whisper."]
+    assert after  == ["After whisper."]
+
+
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
     display = MagicMock()
     display.prompt_continue_or_new.return_value = False

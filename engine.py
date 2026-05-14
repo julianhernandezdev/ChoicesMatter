@@ -23,9 +23,13 @@ class Engine:
 
         while True:
             node = self.story.get_node(self._current_node)
-            self.display.show_node(self.story.title, node.text)
 
-            visible = [c for c in node.choices if self._flag_check(c)]
+            visible_overlays = [o for o in node.overlays if self._flag_check(o.requires)]
+            before = [o.text for o in visible_overlays if o.position == "before"]
+            after  = [o.text for o in visible_overlays if o.position == "after"]
+            self.display.show_node(self.story.title, node.text, before, after)
+
+            visible = [c for c in node.choices if self._flag_check(c.requires)]
 
             if node.is_ending or not visible:
                 self.display.show_ending(node.text, node.ending_type)
@@ -44,8 +48,8 @@ class Engine:
     # Private
     # ------------------------------------------------------------------
 
-    def _flag_check(self, choice: Choice) -> bool:
-        return all(self._state.get(k) == v for k, v in choice.requires.items())
+    def _flag_check(self, requires: dict[str, bool]) -> bool:
+        return all(self._state.get(k) == v for k, v in requires.items())
 
     def _resolve_start(self) -> None:
         if self.save_manager.has_save(self.story.id):

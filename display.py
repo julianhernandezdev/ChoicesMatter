@@ -6,6 +6,7 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
+from config import load_settings
 from story import Choice
 
 _ENDING_COLORS = {
@@ -18,6 +19,7 @@ _ENDING_COLORS = {
 class Display:
     def __init__(self) -> None:
         self.console = Console()
+        self._cfg = load_settings()
 
     # ------------------------------------------------------------------
     # Title / chrome
@@ -51,10 +53,7 @@ class Display:
         )
 
     def show_story_picker(self, entries: list[dict]) -> None:
-        """Render the story selection list.
-
-        Each entry: {"index": int, "label": str, "error": bool}
-        """
+        """Each entry: {"index": int, "label": str, "error": bool}"""
         self.console.print(Rule("[bold cyan]Select a Story[/bold cyan]"))
         for entry in entries:
             num = entry["index"]
@@ -75,8 +74,16 @@ class Display:
     # In-game rendering
     # ------------------------------------------------------------------
 
-    def show_node(self, story_title: str, node_text: str) -> None:
+    def show_node(
+        self,
+        story_title: str,
+        node_text: str,
+        before_overlays: list[str] | None = None,
+        after_overlays: list[str] | None = None,
+    ) -> None:
         self.console.print()
+        for text in (before_overlays or []):
+            self._render_overlay(text)
         self.console.print(
             Panel(
                 node_text,
@@ -85,6 +92,8 @@ class Display:
                 padding=(1, 2),
             )
         )
+        for text in (after_overlays or []):
+            self._render_overlay(text)
 
     def show_choices(self, choices: list[Choice]) -> None:
         self.console.print()
@@ -110,6 +119,18 @@ class Display:
     def show_save_indicator(self) -> None:
         self.console.print("  [dim green]✓ Progress saved.[/dim green]")
 
+    def _render_overlay(self, text: str) -> None:
+        cfg = self._cfg["overlay"]
+        parts = []
+        if cfg.get("dim"):
+            parts.append("dim")
+        if cfg.get("italic"):
+            parts.append("italic")
+        color = cfg.get("color", "cyan")
+        style = f"{' '.join(parts)} {color}".strip()
+        prefix = cfg.get("prefix", "✦ ")
+        self.console.print(f"  {prefix}{text}", style=style)
+
     # ------------------------------------------------------------------
     # Input prompts
     # ------------------------------------------------------------------
@@ -128,9 +149,7 @@ class Display:
 
     def prompt_continue_or_new(self) -> bool:
         """Return True to continue saved game, False for new game."""
-        self.console.print(
-            "\n  [yellow]A save was found for this story.[/yellow]"
-        )
+        self.console.print("\n  [yellow]A save was found for this story.[/yellow]")
         while True:
             raw = self.console.input(
                 "  [bold]Continue saved game? ([green]C[/green]/[red]N[/red] for new):[/bold] "
@@ -149,9 +168,7 @@ class Display:
                 value = int(raw)
                 if 1 <= value <= len(choices):
                     return value
-            self.console.print(
-                f"  [red]Enter a number between 1 and {len(choices)}.[/red]"
-            )
+            self.console.print(f"  [red]Enter a number between 1 and {len(choices)}.[/red]")
 
     def prompt_play_again(self) -> bool:
         """Return True to play again, False to return to picker."""

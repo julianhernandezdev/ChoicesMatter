@@ -22,3 +22,6 @@ GameConcept.md
 # Game saves (runtime, not committed)
 saves/*
 !saves/.gitkeep
+
+# User settings (per-user customization — see settings.example.json)
+settings.json

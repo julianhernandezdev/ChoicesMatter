@@ -64,6 +64,18 @@
 
     "platform_7": {
       "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\nYou hear footsteps on the other side.",
+      "overlays": [
+        {
+          "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
+          "requires": { "called_mira": true },
+          "position": "before"
+        },
+        {
+          "text": "The circled P7 on the map. You're exactly where it pointed.",
+          "requires": { "has_phone": true },
+          "position": "after"
+        }
+      ],
       "choices": [
         { "label": "Knock and announce yourself", "next": "caught" },
         {

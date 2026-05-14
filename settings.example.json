@@ -1,0 +1,8 @@
+{
+  "overlay": {
+    "color": "cyan",
+    "dim": true,
+    "italic": true,
+    "prefix": "✦ "
+  }
+}
