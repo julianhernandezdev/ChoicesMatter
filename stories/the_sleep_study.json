@@ -4,7 +4,8 @@
     "title": "The Sleep Study",
     "version": "1.0",
     "author": "Claude",
-    "start_node": "intake"
+    "start_node": "intake",
+    "est_time": "20–30 min"
   },
   "nodes": {
     "intake": {

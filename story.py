@@ -48,6 +48,9 @@ class Story:
     start_node: str
     nodes: dict[str, Node]
     source_path: Path
+    node_count: int = 0
+    ending_count: int = 0
+    est_time: str = ""
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -134,6 +137,19 @@ class StoryLoader:
                         f"references nonexistent node '{choice.next}'"
                     )
 
+        node_count = len(nodes)
+        ending_count = sum(1 for n in nodes.values() if n.is_ending or not n.choices)
+
+        est_time_raw = meta.get("est_time")
+        if est_time_raw is not None:
+            if not isinstance(est_time_raw, str) or not est_time_raw.strip():
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'est_time' must be a non-empty string if provided"
+                )
+            est_time = est_time_raw.strip()
+        else:
+            est_time = StoryLoader._compute_est_time(nodes)
+
         return Story(
             id=story_id,
             title=title,
@@ -142,7 +158,17 @@ class StoryLoader:
             start_node=start,
             nodes=nodes,
             source_path=path,
+            node_count=node_count,
+            ending_count=ending_count,
+            est_time=est_time,
         )
+
+    @staticmethod
+    def _compute_est_time(nodes: dict[str, "Node"]) -> str:
+        total_words = sum(len(n.text.split()) for n in nodes.values())
+        raw_minutes = total_words / 130 * 1.3
+        minutes = max(5, round(raw_minutes / 5) * 5)
+        return f"~{minutes} min"
 
     @staticmethod
     def _required_string(data: dict, field_name: str, file_name: str, location: str) -> str:

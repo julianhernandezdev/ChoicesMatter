@@ -4,7 +4,8 @@
     "title": "The Watcher in the Light",
     "version": "1.0",
     "author": "Choices Matter",
-    "start_node": "arrival"
+    "start_node": "arrival",
+    "est_time": "15–25 min"
   },
   "nodes": {
 

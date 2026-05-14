@@ -4,7 +4,8 @@
     "title": "This House, Remembered",
     "version": "1.0",
     "author": "Claude",
-    "start_node": "cold_open"
+    "start_node": "cold_open",
+    "est_time": "15–25 min"
   },
   "nodes": {
     "cold_open": {

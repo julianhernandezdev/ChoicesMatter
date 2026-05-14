@@ -4,7 +4,8 @@
     "title": "The Last Train",
     "version": "1.1",
     "author": "Choices Matter",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "5–10 min"
   },
   "nodes": {
     "intro": {

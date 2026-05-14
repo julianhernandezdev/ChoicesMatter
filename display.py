@@ -53,7 +53,6 @@ class Display:
         )
 
     def show_story_picker(self, entries: list[dict]) -> None:
-        """Each entry: {"index": int, "label": str, "error": bool}"""
         self.console.print(Rule("[bold cyan]Select a Story[/bold cyan]"))
         self.console.print()
         for entry in entries:
@@ -62,7 +61,14 @@ class Display:
             if entry.get("error"):
                 self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             else:
-                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}")
+                resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
+                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{resume}")
+                node_count = entry.get("node_count", 0)
+                ending_count = entry.get("ending_count", 0)
+                est_time = entry.get("est_time", "")
+                if node_count or est_time:
+                    stats = f"{node_count} nodes · {ending_count} endings · {est_time}"
+                    self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
         self.console.print(f"  [dim]Q.[/dim]  [dim]Quit[/dim]")
         self.console.print()

@@ -132,6 +132,34 @@ def test_choice_parses_requires_and_sets(tmp_path: Path, sample_story_dict: dict
     assert choice.sets == {"flag_b": True}
 
 
+def test_node_count_and_ending_count(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert story.node_count == 3
+    assert story.ending_count == 1
+
+
+def test_est_time_auto_computed(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert story.est_time.startswith("~")
+    assert "min" in story.est_time
+
+
+def test_est_time_author_override(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["est_time"] = "15–25 min"
+    path = tmp_path / "timed.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.est_time == "15–25 min"
+
+
+def test_est_time_invalid_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["est_time"] = ""
+    path = tmp_path / "bad_time.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="est_time"):
+        StoryLoader.load(path)
+
+
 @pytest.mark.parametrize("bad_story_id", ["../escape", "story/id", "story id", ""])
 def test_invalid_story_id_raises(tmp_path: Path, sample_story_dict: dict, bad_story_id: str) -> None:
     sample_story_dict["meta"]["id"] = bad_story_id

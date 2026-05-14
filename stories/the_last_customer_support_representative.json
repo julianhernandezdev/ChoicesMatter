@@ -4,7 +4,8 @@
     "title": "The Last Customer Support Representative",
     "version": "1.0",
     "author": "Julian H.",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "25–35 min"
   },
   "nodes": {
     "intro": {

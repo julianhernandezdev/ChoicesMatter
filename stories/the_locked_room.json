@@ -4,7 +4,8 @@
     "title": "The Locked Room",
     "version": "1.2",
     "author": "Choices Matter Dev",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "5–10 min"
   },
   "nodes": {
     "intro": {
