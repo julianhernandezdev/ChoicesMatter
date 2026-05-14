@@ -4,11 +4,15 @@
     "title": "The Locked Room",
     "version": "1.2",
     "author": "Choices Matter Dev",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "5–10 min"
   },
   "nodes": {
     "intro": {
       "text": "You wake up on a cold stone floor. The room is dim — a single bulb flickers overhead. There's a heavy door to your left and a cluttered desk to your right.",
+      "insets": [
+        { "text": "Location unknown. Time unknown. Duration unknown.", "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Try the door", "next": "try_door" },
         { "label": "Search the desk", "next": "search_desk" }
@@ -17,6 +21,9 @@
 
     "try_door": {
       "text": "The door is locked tight. You notice a small keyhole and a faint smell of rust. Scratches around the lock suggest someone else has been here before.\n\nOn the floor near the door you spot a crumpled note.",
+      "insets": [
+        { "text": "The scratches are old. Many hands. Many attempts.", "position": "after", "style": "echo" }
+      ],
       "choices": [
         { "label": "Read the note", "next": "read_note" },
         { "label": "Look for another way out", "next": "search_desk" }
@@ -29,7 +36,8 @@
         {
           "text": "The tarnished silver watch sits in your pocket. Harrow knew someone would find it here. He left it for exactly this.",
           "requires": { "logbook_read": true },
-          "position": "after"
+          "position": "after",
+          "style": "memory"
         }
       ],
       "choices": [
@@ -45,6 +53,9 @@
 
     "read_note": {
       "text": "The note reads: 'Key is under the desk. Don't make noise. They patrol at dawn.'\n\nDawn. How long have you been here?",
+      "insets": [
+        { "text": "No windows. No clock. The bulb has been burning the whole time.", "position": "after", "style": "system" }
+      ],
       "choices": [
         { "label": "Search the desk for the key", "next": "search_desk" }
       ]
@@ -52,6 +63,9 @@
 
     "read_logbook": {
       "text": "The logbook belonged to someone called Harrow — a prisoner here three years ago. The last entry reads:\n\n'The night guard has a weakness for silver. I traded my watch and he looked the other way. The watch is still in the desk drawer if anyone finds this.'\n\nYou check the drawer. A tarnished silver watch is tucked under a cloth.",
+      "insets": [
+        { "text": "Three years ago. Same room. Same door.", "position": "before", "style": "echo" }
+      ],
       "choices": [
         { "label": "Take the watch and return to the desk", "next": "search_desk" }
       ]
@@ -71,7 +85,8 @@
         {
           "text": "Harrow's entry surfaces: 'The night guard has a weakness for silver. I traded my watch and he looked the other way.'",
           "requires": { "logbook_read": true },
-          "position": "before"
+          "position": "before",
+          "style": "memory"
         }
       ],
       "choices": [
@@ -90,7 +105,8 @@
         {
           "text": "The watch is still in your pocket. You knew about it. You didn't use it.",
           "requires": { "logbook_read": true },
-          "position": "after"
+          "position": "after",
+          "style": "echo"
         }
       ],
       "choices": [],
@@ -107,6 +123,9 @@
 
     "window_escape": {
       "text": "You slip down the hall, keeping close to the wall. The window is exactly where the letter said — unlatched, open just enough.\n\nYou squeeze through and drop into the cool night air. Behind you, the building fades into darkness.\n\nYou made it.",
+      "insets": [
+        { "text": "The window was always open. It just needed someone to look.", "position": "after", "style": "echo" }
+      ],
       "choices": [],
       "is_ending": true,
       "ending_type": "good"

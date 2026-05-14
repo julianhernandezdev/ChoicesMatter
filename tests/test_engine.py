@@ -50,7 +50,7 @@ def test_advance_moves_to_next_node(saves_dir: Path, two_node_story: Story) -> N
     engine = Engine(two_node_story, sm, display)
     engine.run()
 
-    display.show_node.assert_any_call("Test Story", "You begin.")
+    display.show_node.assert_any_call("Test Story", "You begin.", [], [])
     display.show_ending.assert_any_call("You win.", "good", overlays=[])
 
 
@@ -228,7 +228,7 @@ def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path)
 
     call = display.show_choices.call_args_list[0]
     after = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
-    assert not after
+    assert not after  # Overlay objects filtered out by requires
 
 
 def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> None:
@@ -251,7 +251,7 @@ def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> No
 
     mid_call = display.show_choices.call_args_list[1]
     after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
-    assert after == ["Secret revealed."]
+    assert len(after) == 1 and after[0].text == "Secret revealed."
 
 
 def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
@@ -273,8 +273,72 @@ def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
     call = display.show_choices.call_args_list[0]
     before = call.args[1] if len(call.args) > 1 else call.kwargs.get("before_overlays", [])
     after  = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
-    assert before == ["Before whisper."]
-    assert after  == ["After whisper."]
+    assert len(before) == 1 and before[0].text == "Before whisper."
+    assert len(after)  == 1 and after[0].text  == "After whisper."
+
+
+def test_insets_with_unmet_requires_not_passed_to_show_node(saves_dir: Path) -> None:
+    from story import Inset
+    story = _make_story({
+        "start": Node(
+            text="Scene.",
+            choices=[Choice(label="Go", next="end")],
+            insets=[Inset(text="Secret.", requires={"secret": True}, position="before")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call = display.show_node.call_args_list[0]
+    before_insets = call.args[2] if len(call.args) > 2 else call.kwargs.get("before_insets", [])
+    assert not before_insets
+
+
+def test_insets_with_met_requires_passed_to_show_node(saves_dir: Path) -> None:
+    from story import Inset
+    story = _make_story({
+        "start": Node(
+            text="Scene.",
+            choices=[Choice(label="Reveal", next="mid", sets={"secret": True})],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="End", next="end")],
+            insets=[Inset(text="The secret.", requires={"secret": True}, position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_node.call_args_list[1]
+    after_insets = mid_call.args[3] if len(mid_call.args) > 3 else mid_call.kwargs.get("after_insets", [])
+    assert len(after_insets) == 1 and after_insets[0].text == "The secret."
+
+
+def test_before_and_after_insets_split_correctly(saves_dir: Path) -> None:
+    from story import Inset
+    story = _make_story({
+        "start": Node(
+            text="Scene.",
+            choices=[Choice(label="Go", next="end")],
+            insets=[
+                Inset(text="Header.", position="before"),
+                Inset(text="Footer.", position="after"),
+            ],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call = display.show_node.call_args_list[0]
+    before = call.args[2] if len(call.args) > 2 else call.kwargs.get("before_insets", [])
+    after  = call.args[3] if len(call.args) > 3 else call.kwargs.get("after_insets", [])
+    assert len(before) == 1 and before[0].text == "Header."
+    assert len(after)  == 1 and after[0].text  == "Footer."
 
 
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:

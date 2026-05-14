@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+_STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefix")
+
 _DEFAULTS: dict = {
     "overlay": {
         "color": "cyan",
@@ -12,7 +14,14 @@ _DEFAULTS: dict = {
         "underline": False,
         "strike": False,
         "prefix": "✦ ",
-    }
+    },
+    "styles": {
+        "whisper": {"color": "cyan",    "dim": True,  "italic": True,  "bold": False, "underline": False, "strike": False, "prefix": "✦ "},
+        "echo":    {"color": "blue",    "dim": True,  "italic": True,  "bold": False, "underline": False, "strike": False, "prefix": "~ "},
+        "warning": {"color": "yellow",  "dim": False, "italic": False, "bold": True,  "underline": False, "strike": False, "prefix": "⚠ "},
+        "memory":  {"color": "magenta", "dim": True,  "italic": True,  "bold": False, "underline": False, "strike": False, "prefix": "◈ "},
+        "system":  {"color": "white",   "dim": True,  "italic": False, "bold": False, "underline": False, "strike": False, "prefix": ""},
+    },
 }
 
 

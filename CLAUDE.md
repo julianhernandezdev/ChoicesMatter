@@ -50,7 +50,7 @@ main.py
 
 Stories have two top-level keys: `meta` and `nodes`.
 
-**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`.
+**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count.
 
 ```json
 {
@@ -58,7 +58,8 @@ Stories have two top-level keys: `meta` and `nodes`.
   "title": "Display Title",
   "version": "1.0",
   "author": "Name",
-  "start_node": "intro"
+  "start_node": "intro",
+  "est_time": "15–25 min"
 }
 ```
 
@@ -106,10 +107,15 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 ## Validation Rules
 
 `StoryLoader` validates before the engine starts. It raises `StoryValidationError` on:
-- Missing `meta` fields
+- Missing or non-string `meta` fields
 - `start_node` not present in `nodes`
 - Any node missing `text` or `choices`
 - Any choice referencing a nonexistent node ID
+- `story_id` containing characters outside `[A-Za-z0-9_.-]` (path traversal guard)
+- `ending_type` not one of `good`, `bad`, `neutral`
+- Overlay `position` not `before` or `after`
+- Flag dicts (`requires`, `sets`) mapping non-string keys or non-boolean values
+- `est_time` present but not a non-empty string
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 

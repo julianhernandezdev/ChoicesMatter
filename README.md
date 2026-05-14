@@ -42,12 +42,13 @@ Stories are JSON files with two top-level keys: `meta` and `nodes`.
     "title": "Display Title",
     "version": "1.0",
     "author": "Your Name",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "15–25 min"
   }
 }
 ```
 
-`id` is used as the save file key. `start_node` must match a key in `nodes`.
+`id` is used as the save file key. `start_node` must match a key in `nodes`. `est_time` is optional — if omitted, the engine auto-computes it from word count. If supplied, it's shown as-is in the story picker.
 
 ### Nodes
 

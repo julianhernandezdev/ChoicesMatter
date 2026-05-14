@@ -28,7 +28,7 @@ def main() -> None:
             display.show_no_stories()
             return
 
-        display.show_story_picker(_build_entries(paths, errors))
+        display.show_story_picker(_build_entries(paths, errors, save_manager))
 
         selection = display.prompt_story_select(len(paths))
         if selection is None:
@@ -50,21 +50,45 @@ def main() -> None:
         Engine(story, save_manager, display).run()
 
 
-def _build_entries(paths: list[Path], errors: dict[Path, str]) -> list[dict]:
+def _build_entries(
+    paths: list[Path],
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+) -> list[dict]:
     entries = []
     for i, path in enumerate(paths, start=1):
         if path in errors:
             entries.append({"index": i, "label": path.stem, "error": True})
-        else:
-            entries.append({"index": i, "label": _get_title(path), "error": False})
+            continue
+
+        info = _load_story_info(path)
+        title, story_id, node_count, ending_count, est_time = info
+
+        has_save = False
+        if story_id:
+            try:
+                has_save = save_manager.has_save(story_id)
+            except ValueError:
+                pass
+
+        entries.append({
+            "index": i,
+            "label": title,
+            "error": False,
+            "has_save": has_save,
+            "node_count": node_count,
+            "ending_count": ending_count,
+            "est_time": est_time,
+        })
     return entries
 
 
-def _get_title(path: Path) -> str:
+def _load_story_info(path: Path) -> tuple[str, str, int, int, str]:
     try:
-        return StoryLoader.load(path).title
+        s = StoryLoader.load(path)
+        return (s.title, s.id, s.node_count, s.ending_count, s.est_time)
     except StoryValidationError:
-        return path.stem
+        return (path.stem, "", 0, 0, "")
 
 
 if __name__ == "__main__":

@@ -49,3 +49,49 @@ def test_defaults_are_independent_copies(tmp_path: Path) -> None:
     cfg2 = load_settings(tmp_path / "missing.json")
     cfg1["overlay"]["color"] = "mutated"
     assert cfg2["overlay"]["color"] == "cyan"
+
+
+# ------------------------------------------------------------------
+# Named styles
+# ------------------------------------------------------------------
+
+def test_all_builtin_named_styles_present(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    for name in ("whisper", "echo", "warning", "memory", "system"):
+        assert name in cfg["styles"], f"missing built-in style: {name}"
+
+
+def test_each_builtin_style_has_required_fields(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    required = ("color", "dim", "italic", "bold", "prefix")
+    for name, style in cfg["styles"].items():
+        for field in required:
+            assert field in style, f"style '{name}' missing field '{field}'"
+
+
+def test_named_style_override_in_settings(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(
+        json.dumps({"styles": {"warning": {"color": "red"}}}),
+        encoding="utf-8",
+    )
+    cfg = load_settings(path)
+    assert cfg["styles"]["warning"]["color"] == "red"
+    assert cfg["styles"]["warning"]["bold"] is True   # default preserved
+
+
+def test_named_style_addition_in_settings(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(
+        json.dumps({"styles": {"custom": {"color": "green", "dim": True, "italic": False,
+                                          "bold": False, "underline": False, "strike": False, "prefix": "» "}}}),
+        encoding="utf-8",
+    )
+    cfg = load_settings(path)
+    assert "custom" in cfg["styles"]
+    assert cfg["styles"]["custom"]["color"] == "green"
+
+
+def test_styles_independent_of_overlay_config(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    assert cfg["styles"]["warning"]["color"] != cfg["overlay"]["color"]

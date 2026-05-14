@@ -4,11 +4,15 @@
     "title": "The Sleep Study",
     "version": "1.0",
     "author": "Claude",
-    "start_node": "intake"
+    "start_node": "intake",
+    "est_time": "20–30 min"
   },
   "nodes": {
     "intake": {
       "text": "The Marsh Center for Sleep Disorders smells faintly of bleach and something underneath the bleach. You've spent the last six weeks waking up in rooms you don't remember entering, with blood under your fingernails that isn't yours.\n\nThe pamphlet promised three nights of observation. A diagnosis. An end to it.\n\nDr. Marsh smiles at you from behind the intake counter. The smile arrives a half-second before her eyes catch up. She slides a clipboard across the desk.\n\n'We're so glad you came back to us.'\n\nYou don't remember being here before. The form on the clipboard already has your name printed at the top.",
+      "insets": [
+        { "text": "MARSH CENTER FOR SLEEP DISORDERS — SUBJECT INTAKE\nDAY 1  |  SUBJECT: 7  |  STATUS: VOLUNTARY", "position": "before", "style": "system" }
+      ],
       "overlays": [
         { "text": "(The fluorescent light above the desk does not hum. You have never been in a room with fluorescent lights that didn't hum.)", "position": "after" }
       ],
@@ -34,6 +38,9 @@
 
     "room_first": {
       "text": "Room 7. A bed, a chair, a small bathroom. A camera in the upper corner with a small red light. The window is sealed shut and overlooks an interior courtyard you can't quite make sense of — the angles of the walls don't add up.\n\nThere is a mirror over the sink. Someone has covered it with a folded white sheet, taped at the corners.\n\nOn the nightstand: a small paper cup with two white pills, and a glass of water.\n\nDr. Marsh stands in the doorway. 'The pills will help you sleep through the first night. We need a baseline.'",
+      "insets": [
+        { "text": "ROOM ASSIGNMENT: 07  |  CAMERA: ACTIVE  |  BASELINE COLLECTION: NIGHT 1", "position": "before", "style": "system" }
+      ],
       "overlays": [
         { "text": "(There is a faint groove on the floor by the bed, as if something has been dragged in and out, many times.)", "position": "after" }
       ],
@@ -66,6 +73,9 @@
 
     "night_1_drugged": {
       "text": "The pills work fast. The ceiling pulls away. You hear, or think you hear, a door opening somewhere very close, and a sound like a chair being dragged across tile, and then nothing.\n\nYou dream that you are watching yourself sleep. You dream that someone is taking notes.",
+      "insets": [
+        { "text": "NIGHT 1  —  SUBJECT 7  —  BASELINE OBSERVATION\n23:14 sedative administered  |  SLEEP ONSET: 23:22\nOBSERVER: MARSH, A.  +1", "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Morning.", "next": "morning_1" }
       ]
@@ -73,8 +83,11 @@
 
     "night_1_aware": {
       "text": "You let your eyes close and slow your breathing. The pills are in your sleeve.\n\nAt 2:47 AM by the wall clock, the door opens. Two people enter — you can see them through your eyelashes. One of them is Dr. Marsh. The other you don't recognize. They stand over the bed for what feels like a long time. The unfamiliar one whispers, 'Viability?'\n\nDr. Marsh whispers back: 'Stable. Same as the other.'\n\nThey leave. You do not sleep again.",
+      "insets": [
+        { "text": "NIGHT 1  —  SUBJECT 7  —  BASELINE OBSERVATION\n23:14 sedative administered  |  SLEEP ONSET: UNCONFIRMED\nOBSERVER: MARSH, A.  +1", "position": "before", "style": "system" }
+      ],
       "overlays": [
-        { "text": "(The other. The other what.)", "position": "after" }
+        { "text": "(The other. The other what.)", "position": "after", "style": "echo" }
       ],
       "choices": [
         { "label": "Morning.", "next": "morning_1", "sets": { "heard_them": true } }
@@ -83,6 +96,9 @@
 
     "morning_1": {
       "text": "You wake — or are told you've woken — to a soft chime over an intercom. Breakfast is in the common room.\n\nYou sit up. Your mouth tastes like copper. Your left wrist has a small adhesive bandage on it that you don't remember receiving. Under the bandage, a single pinprick.\n\nThe folded sheet is back over the mirror. You did not put it there.",
+      "insets": [
+        { "text": "DAY 2  —  07:00  —  SUBJECT 7\nNOCTURNAL SAMPLE: COLLECTED  |  ANALYSIS: PENDING", "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Go to breakfast.", "next": "breakfast" }
       ]
@@ -102,7 +118,7 @@
     "approach_seven": {
       "text": "The nurse's hand closes lightly around your forearm. Lightly, but not lightly enough.\n\n'Seven is non-verbal,' she says. 'Sit down, please. Dr. Marsh would prefer it.'\n\nYou sit. Seven keeps watching you. Their lips move, slowly, again. You can almost read it this time. You think it might be: it's not you. it's not you. it's not you.",
       "overlays": [
-        { "text": "(You feel, for a moment, that the person in the corner is sitting in your chair.)", "position": "after" }
+        { "text": "(You feel, for a moment, that the person in the corner is sitting in your chair.)", "position": "after", "style": "echo" }
       ],
       "choices": [
         { "label": "Finish breakfast. Plan to come back to Seven later.", "next": "after_breakfast", "sets": { "saw_seven": true } }
@@ -121,7 +137,7 @@
     "records_office": {
       "text": "You step inside and ease the door almost shut behind you. Filing cabinets. A computer, screensaver running. A clipboard on the desk.\n\nThe clipboard says SUBJECT 7 — DAY 14.\n\nDay fourteen. You arrived yesterday.\n\nThe top page reads, in tight handwriting:\n\n*Primary continues to exhibit refusal behaviors. Replica viability at 71% and rising. Recommend phase two within 48 hours. Primary will need to be sedated for the transfer; the replica is, at present, more cooperative than expected.*\n\nFootsteps in the hall.",
       "overlays": [
-        { "text": "(Replica. Primary. Replica. Primary.)", "position": "after" }
+        { "text": "(Replica. Primary. Replica. Primary.)", "position": "after", "style": "echo" }
       ],
       "choices": [
         { "label": "Slip the page into your pocket and leave.", "next": "midday_room", "sets": { "saw_logs": true, "wary": true } },
@@ -131,6 +147,9 @@
 
     "records_deeper": {
       "text": "You flip the page.\n\n*Subject was acquired Day 1 from voluntary intake. Memory imprint successful. Replica reports no awareness of substitution. Continue baseline conditioning. Primary should not, under any circumstances, be permitted contact with Replica before transfer.*\n\nA photograph is paperclipped to the back of the page. It is a photograph of you. You are restrained to a bed. Your mouth is open. Your eyes are not your eyes.\n\nThe footsteps are very close now.",
+      "insets": [
+        { "text": "PHOTOGRAPH — REF: 7-PRIMARY-DAY01\nDATE OF ACQUISITION  |  CONDITION: COMPLIANT\nFILE STATUS: ACTIVE", "position": "after", "style": "system" }
+      ],
       "choices": [
         { "label": "Take the page and the photo. Hide.", "next": "midday_room", "sets": { "saw_logs": true, "saw_photo": true, "wary": true } }
       ]
@@ -139,7 +158,7 @@
     "west_wing_door": {
       "text": "Through the frosted glass, a shape moves. Slow, deliberate. The shape stops on the other side of the door. You can hear breathing.\n\nThe shape places a hand flat against the glass. It is your hand. The bandaid is on the wrong wrist.\n\nThe keypad beside the door blinks idly. You don't have the code. You are not supposed to be standing here.",
       "overlays": [
-        { "text": "(Hand. Your hand. Not yours.)", "position": "after" }
+        { "text": "(Hand. Your hand. Not yours.)", "position": "after", "style": "echo" }
       ],
       "choices": [
         { "label": "Walk away. Quickly.", "next": "midday_room", "sets": { "saw_hand": true } },
@@ -149,6 +168,9 @@
 
     "glass_contact": {
       "text": "You press your palm to the glass.\n\nThe hand on the other side is the same size. The same lines. Even the small white scar across the base of the thumb — where you cut yourself opening a can three summers ago — is there.\n\nA voice on the other side, ragged, barely above a whisper:\n\n'Don't take the second pill. Please. Please. Please.'\n\nFootsteps from down the hall. A nurse. You step away from the door before she rounds the corner. She does not see you.",
+      "overlays": [
+        { "text": "(Please. Please. Please.)", "position": "after", "style": "echo" }
+      ],
       "choices": [
         { "label": "Return to your room.", "next": "midday_room", "sets": { "heard_primary": true, "wary": true } }
       ]
@@ -178,7 +200,7 @@
     "confront_early": {
       "text": "Dr. Marsh's office is at the end of the hall. She is at her desk, writing. She looks up without surprise.\n\n'Sit down. I was about to call for you.'\n\nYou stay standing. You ask her what Subject 7 means. You ask her what 'replica' means. You ask her, with your voice cracking, why you cannot feel your own heart.\n\nShe sets down her pen. She folds her hands. She looks, for the first time, almost kind.\n\n'You weren't supposed to know yet,' she says. 'It complicates conditioning. But — since you're here.'",
       "overlays": [
-        { "text": "(She is not afraid of you. She has done this before.)", "position": "after" }
+        { "text": "(She is not afraid of you. She has done this before.)", "position": "after", "style": "warning" }
       ],
       "choices": [
         { "label": "Let her explain.", "next": "revelation" }
@@ -187,6 +209,9 @@
 
     "dinner": {
       "text": "Dinner is quiet. Seven is not there. The man with the bandaged head eats his soup in tiny, careful spoonfuls. The woman with the bandaged hands does not eat.\n\nAfterward, a nurse walks you back to Room 7. On the nightstand: a paper cup with two pills. A glass of water.\n\nThe nurse waits in the doorway. 'Dr. Marsh asked me to make sure you take both tonight,' she says. 'She says you'll feel better in the morning.'\n\nShe is watching your hands.",
+      "insets": [
+        { "text": "DAY 2  —  NIGHT 2  —  SUBJECT 7\nPHASE TWO WINDOW: ACTIVE  |  COMPLIANCE: REQUIRED", "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Take both pills, openly.", "next": "night_2_compliant", "sets": { "took_pills_n2": true } },
         { "label": "Palm one. Take the other.", "next": "night_2_partial", "sets": { "partial_dose": true } },
@@ -206,7 +231,7 @@
       "is_ending": true,
       "ending_type": "bad",
       "overlays": [
-        { "text": "(Somewhere, a Primary's chart is marked complete. Somewhere, a Replica is informed she is, now, just herself.)", "position": "before" },
+        { "text": "(Somewhere, a Primary's chart is marked complete. Somewhere, a Replica is informed she is, now, just herself.)", "position": "before", "style": "system" },
         { "text": "(You do not wake up as the same thing you were when you closed your eyes. You do not wake up at all, in the sense that matters.)", "position": "before" }
       ],
       "choices": []
@@ -222,6 +247,9 @@
 
     "night_walk": {
       "text": "The corridor at night is different. The fluorescent lights are off. Emergency strips along the floor cast everything in dim red.\n\nThe door to the west wing is open. Propped, again, with a small rubber wedge.\n\nYou step through.\n\nThe hallway beyond is short. Three doors. One of them has a small whiteboard with a name written on it. Your name. The wrong handwriting — but yours, scaled to a child's.\n\nInside, in a bed, restrained at the wrists and ankles, is you.\n\nYou are awake. You are looking at you.",
+      "insets": [
+        { "text": "02:47", "position": "before", "style": "system" }
+      ],
       "overlays": [
         { "text": "(There is no sound. The two of you simply look.)", "position": "after" }
       ],
@@ -244,8 +272,11 @@
 
     "revelation": {
       "text": "She tells you, calmly, what you are.\n\nYou are forty-one days old. The man you remember being — the apartment, the dog, the woman you loved — that man is in the west wing. He has been here for a long time. He stopped cooperating eight months ago.\n\n'A primary that cannot function is a waste,' Dr. Marsh says. 'A primary that breaks down mid-life is a liability for the families paying us. So we build a replica. We imprint. We observe. We confirm viability. And then we make a clean swap.'\n\nShe smiles, and the smile reaches her eyes this time. It is the worst smile you have ever seen.\n\n'You aren't broken. You're the upgrade. And you've done very, very well.'",
+      "insets": [
+        { "text": "SUBJECT 7  —  DAY 41\nREPLICA VIABILITY: 94%  |  PHASE TWO: AUTHORIZED\nCONDITIONING STATUS: COMPLETE", "position": "before", "style": "system" }
+      ],
       "overlays": [
-        { "text": "(You think of the dog. You can picture the dog perfectly. You have never met the dog.)", "position": "after" }
+        { "text": "(You think of the dog. You can picture the dog perfectly. You have never met the dog.)", "position": "after", "style": "memory" }
       ],
       "choices": [
         { "label": "Ask to see the Primary. Just once.", "next": "night_walk", "sets": { "stayed_awake": true } },
@@ -258,8 +289,11 @@
       "text": "You wake strapped to a bed. The same bed, you understand slowly, that the Primary was in.\n\nDr. Marsh's voice, somewhere above you: 'Refusal is one of the failure modes. We hoped it wouldn't surface in this one.'\n\nAnother voice: 'Viability?'\n\n'Reset and re-imprint. We have the template.'\n\nYou try to scream. Your throat does not yet know how. You are very, very new.",
       "is_ending": true,
       "ending_type": "bad",
+      "insets": [
+        { "text": "SUBJECT 7  —  REPLICA INSTANCE 2\nPREVIOUS INSTANCE: TERMINATED  |  RESET: INITIATED\nMEMORY TEMPLATE: INTACT", "position": "before", "style": "system" }
+      ],
       "overlays": [
-        { "text": "(Tomorrow, a person who looks like you will sign an intake form. They will not remember any of this. They will be very cooperative.)", "position": "before" }
+        { "text": "(Tomorrow, a person who looks like you will sign an intake form. They will not remember any of this. They will be very cooperative.)", "position": "before", "style": "system" }
       ],
       "choices": []
     },

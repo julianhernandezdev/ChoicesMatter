@@ -28,6 +28,15 @@ class Overlay:
     text: str
     requires: dict[str, bool] = field(default_factory=dict)
     position: str = "after"  # "before" | "after"
+    style: str = ""           # named style key; "" = default overlay config
+
+
+@dataclass
+class Inset:
+    text: str
+    position: str = "before"  # "before" | "after" relative to node text
+    style: str = ""            # named style key; "" = dim italic default
+    requires: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -37,6 +46,7 @@ class Node:
     is_ending: bool = False
     ending_type: str = "neutral"
     overlays: list[Overlay] = field(default_factory=list)
+    insets: list[Inset] = field(default_factory=list)
 
 
 @dataclass
@@ -48,6 +58,9 @@ class Story:
     start_node: str
     nodes: dict[str, Node]
     source_path: Path
+    node_count: int = 0
+    ending_count: int = 0
+    est_time: str = ""
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -105,6 +118,7 @@ class StoryLoader:
             text = StoryLoader._required_string(node_data, "text", path.name, f"node '{node_id}'")
             choices = StoryLoader._parse_choices(node_data, node_id, path.name)
             overlays = StoryLoader._parse_overlays(node_data, node_id, path.name)
+            insets = StoryLoader._parse_insets(node_data, node_id, path.name)
 
             is_ending = node_data.get("is_ending", False)
             if not isinstance(is_ending, bool):
@@ -124,6 +138,7 @@ class StoryLoader:
                 is_ending=is_ending,
                 ending_type=ending_type,
                 overlays=overlays,
+                insets=insets,
             )
 
         for node_id, node in nodes.items():
@@ -134,6 +149,19 @@ class StoryLoader:
                         f"references nonexistent node '{choice.next}'"
                     )
 
+        node_count = len(nodes)
+        ending_count = sum(1 for n in nodes.values() if n.is_ending or not n.choices)
+
+        est_time_raw = meta.get("est_time")
+        if est_time_raw is not None:
+            if not isinstance(est_time_raw, str) or not est_time_raw.strip():
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'est_time' must be a non-empty string if provided"
+                )
+            est_time = est_time_raw.strip()
+        else:
+            est_time = StoryLoader._compute_est_time(nodes)
+
         return Story(
             id=story_id,
             title=title,
@@ -142,7 +170,17 @@ class StoryLoader:
             start_node=start,
             nodes=nodes,
             source_path=path,
+            node_count=node_count,
+            ending_count=ending_count,
+            est_time=est_time,
         )
+
+    @staticmethod
+    def _compute_est_time(nodes: dict[str, "Node"]) -> str:
+        total_words = sum(len(n.text.split()) for n in nodes.values())
+        raw_minutes = total_words / 130 * 1.3
+        minutes = max(5, round(raw_minutes / 5) * 5)
+        return f"~{minutes} min"
 
     @staticmethod
     def _required_string(data: dict, field_name: str, file_name: str, location: str) -> str:
@@ -207,9 +245,38 @@ class StoryLoader:
                     text=StoryLoader._required_string(overlay_data, "text", file_name, location),
                     requires=StoryLoader._parse_flags(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     position=position,
+                    style=overlay_data.get("style", ""),
                 )
             )
         return overlays
+
+    @staticmethod
+    def _parse_insets(node_data: dict, node_id: str, file_name: str) -> list[Inset]:
+        raw_insets = node_data.get("insets", [])
+        if not isinstance(raw_insets, list):
+            raise StoryValidationError(
+                f"'{file_name}': node '{node_id}' field 'insets' must be a list"
+            )
+
+        insets = []
+        for idx, inset_data in enumerate(raw_insets, start=1):
+            location = f"node '{node_id}' inset #{idx}"
+            if not isinstance(inset_data, dict):
+                raise StoryValidationError(f"'{file_name}': {location} must be an object")
+            position = inset_data.get("position", "before")
+            if position not in _OVERLAY_POSITIONS:
+                raise StoryValidationError(
+                    f"'{file_name}': {location} field 'position' must be 'before' or 'after'"
+                )
+            insets.append(
+                Inset(
+                    text=StoryLoader._required_string(inset_data, "text", file_name, location),
+                    position=position,
+                    style=inset_data.get("style", ""),
+                    requires=StoryLoader._parse_flags(inset_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                )
+            )
+        return insets
 
     @staticmethod
     def _parse_flags(value: object, file_name: str, location: str) -> dict[str, bool]:
