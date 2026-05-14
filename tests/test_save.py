@@ -52,3 +52,10 @@ def test_delete_silent_when_missing(saves_dir: Path) -> None:
 def test_save_path_format(saves_dir: Path) -> None:
     sm = SaveManager(saves_dir)
     assert sm.save_path("my_story") == saves_dir / "my_story.save.json"
+
+
+@pytest.mark.parametrize("bad_story_id", ["../escape", "a/b", "", "story id"])
+def test_save_path_rejects_unsafe_story_ids(saves_dir: Path, bad_story_id: str) -> None:
+    sm = SaveManager(saves_dir)
+    with pytest.raises(ValueError, match="story_id"):
+        sm.save_path(bad_story_id)

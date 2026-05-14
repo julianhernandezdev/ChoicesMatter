@@ -130,3 +130,36 @@ def test_choice_parses_requires_and_sets(tmp_path: Path, sample_story_dict: dict
     choice = story.nodes["start"].choices[0]
     assert choice.requires == {"flag_a": True}
     assert choice.sets == {"flag_b": True}
+
+
+@pytest.mark.parametrize("bad_story_id", ["../escape", "story/id", "story id", ""])
+def test_invalid_story_id_raises(tmp_path: Path, sample_story_dict: dict, bad_story_id: str) -> None:
+    sample_story_dict["meta"]["id"] = bad_story_id
+    path = tmp_path / "bad_id.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="id"):
+        StoryLoader.load(path)
+
+
+def test_choice_missing_label_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    del sample_story_dict["nodes"]["start"]["choices"][0]["label"]
+    path = tmp_path / "missing_choice_label.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="label"):
+        StoryLoader.load(path)
+
+
+def test_choice_requires_must_use_boolean_values(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"flag": "yes"}
+    path = tmp_path / "bad_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="true/false"):
+        StoryLoader.load(path)
+
+
+def test_overlay_position_must_be_before_or_after(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = [{"text": "Whisper.", "position": "middle"}]
+    path = tmp_path / "bad_overlay_position.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="position"):
+        StoryLoader.load(path)

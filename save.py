@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+_SAFE_STORY_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 @dataclass
@@ -40,6 +44,7 @@ class SaveManager:
         saves_dir.mkdir(parents=True, exist_ok=True)
 
     def save_path(self, story_id: str) -> Path:
+        self._validate_story_id(story_id)
         return self.saves_dir / f"{story_id}.save.json"
 
     def has_save(self, story_id: str) -> bool:
@@ -62,3 +67,9 @@ class SaveManager:
         path = self.save_path(story_id)
         if path.exists():
             path.unlink()
+
+    def _validate_story_id(self, story_id: str) -> None:
+        if not isinstance(story_id, str) or not _SAFE_STORY_ID.fullmatch(story_id):
+            raise ValueError(
+                "story_id may only contain letters, numbers, dots, underscores, and hyphens"
+            )
