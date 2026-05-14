@@ -94,7 +94,8 @@ class Display:
                 endings_found = entry.get("endings_found", 0)
                 est_time = entry.get("est_time", "")
                 if node_count or est_time:
-                    endings_str = f"{endings_found}/{ending_count}"
+                    denom = "?" if ending_count == 1 else str(ending_count)
+                    endings_str = f"{endings_found}/{denom}"
                     stats = f"{node_count} nodes · {endings_str} endings · {est_time}"
                     self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
@@ -130,12 +131,21 @@ class Display:
         after_overlays: list[Overlay] | None = None,
     ) -> None:
         self.console.print()
+        stagger = 0.06 if self._typewriter_delay() else 0.0
+        if stagger:
+            time.sleep(0.25)
         for overlay in (before_overlays or []):
             self._render_overlay(overlay)
+            if stagger:
+                time.sleep(stagger)
         for i, choice in enumerate(choices, start=1):
             self.console.print(f"  [bold cyan]{i}.[/bold cyan] {choice.label}")
+            if stagger:
+                time.sleep(stagger)
         for overlay in (after_overlays or []):
             self._render_overlay(overlay)
+            if stagger:
+                time.sleep(stagger)
         self.console.print()
 
     def show_ending(
