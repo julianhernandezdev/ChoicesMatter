@@ -82,3 +82,21 @@ def test_discover_empty_dir(tmp_path: Path) -> None:
 
 def test_discover_missing_dir(tmp_path: Path) -> None:
     assert StoryLoader.discover(tmp_path / "nonexistent") == []
+
+
+def test_choice_defaults_have_empty_requires_and_sets(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    choice = story.nodes["start"].choices[0]
+    assert choice.requires == {}
+    assert choice.sets == {}
+
+
+def test_choice_parses_requires_and_sets(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"flag_a": True}
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"flag_b": True}
+    path = tmp_path / "flagged.json"
+    path.write_text(__import__("json").dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    choice = story.nodes["start"].choices[0]
+    assert choice.requires == {"flag_a": True}
+    assert choice.sets == {"flag_b": True}

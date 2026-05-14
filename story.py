@@ -13,6 +13,8 @@ class StoryValidationError(Exception):
 class Choice:
     label: str
     next: str
+    requires: dict[str, bool] = field(default_factory=dict)
+    sets: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -83,7 +85,12 @@ class StoryLoader:
                 )
 
             choices = [
-                Choice(label=c["label"], next=c["next"])
+                Choice(
+                    label=c["label"],
+                    next=c["next"],
+                    requires=c.get("requires", {}),
+                    sets=c.get("sets", {}),
+                )
                 for c in node_data["choices"]
             ]
             nodes[node_id] = Node(
