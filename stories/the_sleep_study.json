@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "id": "the_sleep_study",
+    "title": "The Sleep Study",
+    "version": "1.0",
+    "author": "Claude",
+    "start_node": "intake"
+  },
+  "nodes": {
+    "intake": {
+      "text": "The Marsh Center for Sleep Disorders smells faintly of bleach and something underneath the bleach. You've spent the last six weeks waking up in rooms you don't remember entering, with blood under your fingernails that isn't yours.\n\nThe pamphlet promised three nights of observation. A diagnosis. An end to it.\n\nDr. Marsh smiles at you from behind the intake counter. The smile arrives a half-second before her eyes catch up. She slides a clipboard across the desk.\n\n'We're so glad you came back to us.'\n\nYou don't remember being here before. The form on the clipboard already has your name printed at the top.",
+      "overlays": [
+        { "text": "(The fluorescent light above the desk does not hum. You have never been in a room with fluorescent lights that didn't hum.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Ask her what she means by 'came back.'", "next": "ask_back", "sets": { "wary": true } },
+        { "label": "Sign without asking. You want to sleep.", "next": "sign_in", "sets": { "compliant": true } }
+      ]
+    },
+
+    "ask_back": {
+      "text": "Her smile widens a degree. 'Oh — I'm sorry. The intake call. We spoke on Tuesday. You told me about the fingernails.'\n\nYou did not tell her about the fingernails. You haven't told anyone about the fingernails.\n\n'It's normal to feel disoriented,' she says. 'Sleep deprivation does that.' She taps the form. 'Just a signature, when you're ready.'",
+      "choices": [
+        { "label": "Sign. Whatever this is, you need it to stop.", "next": "room_first" }
+      ]
+    },
+
+    "sign_in": {
+      "text": "You sign. The pen drags slightly, like the paper is damp. Dr. Marsh files the form somewhere below the counter and stands.\n\n'I'll walk you to your room.'",
+      "choices": [
+        { "label": "Follow her.", "next": "room_first" }
+      ]
+    },
+
+    "room_first": {
+      "text": "Room 7. A bed, a chair, a small bathroom. A camera in the upper corner with a small red light. The window is sealed shut and overlooks an interior courtyard you can't quite make sense of — the angles of the walls don't add up.\n\nThere is a mirror over the sink. Someone has covered it with a folded white sheet, taped at the corners.\n\nOn the nightstand: a small paper cup with two white pills, and a glass of water.\n\nDr. Marsh stands in the doorway. 'The pills will help you sleep through the first night. We need a baseline.'",
+      "overlays": [
+        { "text": "(There is a faint groove on the floor by the bed, as if something has been dragged in and out, many times.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Take the pills. Get this over with.", "next": "night_1_drugged", "sets": { "took_pills_n1": true } },
+        { "label": "Palm the pills. Pretend to swallow.", "next": "night_1_aware", "sets": { "wary": true } },
+        { "label": "Ask about the covered mirror first.", "next": "ask_mirror" }
+      ]
+    },
+
+    "ask_mirror": {
+      "text": "Dr. Marsh follows your eyes to the sheet over the mirror.\n\n'Some of our patients find their reflection distressing during episodes. It's a precaution. You can remove it if you'd like.'\n\nShe waits. The red light on the camera doesn't blink.",
+      "choices": [
+        { "label": "Leave it covered. Take the pills.", "next": "night_1_drugged", "sets": { "took_pills_n1": true } },
+        { "label": "Leave it covered. Palm the pills.", "next": "night_1_aware", "sets": { "wary": true } },
+        { "label": "Remove the sheet.", "next": "mirror_uncovered" }
+      ]
+    },
+
+    "mirror_uncovered": {
+      "text": "You pull the tape. The sheet falls.\n\nFor half a second — less than that — the face in the mirror is not yours. It is the face of someone who has been screaming for a long time. The eyes are open too wide and the mouth is doing something a mouth shouldn't do.\n\nThen it's you again. Tired. Pale. You.\n\nDr. Marsh has not moved. 'I told you,' she says softly. 'Some patients find it distressing.'",
+      "overlays": [
+        { "text": "(Your hands are shaking. You can't tell if that's new.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Take the pills. You want to not be awake.", "next": "night_1_drugged", "sets": { "took_pills_n1": true, "saw_mirror": true } },
+        { "label": "Palm the pills. You need to stay alert.", "next": "night_1_aware", "sets": { "wary": true, "saw_mirror": true } }
+      ]
+    },
+
+    "night_1_drugged": {
+      "text": "The pills work fast. The ceiling pulls away. You hear, or think you hear, a door opening somewhere very close, and a sound like a chair being dragged across tile, and then nothing.\n\nYou dream that you are watching yourself sleep. You dream that someone is taking notes.",
+      "choices": [
+        { "label": "Morning.", "next": "morning_1" }
+      ]
+    },
+
+    "night_1_aware": {
+      "text": "You let your eyes close and slow your breathing. The pills are in your sleeve.\n\nAt 2:47 AM by the wall clock, the door opens. Two people enter — you can see them through your eyelashes. One of them is Dr. Marsh. The other you don't recognize. They stand over the bed for what feels like a long time. The unfamiliar one whispers, 'Viability?'\n\nDr. Marsh whispers back: 'Stable. Same as the other.'\n\nThey leave. You do not sleep again.",
+      "overlays": [
+        { "text": "(The other. The other what.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Morning.", "next": "morning_1", "sets": { "heard_them": true } }
+      ]
+    },
+
+    "morning_1": {
+      "text": "You wake — or are told you've woken — to a soft chime over an intercom. Breakfast is in the common room.\n\nYou sit up. Your mouth tastes like copper. Your left wrist has a small adhesive bandage on it that you don't remember receiving. Under the bandage, a single pinprick.\n\nThe folded sheet is back over the mirror. You did not put it there.",
+      "choices": [
+        { "label": "Go to breakfast.", "next": "breakfast" }
+      ]
+    },
+
+    "breakfast": {
+      "text": "The common room has four tables. Three patients. They do not look up when you enter.\n\nA woman with bandaged hands. A man with his head wrapped in gauze, eating soup with great care. And, in the corner, a person who looks up when you sit down.\n\nThey look at you for a long time. They do not blink. Their face is doing something that is not quite a smile. They mouth something. You can't read it.\n\nA nurse appears at your elbow with a tray. 'Don't mind them,' she says. 'That's Seven.'\n\nYou were told your room is Room 7.",
+      "overlays": [
+        { "text": "(The person in the corner is wearing the same bracelet you woke up with.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Approach Seven.", "next": "approach_seven" },
+        { "label": "Eat quietly. Don't make eye contact.", "next": "after_breakfast" }
+      ]
+    },
+
+    "approach_seven": {
+      "text": "The nurse's hand closes lightly around your forearm. Lightly, but not lightly enough.\n\n'Seven is non-verbal,' she says. 'Sit down, please. Dr. Marsh would prefer it.'\n\nYou sit. Seven keeps watching you. Their lips move, slowly, again. You can almost read it this time. You think it might be: it's not you. it's not you. it's not you.",
+      "overlays": [
+        { "text": "(You feel, for a moment, that the person in the corner is sitting in your chair.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Finish breakfast. Plan to come back to Seven later.", "next": "after_breakfast", "sets": { "saw_seven": true } }
+      ]
+    },
+
+    "after_breakfast": {
+      "text": "After breakfast, there is unstructured time before the morning session. A long, quiet corridor stretches from the common room. Most doors are open — empty rooms, a small lounge, a supply closet.\n\nOne door, at the far end, is closed. A keypad. A small window of frosted glass. Above it, a sign: WEST WING — STAFF ONLY.\n\nThere is also a door, propped open with a wedge, that leads into what looks like a records office. Nobody is inside.",
+      "choices": [
+        { "label": "Slip into the records office.", "next": "records_office" },
+        { "label": "Approach the west wing door.", "next": "west_wing_door" },
+        { "label": "Go back to your room and rest.", "next": "midday_room" }
+      ]
+    },
+
+    "records_office": {
+      "text": "You step inside and ease the door almost shut behind you. Filing cabinets. A computer, screensaver running. A clipboard on the desk.\n\nThe clipboard says SUBJECT 7 — DAY 14.\n\nDay fourteen. You arrived yesterday.\n\nThe top page reads, in tight handwriting:\n\n*Primary continues to exhibit refusal behaviors. Replica viability at 71% and rising. Recommend phase two within 48 hours. Primary will need to be sedated for the transfer; the replica is, at present, more cooperative than expected.*\n\nFootsteps in the hall.",
+      "overlays": [
+        { "text": "(Replica. Primary. Replica. Primary.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Slip the page into your pocket and leave.", "next": "midday_room", "sets": { "saw_logs": true, "wary": true } },
+        { "label": "Read more. Footsteps are still far away.", "next": "records_deeper" }
+      ]
+    },
+
+    "records_deeper": {
+      "text": "You flip the page.\n\n*Subject was acquired Day 1 from voluntary intake. Memory imprint successful. Replica reports no awareness of substitution. Continue baseline conditioning. Primary should not, under any circumstances, be permitted contact with Replica before transfer.*\n\nA photograph is paperclipped to the back of the page. It is a photograph of you. You are restrained to a bed. Your mouth is open. Your eyes are not your eyes.\n\nThe footsteps are very close now.",
+      "choices": [
+        { "label": "Take the page and the photo. Hide.", "next": "midday_room", "sets": { "saw_logs": true, "saw_photo": true, "wary": true } }
+      ]
+    },
+
+    "west_wing_door": {
+      "text": "Through the frosted glass, a shape moves. Slow, deliberate. The shape stops on the other side of the door. You can hear breathing.\n\nThe shape places a hand flat against the glass. It is your hand. The bandaid is on the wrong wrist.\n\nThe keypad beside the door blinks idly. You don't have the code. You are not supposed to be standing here.",
+      "overlays": [
+        { "text": "(Hand. Your hand. Not yours.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Walk away. Quickly.", "next": "midday_room", "sets": { "saw_hand": true } },
+        { "label": "Press your hand against the glass on your side.", "next": "glass_contact", "sets": { "saw_hand": true } }
+      ]
+    },
+
+    "glass_contact": {
+      "text": "You press your palm to the glass.\n\nThe hand on the other side is the same size. The same lines. Even the small white scar across the base of the thumb — where you cut yourself opening a can three summers ago — is there.\n\nA voice on the other side, ragged, barely above a whisper:\n\n'Don't take the second pill. Please. Please. Please.'\n\nFootsteps from down the hall. A nurse. You step away from the door before she rounds the corner. She does not see you.",
+      "choices": [
+        { "label": "Return to your room.", "next": "midday_room", "sets": { "heard_primary": true, "wary": true } }
+      ]
+    },
+
+    "midday_room": {
+      "text": "Back in Room 7. The sheet is still over the mirror.\n\nYou sit on the edge of the bed. Your hand goes to your chest, almost without your permission. You hold it there.\n\nYou cannot feel your heartbeat.\n\nYou move your hand. You try the other side. Your throat. The inside of your wrist.\n\nIt is there, eventually, when you find it. Faint. Steady. Slow. Too slow.",
+      "overlays": [
+        { "text": "(How long were you looking for it.)", "position": "after" },
+        { "text": "(The page in your pocket is warm.)", "requires": { "saw_logs": true }, "position": "after" }
+      ],
+      "choices": [
+        { "label": "Confront Dr. Marsh.", "next": "confront_early", "requires": { "wary": true } },
+        { "label": "Wait. Do nothing. The chime will sound for dinner.", "next": "dinner" },
+        { "label": "Try the door. See if it's locked.", "next": "try_door" }
+      ]
+    },
+
+    "try_door": {
+      "text": "The handle turns. The door opens. You stand in the doorway, looking out at an empty hall.\n\nNothing stops you. No alarm. No nurse.\n\nThat is somehow worse than if it had been locked.",
+      "choices": [
+        { "label": "Close the door. Wait for dinner.", "next": "dinner" },
+        { "label": "Confront Dr. Marsh now.", "next": "confront_early", "requires": { "wary": true } }
+      ]
+    },
+
+    "confront_early": {
+      "text": "Dr. Marsh's office is at the end of the hall. She is at her desk, writing. She looks up without surprise.\n\n'Sit down. I was about to call for you.'\n\nYou stay standing. You ask her what Subject 7 means. You ask her what 'replica' means. You ask her, with your voice cracking, why you cannot feel your own heart.\n\nShe sets down her pen. She folds her hands. She looks, for the first time, almost kind.\n\n'You weren't supposed to know yet,' she says. 'It complicates conditioning. But — since you're here.'",
+      "overlays": [
+        { "text": "(She is not afraid of you. She has done this before.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Let her explain.", "next": "revelation" }
+      ]
+    },
+
+    "dinner": {
+      "text": "Dinner is quiet. Seven is not there. The man with the bandaged head eats his soup in tiny, careful spoonfuls. The woman with the bandaged hands does not eat.\n\nAfterward, a nurse walks you back to Room 7. On the nightstand: a paper cup with two pills. A glass of water.\n\nThe nurse waits in the doorway. 'Dr. Marsh asked me to make sure you take both tonight,' she says. 'She says you'll feel better in the morning.'\n\nShe is watching your hands.",
+      "choices": [
+        { "label": "Take both pills, openly.", "next": "night_2_compliant", "sets": { "took_pills_n2": true } },
+        { "label": "Palm one. Take the other.", "next": "night_2_partial", "sets": { "partial_dose": true } },
+        { "label": "Refuse to take them.", "next": "night_2_refuse" }
+      ]
+    },
+
+    "night_2_refuse": {
+      "text": "You set the cup down. You say no.\n\nThe nurse's face does something complicated. She nods, once, and steps out. The door closes. You hear a small electric click.\n\nThe handle does not turn.\n\nAt 2:47 AM, three people enter. You do not pretend to be asleep this time. There is no point.\n\nThe needle is very fine. You do not feel it for very long.",
+      "choices": [
+        { "label": "Wake.", "next": "revelation_forced" }
+      ]
+    },
+
+    "night_2_compliant": {
+      "text": "The pills go down. The nurse smiles and says goodnight.\n\nYou dream of being a child in a kitchen you have never been in. A woman's hand on the back of your neck. A voice saying 'good. very good.' over and over, very softly.\n\nYou sleep through the night.\n\nYou sleep through the next day.\n\nYou sleep through everything that comes after.",
+      "is_ending": true,
+      "ending_type": "bad",
+      "overlays": [
+        { "text": "(Somewhere, a Primary's chart is marked complete. Somewhere, a Replica is informed she is, now, just herself.)", "position": "before" },
+        { "text": "(You do not wake up as the same thing you were when you closed your eyes. You do not wake up at all, in the sense that matters.)", "position": "before" }
+      ],
+      "choices": []
+    },
+
+    "night_2_partial": {
+      "text": "You swallow one. You hide one under your tongue and spit it into the sink when the nurse leaves.\n\nThe one you swallowed is enough to make the room soft at the edges. The walls are too patient. The clock ticks twice for every second.\n\nYou hear, distantly, someone crying in another room. You think the voice is yours. You think the voice has been yours for a very long time.\n\nYou fight to stay awake.",
+      "choices": [
+        { "label": "Get up. Go to the west wing while you still can.", "next": "night_walk", "sets": { "stayed_awake": true } },
+        { "label": "The bed is so soft. Just close your eyes.", "next": "night_2_compliant" }
+      ]
+    },
+
+    "night_walk": {
+      "text": "The corridor at night is different. The fluorescent lights are off. Emergency strips along the floor cast everything in dim red.\n\nThe door to the west wing is open. Propped, again, with a small rubber wedge.\n\nYou step through.\n\nThe hallway beyond is short. Three doors. One of them has a small whiteboard with a name written on it. Your name. The wrong handwriting — but yours, scaled to a child's.\n\nInside, in a bed, restrained at the wrists and ankles, is you.\n\nYou are awake. You are looking at you.",
+      "overlays": [
+        { "text": "(There is no sound. The two of you simply look.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Unstrap them. Both of you run.", "next": "end_liberate_setup", "requires": { "saw_logs": true } },
+        { "label": "Unstrap them. Both of you run.", "next": "end_liberate_setup", "requires": { "heard_primary": true } },
+        { "label": "Step closer.", "next": "close_to_primary" },
+        { "label": "Turn around. You cannot do this. Go back to bed.", "next": "night_2_compliant" }
+      ]
+    },
+
+    "close_to_primary": {
+      "text": "You take three steps in. The figure on the bed watches you the whole way. They are thinner than you. There is gauze on their forearm. There is a feeding tube taped to their cheek.\n\nThey speak. Their voice is so quiet that you have to lean down to hear.\n\n'I'm sorry,' they say. 'I'm so sorry. I didn't know what they were doing with the pieces of me.'\n\nThey close their eyes. A tear slides into the gauze.\n\n'You're not a monster,' they say. 'You're just new. But please. Please don't let them finish.'",
+      "choices": [
+        { "label": "Unstrap them. Both of you run.", "next": "end_liberate_setup", "sets": { "made_contact": true } },
+        { "label": "Smother them with the pillow. Take their life. Walk out as the only one.", "next": "end_replace_setup", "sets": { "made_contact": true } },
+        { "label": "Kneel beside the bed. Take their hand. Stay until morning.", "next": "end_mercy_setup", "sets": { "made_contact": true } }
+      ]
+    },
+
+    "revelation": {
+      "text": "She tells you, calmly, what you are.\n\nYou are forty-one days old. The man you remember being — the apartment, the dog, the woman you loved — that man is in the west wing. He has been here for a long time. He stopped cooperating eight months ago.\n\n'A primary that cannot function is a waste,' Dr. Marsh says. 'A primary that breaks down mid-life is a liability for the families paying us. So we build a replica. We imprint. We observe. We confirm viability. And then we make a clean swap.'\n\nShe smiles, and the smile reaches her eyes this time. It is the worst smile you have ever seen.\n\n'You aren't broken. You're the upgrade. And you've done very, very well.'",
+      "overlays": [
+        { "text": "(You think of the dog. You can picture the dog perfectly. You have never met the dog.)", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Ask to see the Primary. Just once.", "next": "night_walk", "sets": { "stayed_awake": true } },
+        { "label": "Agree. Sign the transfer. Go be the man in the photographs.", "next": "end_replace_setup", "sets": { "chose_replace": true } },
+        { "label": "Tell her no. Refuse. Demand to be undone.", "next": "end_mercy_setup", "sets": { "refused": true } }
+      ]
+    },
+
+    "revelation_forced": {
+      "text": "You wake strapped to a bed. The same bed, you understand slowly, that the Primary was in.\n\nDr. Marsh's voice, somewhere above you: 'Refusal is one of the failure modes. We hoped it wouldn't surface in this one.'\n\nAnother voice: 'Viability?'\n\n'Reset and re-imprint. We have the template.'\n\nYou try to scream. Your throat does not yet know how. You are very, very new.",
+      "is_ending": true,
+      "ending_type": "bad",
+      "overlays": [
+        { "text": "(Tomorrow, a person who looks like you will sign an intake form. They will not remember any of this. They will be very cooperative.)", "position": "before" }
+      ],
+      "choices": []
+    },
+
+    "end_liberate_setup": {
+      "text": "Your hands are steadier than you expected. You undo the wrist straps. The Primary — you — sits up slowly, like a person who has not sat up in months.\n\nYou ease the feeding tube out together. They wince. You take their weight on your shoulder.\n\nThe west wing exit door has a fire-alarm release. The kind that triggers if you push it.\n\nYou look at each other. You have the same face. You make the same decision at the same time.\n\nYou push.\n\nAlarms. White light. Boots, somewhere far back in the building. The cold of a parking lot in October at three in the morning. Two of you, holding each other up, running for the treeline.\n\nNobody catches you that night. Whether anyone catches you later is a different story.\n\nYou do not know, in the end, which of you is the real one. Neither of you ever quite figures it out. You learn to live with it. It is not a good life. But it is a life, and there are two of you in it, and there is no one taking notes.",
+      "is_ending": true,
+      "ending_type": "neutral",
+      "overlays": [
+        { "text": "(This is the only ending in which someone walks out of the Marsh Center on their own feet.)", "position": "before" }
+      ],
+      "choices": []
+    },
+
+    "end_replace_setup": {
+      "text": "You put the pillow over their face. They do not struggle very hard. They are tired. You are stronger. You were built to be stronger.\n\nIt takes longer than you expected. When it is done, you are sweating, and your hands feel like they belong to someone else.\n\nIn the morning, Dr. Marsh signs the paperwork. The Primary's chart is closed. You are walked to a car. A driver takes you to an apartment you have never been to that you remember perfectly. There is a dog. The dog does not recognize you. The dog learns.\n\nThe woman you loved comes home in the evening. She kisses you on the cheek and asks how the sleep study went. You say it was fine. You say you feel better.\n\nYou will live another forty years like this. You will be a good husband. A good father, eventually. Nobody will ever know.\n\nExcept, sometimes, in the moment before sleep, you will hear a pillow being pressed down, and the small wet sound of someone who has stopped being afraid because there is nothing left to be afraid of.\n\nAnd you will know.",
+      "is_ending": true,
+      "ending_type": "bad",
+      "overlays": [
+        { "text": "(You wanted a life. You have one. It is yours now, in the only sense that matters and in no other sense at all.)", "position": "before" }
+      ],
+      "choices": []
+    },
+
+    "end_mercy_setup": {
+      "text": "You sit beside the bed. You take their hand. It is your hand. It is warmer than you expected.\n\nWhen Dr. Marsh comes in the morning, you are still there. The Primary is still alive — barely. You have stayed awake the whole night.\n\nYou tell her, calmly, that you will not accept the transfer. That she should let the Primary go home, even if home is broken. That she should undo you.\n\nShe looks at you for a long time. She is, you understand, deciding whether to argue.\n\nShe doesn't.\n\n'You're a very good replica,' she says, almost regretfully. 'I'll note it in the file.'\n\nThe needle is, again, very fine.\n\nYou were forty-one days old. You learned, in those forty-one days, that there is a thing a person can choose to be that is worth more than being a person. You closed your eyes knowing it.\n\nThe Primary went home three weeks later. He never fully recovered. He kept, for the rest of his life, a single photograph in his wallet — a photograph of someone who looked exactly like him, that he could not explain to anyone, including himself.",
+      "is_ending": true,
+      "ending_type": "good",
+      "overlays": [
+        { "text": "(This is the closest thing to a good ending. Sit with what that means.)", "position": "before" }
+      ],
+      "choices": []
+    }
+  }
+}
