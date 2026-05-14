@@ -7,7 +7,7 @@ _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefi
 
 _DEFAULTS: dict = {
     "typewriter": {
-        "enabled": False,
+        "enabled": True,
         "delay_ms": 35,
         "punctuation_pauses": {
             ".": 550,

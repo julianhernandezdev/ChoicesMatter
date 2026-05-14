@@ -103,7 +103,7 @@ def test_styles_independent_of_overlay_config(tmp_path: Path) -> None:
 
 def test_typewriter_defaults_present(tmp_path: Path) -> None:
     cfg = load_settings(tmp_path / "nonexistent.json")
-    assert cfg["typewriter"]["enabled"] is False
+    assert cfg["typewriter"]["enabled"] is True
     assert cfg["typewriter"]["delay_ms"] == 35
     pauses = cfg["typewriter"]["punctuation_pauses"]
     assert pauses["."] == 550

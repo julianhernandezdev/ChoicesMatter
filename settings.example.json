@@ -1,6 +1,6 @@
 {
   "typewriter": {
-    "enabled": false,
+    "enabled": true,
     "delay_ms": 35,
     "punctuation_pauses": {
       ".": 550,
