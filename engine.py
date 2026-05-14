@@ -26,8 +26,12 @@ class Engine:
             visible = [c for c in node.choices if self._flag_check(c.requires)]
 
             visible_overlays = [o for o in node.overlays if self._flag_check(o.requires)]
-            before = [o.text for o in visible_overlays if o.position == "before"]
-            after  = [o.text for o in visible_overlays if o.position == "after"]
+            before = [o for o in visible_overlays if o.position == "before"]
+            after  = [o for o in visible_overlays if o.position == "after"]
+
+            visible_insets = [i for i in node.insets if self._flag_check(i.requires)]
+            before_insets = [i for i in visible_insets if i.position == "before"]
+            after_insets  = [i for i in visible_insets if i.position == "after"]
 
             if node.is_ending or not visible:
                 self.display.show_ending(node.text, node.ending_type, overlays=before + after)
@@ -37,7 +41,7 @@ class Engine:
                     continue
                 return
 
-            self.display.show_node(self.story.title, node.text)
+            self.display.show_node(self.story.title, node.text, before_insets, after_insets)
             self.display.show_choices(visible, before, after)
             idx = self.display.prompt_choice(visible)
             if idx is None:

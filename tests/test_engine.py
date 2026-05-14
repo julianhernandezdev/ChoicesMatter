@@ -50,7 +50,7 @@ def test_advance_moves_to_next_node(saves_dir: Path, two_node_story: Story) -> N
     engine = Engine(two_node_story, sm, display)
     engine.run()
 
-    display.show_node.assert_any_call("Test Story", "You begin.")
+    display.show_node.assert_any_call("Test Story", "You begin.", [], [])
     display.show_ending.assert_any_call("You win.", "good", overlays=[])
 
 
@@ -228,7 +228,7 @@ def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path)
 
     call = display.show_choices.call_args_list[0]
     after = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
-    assert not after
+    assert not after  # Overlay objects filtered out by requires
 
 
 def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> None:
@@ -251,7 +251,7 @@ def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> No
 
     mid_call = display.show_choices.call_args_list[1]
     after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
-    assert after == ["Secret revealed."]
+    assert len(after) == 1 and after[0].text == "Secret revealed."
 
 
 def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
@@ -273,8 +273,8 @@ def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
     call = display.show_choices.call_args_list[0]
     before = call.args[1] if len(call.args) > 1 else call.kwargs.get("before_overlays", [])
     after  = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
-    assert before == ["Before whisper."]
-    assert after  == ["After whisper."]
+    assert len(before) == 1 and before[0].text == "Before whisper."
+    assert len(after)  == 1 and after[0].text  == "After whisper."
 
 
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:

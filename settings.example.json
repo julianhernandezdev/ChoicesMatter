@@ -7,5 +7,12 @@
     "underline": false,
     "strike": false,
     "prefix": "✦ "
+  },
+  "styles": {
+    "whisper": { "color": "cyan",    "dim": true,  "italic": true,  "bold": false, "prefix": "✦ " },
+    "echo":    { "color": "blue",    "dim": true,  "italic": true,  "bold": false, "prefix": "~ " },
+    "warning": { "color": "yellow",  "dim": false, "italic": false, "bold": true,  "prefix": "⚠ " },
+    "memory":  { "color": "magenta", "dim": true,  "italic": true,  "bold": false, "prefix": "◈ " },
+    "system":  { "color": "white",   "dim": true,  "italic": false, "bold": false, "prefix": ""  }
   }
 }

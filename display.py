@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
 from config import load_settings
-from story import Choice
+from story import Choice, Inset, Overlay
 
 _ENDING_COLORS = {
     "good": "bright_green",
     "bad": "bright_red",
     "neutral": "bright_yellow",
 }
+
+_MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
 
 class Display:
@@ -81,11 +83,27 @@ class Display:
     # In-game rendering
     # ------------------------------------------------------------------
 
-    def show_node(self, story_title: str, node_text: str) -> None:
+    def show_node(
+        self,
+        story_title: str,
+        node_text: str,
+        before_insets: list[Inset] | None = None,
+        after_insets: list[Inset] | None = None,
+    ) -> None:
         self.console.print()
+        parts: list = []
+        for inset in (before_insets or []):
+            parts.append(self._inset_renderable(inset))
+            parts.append(Rule(style="dim white"))
+        parts.append(Text(node_text))
+        for inset in (after_insets or []):
+            parts.append(Rule(style="dim white"))
+            parts.append(self._inset_renderable(inset))
+
+        content = Group(*parts) if len(parts) > 1 else node_text
         self.console.print(
             Panel(
-                node_text,
+                content,
                 title=f"[bold]{story_title}[/bold]",
                 border_style="white",
                 padding=(1, 2),
@@ -95,29 +113,29 @@ class Display:
     def show_choices(
         self,
         choices: list[Choice],
-        before_overlays: list[str] | None = None,
-        after_overlays: list[str] | None = None,
+        before_overlays: list[Overlay] | None = None,
+        after_overlays: list[Overlay] | None = None,
     ) -> None:
         self.console.print()
-        for text in (before_overlays or []):
-            self._render_overlay(text)
+        for overlay in (before_overlays or []):
+            self._render_overlay(overlay)
         for i, choice in enumerate(choices, start=1):
             self.console.print(f"  [bold cyan]{i}.[/bold cyan] {choice.label}")
-        for text in (after_overlays or []):
-            self._render_overlay(text)
+        for overlay in (after_overlays or []):
+            self._render_overlay(overlay)
         self.console.print()
 
     def show_ending(
         self,
         node_text: str,
         ending_type: str,
-        overlays: list[str] | None = None,
+        overlays: list[Overlay] | None = None,
     ) -> None:
         color = _ENDING_COLORS.get(ending_type, "bright_yellow")
         label = ending_type.upper()
         self.console.print()
-        for text in (overlays or []):
-            self._render_overlay(text)
+        for overlay in (overlays or []):
+            self._render_overlay(overlay)
         self.console.print(
             Panel(
                 Text(node_text, justify="center"),
@@ -132,14 +150,37 @@ class Display:
     def show_save_indicator(self) -> None:
         self.console.print("  [dim green]✓ Progress saved.[/dim green]")
 
-    def _render_overlay(self, text: str) -> None:
-        cfg = self._cfg["overlay"]
-        _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
+    # ------------------------------------------------------------------
+    # Internal rendering helpers
+    # ------------------------------------------------------------------
+
+    def _style_cfg(self, style_name: str) -> dict:
+        """Return config dict for a named style, falling back to the default overlay config."""
+        if style_name:
+            named = self._cfg.get("styles", {}).get(style_name)
+            if named:
+                return named
+        return self._cfg["overlay"]
+
+    def _render_overlay(self, overlay: Overlay) -> None:
+        cfg = self._style_cfg(overlay.style)
         parts = [m for m in _MODIFIERS if cfg.get(m)]
         color = cfg.get("color", "cyan")
         style = f"{' '.join(parts)} {color}".strip()
         prefix = cfg.get("prefix", "✦ ")
-        self.console.print(f"  {prefix}{text}", style=style)
+        self.console.print(f"  {prefix}{overlay.text}", style=style)
+
+    def _inset_renderable(self, inset: Inset) -> Text:
+        if inset.style:
+            cfg = self._style_cfg(inset.style)
+            parts = [m for m in _MODIFIERS if cfg.get(m)]
+            color = cfg.get("color", "white")
+            style = f"{' '.join(parts)} {color}".strip()
+            prefix = cfg.get("prefix", "")
+        else:
+            style = "dim italic"
+            prefix = ""
+        return Text(f"{prefix}{inset.text}", style=style)
 
     # ------------------------------------------------------------------
     # Input prompts

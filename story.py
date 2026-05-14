@@ -28,6 +28,15 @@ class Overlay:
     text: str
     requires: dict[str, bool] = field(default_factory=dict)
     position: str = "after"  # "before" | "after"
+    style: str = ""           # named style key; "" = default overlay config
+
+
+@dataclass
+class Inset:
+    text: str
+    position: str = "before"  # "before" | "after" relative to node text
+    style: str = ""            # named style key; "" = dim italic default
+    requires: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -37,6 +46,7 @@ class Node:
     is_ending: bool = False
     ending_type: str = "neutral"
     overlays: list[Overlay] = field(default_factory=list)
+    insets: list[Inset] = field(default_factory=list)
 
 
 @dataclass
@@ -108,6 +118,7 @@ class StoryLoader:
             text = StoryLoader._required_string(node_data, "text", path.name, f"node '{node_id}'")
             choices = StoryLoader._parse_choices(node_data, node_id, path.name)
             overlays = StoryLoader._parse_overlays(node_data, node_id, path.name)
+            insets = StoryLoader._parse_insets(node_data, node_id, path.name)
 
             is_ending = node_data.get("is_ending", False)
             if not isinstance(is_ending, bool):
@@ -127,6 +138,7 @@ class StoryLoader:
                 is_ending=is_ending,
                 ending_type=ending_type,
                 overlays=overlays,
+                insets=insets,
             )
 
         for node_id, node in nodes.items():
@@ -233,9 +245,38 @@ class StoryLoader:
                     text=StoryLoader._required_string(overlay_data, "text", file_name, location),
                     requires=StoryLoader._parse_flags(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     position=position,
+                    style=overlay_data.get("style", ""),
                 )
             )
         return overlays
+
+    @staticmethod
+    def _parse_insets(node_data: dict, node_id: str, file_name: str) -> list[Inset]:
+        raw_insets = node_data.get("insets", [])
+        if not isinstance(raw_insets, list):
+            raise StoryValidationError(
+                f"'{file_name}': node '{node_id}' field 'insets' must be a list"
+            )
+
+        insets = []
+        for idx, inset_data in enumerate(raw_insets, start=1):
+            location = f"node '{node_id}' inset #{idx}"
+            if not isinstance(inset_data, dict):
+                raise StoryValidationError(f"'{file_name}': {location} must be an object")
+            position = inset_data.get("position", "before")
+            if position not in _OVERLAY_POSITIONS:
+                raise StoryValidationError(
+                    f"'{file_name}': {location} field 'position' must be 'before' or 'after'"
+                )
+            insets.append(
+                Inset(
+                    text=StoryLoader._required_string(inset_data, "text", file_name, location),
+                    position=position,
+                    style=inset_data.get("style", ""),
+                    requires=StoryLoader._parse_flags(inset_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                )
+            )
+        return insets
 
     @staticmethod
     def _parse_flags(value: object, file_name: str, location: str) -> dict[str, bool]:
