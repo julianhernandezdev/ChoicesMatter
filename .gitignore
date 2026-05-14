@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project docs (local only)
+ProjectManagement.md
+ProjectChecklist.md
+GameConcept.md
+
+# Game saves (runtime, not committed)
+saves/*
+!saves/.gitkeep
