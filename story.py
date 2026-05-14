@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
 
 class StoryValidationError(Exception):
     pass
+
+
+_SAFE_STORY_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
+_ENDING_TYPES = {"good", "bad", "neutral"}
+_OVERLAY_POSITIONS = {"before", "after"}
 
 
 @dataclass
@@ -61,21 +67,29 @@ class StoryLoader:
         except json.JSONDecodeError as e:
             raise StoryValidationError(f"Invalid JSON in '{path.name}': {e}") from e
 
+        if not isinstance(raw, dict):
+            raise StoryValidationError(f"'{path.name}': root must be a JSON object")
+
         meta = raw.get("meta")
         if not isinstance(meta, dict):
             raise StoryValidationError(f"'{path.name}': missing 'meta' block")
 
-        for field_name in ("id", "title", "version", "author", "start_node"):
-            if field_name not in meta:
-                raise StoryValidationError(
-                    f"'{path.name}': meta missing required field '{field_name}'"
-                )
+        story_id = StoryLoader._required_string(meta, "id", path.name, "meta")
+        if not _SAFE_STORY_ID.fullmatch(story_id):
+            raise StoryValidationError(
+                f"'{path.name}': meta field 'id' may only contain letters, numbers, "
+                "dots, underscores, and hyphens"
+            )
+
+        title = StoryLoader._required_string(meta, "title", path.name, "meta")
+        version = StoryLoader._required_string(meta, "version", path.name, "meta")
+        author = StoryLoader._required_string(meta, "author", path.name, "meta")
+        start = StoryLoader._required_string(meta, "start_node", path.name, "meta")
 
         raw_nodes = raw.get("nodes")
         if not isinstance(raw_nodes, dict):
             raise StoryValidationError(f"'{path.name}': missing 'nodes' block")
 
-        start = meta["start_node"]
         if start not in raw_nodes:
             raise StoryValidationError(
                 f"'{path.name}': start_node '{start}' not found in nodes"
@@ -83,37 +97,32 @@ class StoryLoader:
 
         nodes: dict[str, Node] = {}
         for node_id, node_data in raw_nodes.items():
-            if "text" not in node_data:
+            if not isinstance(node_data, dict):
                 raise StoryValidationError(
-                    f"'{path.name}': node '{node_id}' missing 'text'"
-                )
-            if "choices" not in node_data:
-                raise StoryValidationError(
-                    f"'{path.name}': node '{node_id}' missing 'choices'"
+                    f"'{path.name}': node '{node_id}' must be an object"
                 )
 
-            choices = [
-                Choice(
-                    label=c["label"],
-                    next=c["next"],
-                    requires=c.get("requires", {}),
-                    sets=c.get("sets", {}),
+            text = StoryLoader._required_string(node_data, "text", path.name, f"node '{node_id}'")
+            choices = StoryLoader._parse_choices(node_data, node_id, path.name)
+            overlays = StoryLoader._parse_overlays(node_data, node_id, path.name)
+
+            is_ending = node_data.get("is_ending", False)
+            if not isinstance(is_ending, bool):
+                raise StoryValidationError(
+                    f"'{path.name}': node '{node_id}' field 'is_ending' must be true or false"
                 )
-                for c in node_data["choices"]
-            ]
-            overlays = [
-                Overlay(
-                    text=o["text"],
-                    requires=o.get("requires", {}),
-                    position=o.get("position", "after"),
+
+            ending_type = node_data.get("ending_type", "neutral")
+            if ending_type not in _ENDING_TYPES:
+                raise StoryValidationError(
+                    f"'{path.name}': node '{node_id}' field 'ending_type' must be one of: bad, good, neutral"
                 )
-                for o in node_data.get("overlays", [])
-            ]
+
             nodes[node_id] = Node(
-                text=node_data["text"],
+                text=text,
                 choices=choices,
-                is_ending=node_data.get("is_ending", False),
-                ending_type=node_data.get("ending_type", "neutral"),
+                is_ending=is_ending,
+                ending_type=ending_type,
                 overlays=overlays,
             )
 
@@ -126,11 +135,89 @@ class StoryLoader:
                     )
 
         return Story(
-            id=meta["id"],
-            title=meta["title"],
-            version=meta["version"],
-            author=meta["author"],
-            start_node=meta["start_node"],
+            id=story_id,
+            title=title,
+            version=version,
+            author=author,
+            start_node=start,
             nodes=nodes,
             source_path=path,
         )
+
+    @staticmethod
+    def _required_string(data: dict, field_name: str, file_name: str, location: str) -> str:
+        if field_name not in data:
+            raise StoryValidationError(
+                f"'{file_name}': {location} missing required field '{field_name}'"
+            )
+        value = data[field_name]
+        if not isinstance(value, str) or not value.strip():
+            raise StoryValidationError(
+                f"'{file_name}': {location} field '{field_name}' must be a non-empty string"
+            )
+        return value
+
+    @staticmethod
+    def _parse_choices(node_data: dict, node_id: str, file_name: str) -> list[Choice]:
+        if "choices" not in node_data:
+            raise StoryValidationError(
+                f"'{file_name}': node '{node_id}' missing 'choices'"
+            )
+        raw_choices = node_data["choices"]
+        if not isinstance(raw_choices, list):
+            raise StoryValidationError(
+                f"'{file_name}': node '{node_id}' field 'choices' must be a list"
+            )
+
+        choices = []
+        for idx, choice_data in enumerate(raw_choices, start=1):
+            location = f"node '{node_id}' choice #{idx}"
+            if not isinstance(choice_data, dict):
+                raise StoryValidationError(f"'{file_name}': {location} must be an object")
+            choices.append(
+                Choice(
+                    label=StoryLoader._required_string(choice_data, "label", file_name, location),
+                    next=StoryLoader._required_string(choice_data, "next", file_name, location),
+                    requires=StoryLoader._parse_flags(choice_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                    sets=StoryLoader._parse_flags(choice_data.get("sets", {}), file_name, f"{location} field 'sets'"),
+                )
+            )
+        return choices
+
+    @staticmethod
+    def _parse_overlays(node_data: dict, node_id: str, file_name: str) -> list[Overlay]:
+        raw_overlays = node_data.get("overlays", [])
+        if not isinstance(raw_overlays, list):
+            raise StoryValidationError(
+                f"'{file_name}': node '{node_id}' field 'overlays' must be a list"
+            )
+
+        overlays = []
+        for idx, overlay_data in enumerate(raw_overlays, start=1):
+            location = f"node '{node_id}' overlay #{idx}"
+            if not isinstance(overlay_data, dict):
+                raise StoryValidationError(f"'{file_name}': {location} must be an object")
+            position = overlay_data.get("position", "after")
+            if position not in _OVERLAY_POSITIONS:
+                raise StoryValidationError(
+                    f"'{file_name}': {location} field 'position' must be 'before' or 'after'"
+                )
+            overlays.append(
+                Overlay(
+                    text=StoryLoader._required_string(overlay_data, "text", file_name, location),
+                    requires=StoryLoader._parse_flags(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                    position=position,
+                )
+            )
+        return overlays
+
+    @staticmethod
+    def _parse_flags(value: object, file_name: str, location: str) -> dict[str, bool]:
+        if not isinstance(value, dict):
+            raise StoryValidationError(f"'{file_name}': {location} must be an object")
+        for flag, flag_value in value.items():
+            if not isinstance(flag, str) or not isinstance(flag_value, bool):
+                raise StoryValidationError(
+                    f"'{file_name}': {location} must map string flags to true/false values"
+                )
+        return dict(value)

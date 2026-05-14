@@ -51,7 +51,7 @@ def test_advance_moves_to_next_node(saves_dir: Path, two_node_story: Story) -> N
     engine.run()
 
     display.show_node.assert_any_call("Test Story", "You begin.")
-    display.show_node.assert_any_call("Test Story", "You win.")
+    display.show_ending.assert_any_call("You win.", "good", overlays=[])
 
 
 def test_autosave_called_on_advance(saves_dir: Path, two_node_story: Story) -> None:
