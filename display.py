@@ -74,16 +74,8 @@ class Display:
     # In-game rendering
     # ------------------------------------------------------------------
 
-    def show_node(
-        self,
-        story_title: str,
-        node_text: str,
-        before_overlays: list[str] | None = None,
-        after_overlays: list[str] | None = None,
-    ) -> None:
+    def show_node(self, story_title: str, node_text: str) -> None:
         self.console.print()
-        for text in (before_overlays or []):
-            self._render_overlay(text)
         self.console.print(
             Panel(
                 node_text,
@@ -92,19 +84,33 @@ class Display:
                 padding=(1, 2),
             )
         )
-        for text in (after_overlays or []):
-            self._render_overlay(text)
 
-    def show_choices(self, choices: list[Choice]) -> None:
+    def show_choices(
+        self,
+        choices: list[Choice],
+        before_overlays: list[str] | None = None,
+        after_overlays: list[str] | None = None,
+    ) -> None:
         self.console.print()
+        for text in (before_overlays or []):
+            self._render_overlay(text)
         for i, choice in enumerate(choices, start=1):
             self.console.print(f"  [bold cyan]{i}.[/bold cyan] {choice.label}")
+        for text in (after_overlays or []):
+            self._render_overlay(text)
         self.console.print()
 
-    def show_ending(self, node_text: str, ending_type: str) -> None:
+    def show_ending(
+        self,
+        node_text: str,
+        ending_type: str,
+        overlays: list[str] | None = None,
+    ) -> None:
         color = _ENDING_COLORS.get(ending_type, "bright_yellow")
         label = ending_type.upper()
         self.console.print()
+        for text in (overlays or []):
+            self._render_overlay(text)
         self.console.print(
             Panel(
                 Text(node_text, justify="center"),

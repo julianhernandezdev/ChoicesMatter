@@ -23,23 +23,22 @@ class Engine:
 
         while True:
             node = self.story.get_node(self._current_node)
+            visible = [c for c in node.choices if self._flag_check(c.requires)]
 
             visible_overlays = [o for o in node.overlays if self._flag_check(o.requires)]
             before = [o.text for o in visible_overlays if o.position == "before"]
             after  = [o.text for o in visible_overlays if o.position == "after"]
-            self.display.show_node(self.story.title, node.text, before, after)
-
-            visible = [c for c in node.choices if self._flag_check(c.requires)]
 
             if node.is_ending or not visible:
-                self.display.show_ending(node.text, node.ending_type)
+                self.display.show_ending(node.text, node.ending_type, overlays=before + after)
                 self.save_manager.delete(self.story.id)
                 if self.display.prompt_play_again():
                     self._reset()
                     continue
                 return
 
-            self.display.show_choices(visible)
+            self.display.show_node(self.story.title, node.text)
+            self.display.show_choices(visible, before, after)
             idx = self.display.prompt_choice(visible)
             choice = visible[idx - 1]
             self._advance(choice)
