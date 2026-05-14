@@ -241,20 +241,30 @@ class Display:
     # ------------------------------------------------------------------
 
     def prompt_story_select(self, count: int) -> int | None | str:
-        """Return 1-based index, None to quit, or 'clear' to clear save data."""
+        """Return 1-based index, None to quit, 'clear', or 'toggle_typewriter'."""
         while True:
-            raw = self.console.input(
-                "  [bold]Enter a number, Q to quit, or C to clear save data:[/bold] "
-            ).strip().lower()
+            enabled = self._cfg.get("typewriter", {}).get("enabled", False)
+            tw_label = "[green]ON[/green]" if enabled else "[dim]OFF[/dim]"
+            self.console.print("  [bold]Enter a number, Q to quit, or C to clear save data:[/bold]")
+            self.console.print(f"  [dim]T · Toggle typewriter[/dim]  {tw_label}")
+            raw = self.console.input("  › ").strip().lower()
             if raw == "q":
                 return None
             if raw == "c":
                 return "clear"
+            if raw == "t":
+                return "toggle_typewriter"
             if raw.isdigit():
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
-            self.console.print("  [red]Please enter a number from the list, Q to quit, or C to clear save data.[/red]")
+            self.console.print("  [red]Please enter a valid number, Q, C, or T.[/red]")
+
+    def toggle_typewriter(self) -> None:
+        cfg = self._cfg.setdefault("typewriter", {})
+        cfg["enabled"] = not cfg.get("enabled", False)
+        state = "[green]ON[/green]" if cfg["enabled"] else "[dim]OFF[/dim]"
+        self.console.print(f"  Typewriter mode: {state}\n")
 
     def prompt_clear_confirm(self) -> bool:
         """Return True if the user confirms clearing all save data."""

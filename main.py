@@ -35,6 +35,9 @@ def main() -> None:
         selection = display.prompt_story_select(len(paths))
         if selection is None:
             return
+        if selection == "toggle_typewriter":
+            display.toggle_typewriter()
+            continue
         if selection == "clear":
             if display.prompt_clear_confirm():
                 save_manager.clear_all()
