@@ -18,6 +18,7 @@ htmlcov/
 ProjectManagement.md
 ProjectChecklist.md
 GameConcept.md
+ROADMAP.md
 
 # Game saves (runtime, not committed)
 saves/*
