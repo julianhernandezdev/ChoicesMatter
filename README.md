@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The engine discovers all `.json` files in `/stories/`, presents a numbered picker, and runs whichever story you select. Progress autosaves after every choice. Saves are per-story and deleted automatically when you reach an ending.
+The engine discovers all `.json` files in `/stories/`, presents a numbered picker with node count, ending count, and estimated read time, and runs whichever story you select. Stories with an active save show a `● RESUME` badge. Progress autosaves after every choice. Saves are per-story and deleted automatically when you reach an ending.
 
 ## Writing a Story
 
@@ -98,9 +98,30 @@ Choices support `requires` and `sets` to gate content on boolean flags the playe
 
 Flags accumulate across the run and are persisted in the save file.
 
+### Insets
+
+Nodes can have `insets` — styled lines rendered **inside** the story panel, above or below the main text, separated by a dim rule. Use them for timestamps, log entries, documents, or any in-world text that belongs inside the scene rather than around it:
+
+```json
+"intro": {
+  "insets": [
+    { "text": "Platform 3  —  23:58", "position": "before", "style": "system" }
+  ],
+  "text": "You've missed the last train...",
+  "choices": [...]
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `text` | Yes | Line of text shown inside the panel |
+| `position` | No | `"before"` (default) or `"after"` the main text |
+| `style` | No | Named style key — see below; `""` renders as dim italic |
+| `requires` | No | Same flag dict as choices — hides inset if not matched |
+
 ### Conditional Overlays
 
-Nodes can have `overlays` — whispered lines of text that appear conditionally before or after the choice list, based on what the player knows:
+Nodes can have `overlays` — flavour lines that appear conditionally before or after the choice list, based on what the player knows:
 
 ```json
 "use_key": {
@@ -109,39 +130,55 @@ Nodes can have `overlays` — whispered lines of text that appear conditionally 
     {
       "text": "Harrow's words surface: 'The guard has a weakness for silver.'",
       "requires": { "logbook_read": true },
-      "position": "before"
+      "position": "before",
+      "style": "echo"
     }
   ],
   "choices": [...]
 }
 ```
 
-- `position: "before"` — appears above the choice list (prior knowledge framing the decision)
-- `position: "after"` — appears below the choice list (a dawning realization)
-- `requires` — same flag system as choices; omit to show unconditionally
-- Multiple overlays can stack; `before` and `after` accumulate independently
+| Field | Required | Notes |
+|---|---|---|
+| `text` | Yes | Whispered line of text |
+| `position` | No | `"before"` (above choices) or `"after"` (below choices, default) |
+| `style` | No | Named style key — see below; `""` uses the default overlay style |
+| `requires` | No | Same flag system as choices; omit to show unconditionally |
 
-On ending nodes, all overlays appear before the ending panel.
+Multiple overlays can stack; `before` and `after` accumulate independently. On ending nodes, all overlays appear before the ending panel.
 
-## Customizing Overlay Style
+## Named Styles
 
-Copy `settings.example.json` to `settings.json` (gitignored, per-user) and edit:
+Both overlays and insets accept a `style` field. The built-in named styles are:
+
+| Name | Color | Look | Prefix | Use for |
+|---|---|---|---|---|
+| `whisper` | cyan | dim italic | `✦ ` | Quiet asides, intimate atmosphere |
+| `echo` | blue | dim italic | `~ ` | Distant voices, remembered words, intrusive thoughts |
+| `warning` | yellow | bold | `⚠ ` | Danger signals, urgent realisations |
+| `memory` | magenta | dim italic | `◈ ` | Flashbacks, implanted memories, recollections |
+| `system` | white | dim | _(none)_ | Timestamps, logs, documents, clinical text |
+
+### Customizing Styles
+
+Copy `settings.example.json` to `settings.json` (gitignored, per-user). Override any built-in style or add your own:
 
 ```json
 {
+  "styles": {
+    "warning": { "color": "red" },
+    "classified": { "color": "green", "dim": true, "italic": false, "bold": false, "underline": false, "strike": false, "prefix": "[REDACTED] " }
+  },
   "overlay": {
     "color": "cyan",
     "dim": true,
     "italic": true,
-    "bold": false,
-    "underline": false,
-    "strike": false,
     "prefix": "✦ "
   }
 }
 ```
 
-Missing or malformed `settings.json` silently falls back to the defaults above.
+`overlay` sets the default style for overlays with no `style` key. Missing or malformed `settings.json` silently falls back to built-in defaults.
 
 ## Adding a Story
 
@@ -152,14 +189,14 @@ Drop any `.json` file into `/stories/`. No code changes needed. Malformed storie
 ```
 main.py              Entry point — story picker, wires components
 engine.py            Game loop, navigation, save triggers, ending detection
-story.py             Data models (Story, Node, Choice, Overlay), loader, validation
+story.py             Data models (Story, Node, Choice, Overlay, Inset), loader, validation
 save.py              Persistent save state — read/write/delete per story
 display.py           All rich rendering — nothing else imports rich
 config.py            Loads settings.json, merges with defaults
 
 /stories             Drop .json story files here — auto-discovered at startup
 /saves               Auto-generated — one .save.json per story
-settings.example.json  Committed overlay style template
+settings.example.json  Committed style template (overlay defaults + named styles)
 ```
 
 ## Running Tests
