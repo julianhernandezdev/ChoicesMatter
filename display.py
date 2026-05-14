@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import sys
+import time
+
 from rich.console import Console, Group
+from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 from rich.rule import Rule
@@ -8,6 +12,26 @@ from rich import box
 
 from config import load_settings
 from story import Choice, Inset, Overlay
+
+try:
+    import msvcrt as _msvcrt
+
+    def _key_pending() -> bool:
+        return bool(_msvcrt.kbhit())
+
+    def _consume_key() -> None:
+        key = _msvcrt.getch()
+        if key in (b"\x00", b"\xe0"):  # special key — consume the second byte too
+            _msvcrt.getch()
+
+except ImportError:
+    import select as _select
+
+    def _key_pending() -> bool:
+        return bool(_select.select([sys.stdin], [], [], 0)[0])
+
+    def _consume_key() -> None:
+        sys.stdin.read(1)
 
 _ENDING_COLORS = {
     "good": "bright_green",
@@ -92,24 +116,12 @@ class Display:
         after_insets: list[Inset] | None = None,
     ) -> None:
         self.console.print()
-        parts: list = []
-        for inset in (before_insets or []):
-            parts.append(self._inset_renderable(inset))
-            parts.append(Rule(style="dim white"))
-        parts.append(Text(node_text))
-        for inset in (after_insets or []):
-            parts.append(Rule(style="dim white"))
-            parts.append(self._inset_renderable(inset))
-
-        content = Group(*parts) if len(parts) > 1 else node_text
-        self.console.print(
-            Panel(
-                content,
-                title=f"[bold]{story_title}[/bold]",
-                border_style="white",
-                padding=(1, 2),
-            )
-        )
+        make = lambda t: self._node_panel(story_title, t, before_insets, after_insets)
+        delay_s = self._typewriter_delay()
+        if delay_s:
+            self._typewrite(make, node_text, delay_s)
+        else:
+            self.console.print(make(node_text))
 
     def show_choices(
         self,
@@ -137,15 +149,18 @@ class Display:
         self.console.print()
         for overlay in (overlays or []):
             self._render_overlay(overlay)
-        self.console.print(
-            Panel(
-                Text(node_text, justify="center"),
-                title=f"[bold {color}]— {label} ENDING —[/bold {color}]",
-                border_style=color,
-                padding=(1, 4),
-                expand=True,
-            )
+        make = lambda t: Panel(
+            Text(t, justify="center"),
+            title=f"[bold {color}]— {label} ENDING —[/bold {color}]",
+            border_style=color,
+            padding=(1, 4),
+            expand=True,
         )
+        delay_s = self._typewriter_delay()
+        if delay_s:
+            self._typewrite(make, node_text, delay_s)
+        else:
+            self.console.print(make(node_text))
         self.console.print()
 
     def show_save_indicator(self) -> None:
@@ -154,6 +169,44 @@ class Display:
     # ------------------------------------------------------------------
     # Internal rendering helpers
     # ------------------------------------------------------------------
+
+    def _typewriter_delay(self) -> float:
+        cfg = self._cfg.get("typewriter", {})
+        if not cfg.get("enabled"):
+            return 0.0
+        return max(0.0, cfg.get("delay_ms", 20) / 1000)
+
+    def _typewrite(self, make_panel, text: str, delay_s: float) -> None:
+        with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
+            displayed = ""
+            for char in text:
+                if _key_pending():
+                    _consume_key()
+                    live.update(make_panel(text))
+                    live.refresh()
+                    return
+                displayed += char
+                live.update(make_panel(displayed))
+                live.refresh()
+                time.sleep(delay_s)
+
+    def _node_panel(
+        self,
+        story_title: str,
+        text: str,
+        before_insets: list[Inset] | None,
+        after_insets: list[Inset] | None,
+    ) -> Panel:
+        parts: list = []
+        for inset in (before_insets or []):
+            parts.append(self._inset_renderable(inset))
+            parts.append(Rule(style="dim white"))
+        parts.append(Text(text))
+        for inset in (after_insets or []):
+            parts.append(Rule(style="dim white"))
+            parts.append(self._inset_renderable(inset))
+        content = Group(*parts) if len(parts) > 1 else Text(text)
+        return Panel(content, title=f"[bold]{story_title}[/bold]", border_style="white", padding=(1, 2))
 
     def _style_cfg(self, style_name: str) -> dict:
         """Return config dict for a named style, falling back to the default overlay config."""

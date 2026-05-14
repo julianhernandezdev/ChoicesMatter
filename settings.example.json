@@ -1,4 +1,8 @@
 {
+  "typewriter": {
+    "enabled": false,
+    "delay_ms": 20
+  },
   "overlay": {
     "color": "cyan",
     "dim": true,

@@ -6,6 +6,10 @@ from pathlib import Path
 _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefix")
 
 _DEFAULTS: dict = {
+    "typewriter": {
+        "enabled": False,
+        "delay_ms": 20,
+    },
     "overlay": {
         "color": "cyan",
         "dim": True,

@@ -95,3 +95,29 @@ def test_named_style_addition_in_settings(tmp_path: Path) -> None:
 def test_styles_independent_of_overlay_config(tmp_path: Path) -> None:
     cfg = load_settings(tmp_path / "nonexistent.json")
     assert cfg["styles"]["warning"]["color"] != cfg["overlay"]["color"]
+
+
+# ------------------------------------------------------------------
+# Typewriter config
+# ------------------------------------------------------------------
+
+def test_typewriter_defaults_present(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    assert cfg["typewriter"]["enabled"] is False
+    assert cfg["typewriter"]["delay_ms"] == 20
+
+
+def test_typewriter_override_in_settings(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"typewriter": {"enabled": True, "delay_ms": 10}}), encoding="utf-8")
+    cfg = load_settings(path)
+    assert cfg["typewriter"]["enabled"] is True
+    assert cfg["typewriter"]["delay_ms"] == 10
+
+
+def test_typewriter_partial_override_preserves_defaults(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"typewriter": {"enabled": True}}), encoding="utf-8")
+    cfg = load_settings(path)
+    assert cfg["typewriter"]["enabled"] is True
+    assert cfg["typewriter"]["delay_ms"] == 20  # default preserved
