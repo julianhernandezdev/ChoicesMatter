@@ -82,3 +82,51 @@ def test_discover_empty_dir(tmp_path: Path) -> None:
 
 def test_discover_missing_dir(tmp_path: Path) -> None:
     assert StoryLoader.discover(tmp_path / "nonexistent") == []
+
+
+def test_choice_defaults_have_empty_requires_and_sets(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    choice = story.nodes["start"].choices[0]
+    assert choice.requires == {}
+    assert choice.sets == {}
+
+
+def test_node_overlays_default_to_empty(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert story.nodes["start"].overlays == []
+
+
+def test_overlay_fields_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = [
+        {"text": "You sense something.", "requires": {"flag": True}, "position": "before"},
+        {"text": "A chill runs through you.", "position": "after"},
+    ]
+    path = tmp_path / "overlay_story.json"
+    path.write_text(__import__("json").dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    overlays = story.nodes["start"].overlays
+    assert len(overlays) == 2
+    assert overlays[0].text == "You sense something."
+    assert overlays[0].requires == {"flag": True}
+    assert overlays[0].position == "before"
+    assert overlays[1].position == "after"
+    assert overlays[1].requires == {}
+
+
+def test_overlay_position_defaults_to_after(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = [{"text": "Whisper."}]
+    path = tmp_path / "pos_default.json"
+    path.write_text(__import__("json").dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].overlays[0].position == "after"
+
+
+def test_choice_parses_requires_and_sets(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"flag_a": True}
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"flag_b": True}
+    path = tmp_path / "flagged.json"
+    path.write_text(__import__("json").dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    choice = story.nodes["start"].choices[0]
+    assert choice.requires == {"flag_a": True}
+    assert choice.sets == {"flag_b": True}

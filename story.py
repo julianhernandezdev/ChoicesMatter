@@ -13,6 +13,15 @@ class StoryValidationError(Exception):
 class Choice:
     label: str
     next: str
+    requires: dict[str, bool] = field(default_factory=dict)
+    sets: dict[str, bool] = field(default_factory=dict)
+
+
+@dataclass
+class Overlay:
+    text: str
+    requires: dict[str, bool] = field(default_factory=dict)
+    position: str = "after"  # "before" | "after"
 
 
 @dataclass
@@ -21,6 +30,7 @@ class Node:
     choices: list[Choice]
     is_ending: bool = False
     ending_type: str = "neutral"
+    overlays: list[Overlay] = field(default_factory=list)
 
 
 @dataclass
@@ -83,14 +93,28 @@ class StoryLoader:
                 )
 
             choices = [
-                Choice(label=c["label"], next=c["next"])
+                Choice(
+                    label=c["label"],
+                    next=c["next"],
+                    requires=c.get("requires", {}),
+                    sets=c.get("sets", {}),
+                )
                 for c in node_data["choices"]
+            ]
+            overlays = [
+                Overlay(
+                    text=o["text"],
+                    requires=o.get("requires", {}),
+                    position=o.get("position", "after"),
+                )
+                for o in node_data.get("overlays", [])
             ]
             nodes[node_id] = Node(
                 text=node_data["text"],
                 choices=choices,
                 is_ending=node_data.get("is_ending", False),
                 ending_type=node_data.get("ending_type", "neutral"),
+                overlays=overlays,
             )
 
         for node_id, node in nodes.items():

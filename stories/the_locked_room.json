@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "id": "the_locked_room",
+    "title": "The Locked Room",
+    "version": "1.2",
+    "author": "Choices Matter Dev",
+    "start_node": "intro"
+  },
+  "nodes": {
+    "intro": {
+      "text": "You wake up on a cold stone floor. The room is dim — a single bulb flickers overhead. There's a heavy door to your left and a cluttered desk to your right.",
+      "choices": [
+        { "label": "Try the door", "next": "try_door" },
+        { "label": "Search the desk", "next": "search_desk" }
+      ]
+    },
+
+    "try_door": {
+      "text": "The door is locked tight. You notice a small keyhole and a faint smell of rust. Scratches around the lock suggest someone else has been here before.\n\nOn the floor near the door you spot a crumpled note.",
+      "choices": [
+        { "label": "Read the note", "next": "read_note" },
+        { "label": "Look for another way out", "next": "search_desk" }
+      ]
+    },
+
+    "search_desk": {
+      "text": "The desk is covered in papers and old tools. Underneath a stack of manuals you find a brass key. There's also a battered logbook wedged between the drawers, and a half-written letter that ends mid-sentence: '...do not trust the—'",
+      "overlays": [
+        {
+          "text": "The tarnished silver watch sits in your pocket. Harrow knew someone would find it here. He left it for exactly this.",
+          "requires": { "logbook_read": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Take the key and try the door", "next": "use_key" },
+        { "label": "Read the rest of the letter carefully", "next": "read_letter" },
+        {
+          "label": "Flip through the old logbook",
+          "next": "read_logbook",
+          "sets": { "logbook_read": true }
+        }
+      ]
+    },
+
+    "read_note": {
+      "text": "The note reads: 'Key is under the desk. Don't make noise. They patrol at dawn.'\n\nDawn. How long have you been here?",
+      "choices": [
+        { "label": "Search the desk for the key", "next": "search_desk" }
+      ]
+    },
+
+    "read_logbook": {
+      "text": "The logbook belonged to someone called Harrow — a prisoner here three years ago. The last entry reads:\n\n'The night guard has a weakness for silver. I traded my watch and he looked the other way. The watch is still in the desk drawer if anyone finds this.'\n\nYou check the drawer. A tarnished silver watch is tucked under a cloth.",
+      "choices": [
+        { "label": "Take the watch and return to the desk", "next": "search_desk" }
+      ]
+    },
+
+    "read_letter": {
+      "text": "You piece together the rest of the letter from faint impressions on the page below. It warns of a guard who locks this room from the outside — and that the window at the end of the hall is always left unlatched.\n\nYou now have two options.",
+      "choices": [
+        { "label": "Use the key and take your chances at the door", "next": "use_key" },
+        { "label": "Forget the key — go for the window", "next": "window_escape" }
+      ]
+    },
+
+    "use_key": {
+      "text": "The key fits. The lock turns with a satisfying click.\n\nYou ease the door open — and walk straight into the guard. He grabs your arm before you can react, eyes hard.",
+      "overlays": [
+        {
+          "text": "Harrow's entry surfaces: 'The night guard has a weakness for silver. I traded my watch and he looked the other way.'",
+          "requires": { "logbook_read": true },
+          "position": "before"
+        }
+      ],
+      "choices": [
+        { "label": "Try to push past him", "next": "caught" },
+        {
+          "label": "You reach into your pocket and produce the silver watch. His grip loosens.",
+          "next": "bribed_escape",
+          "requires": { "logbook_read": true }
+        }
+      ]
+    },
+
+    "caught": {
+      "text": "'Going somewhere?'\n\nHis grip tightens. You don't get a second chance.",
+      "overlays": [
+        {
+          "text": "The watch is still in your pocket. You knew about it. You didn't use it.",
+          "requires": { "logbook_read": true },
+          "position": "after"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    },
+
+    "bribed_escape": {
+      "text": "The guard turns the watch over in his palm, weighing it. Then he steps aside without a word.\n\nYou walk out into the corridor. Then the courtyard. Then the street.\n\nHarrow's note paid off. You made it.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    },
+
+    "window_escape": {
+      "text": "You slip down the hall, keeping close to the wall. The window is exactly where the letter said — unlatched, open just enough.\n\nYou squeeze through and drop into the cool night air. Behind you, the building fades into darkness.\n\nYou made it.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    }
+  }
+}

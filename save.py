@@ -11,6 +11,7 @@ class SaveState:
     story_id: str
     current_node: str
     history: list[str] = field(default_factory=list)
+    state: dict[str, bool] = field(default_factory=dict)
     timestamp: str = ""
 
     def to_dict(self) -> dict:
@@ -18,6 +19,7 @@ class SaveState:
             "story_id": self.story_id,
             "current_node": self.current_node,
             "history": self.history,
+            "state": self.state,
             "timestamp": self.timestamp,
         }
 
@@ -27,6 +29,7 @@ class SaveState:
             story_id=data["story_id"],
             current_node=data["current_node"],
             history=data.get("history", []),
+            state=data.get("state", {}),
             timestamp=data.get("timestamp", ""),
         )
 

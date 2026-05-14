@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "id": "the_last_train",
+    "title": "The Last Train",
+    "version": "1.1",
+    "author": "Choices Matter",
+    "start_node": "intro"
+  },
+  "nodes": {
+    "intro": {
+      "text": "You've missed the last train. The platform is empty, the fluorescent lights humming in the silence. On the bench beside the ticket machine sits an abandoned bag — unzipped, like someone left in a hurry.",
+      "choices": [
+        { "label": "Check the bag", "next": "check_bag" },
+        { "label": "Find a station worker", "next": "find_worker" }
+      ]
+    },
+
+    "check_bag": {
+      "text": "Inside: a cracked phone, a folded map with a location circled in red ink, and a train ticket stub — tonight's date, Platform 7. You glance at the station board. This station has no Platform 7.",
+      "choices": [
+        {
+          "label": "Turn on the phone",
+          "next": "phone_on",
+          "sets": { "has_phone": true }
+        },
+        { "label": "Study the map", "next": "study_map" }
+      ]
+    },
+
+    "phone_on": {
+      "text": "The screen flickers on. One contact pinned to the top: MIRA. Below it, an unsent message — 'I'm sorry. I had no choice. Don't let them get the—'\n\nThe message cuts off.",
+      "choices": [
+        {
+          "label": "Call Mira",
+          "next": "call_mira",
+          "sets": { "called_mira": true }
+        },
+        { "label": "Pocket the phone and study the map", "next": "study_map" }
+      ]
+    },
+
+    "call_mira": {
+      "text": "She picks up on the first ring. Her voice is tight.\n\n'You found it. Listen to me carefully — do not go to Platform 7. Leave the station right now and drop the bag in the first bin you find. Don't look back.'\n\nShe hangs up before you can speak.",
+      "choices": [
+        { "label": "Do exactly what she said", "next": "safe_escape" },
+        { "label": "Go find Platform 7 anyway", "next": "platform_7" }
+      ]
+    },
+
+    "study_map": {
+      "text": "The map is a hand-drawn layout of this station — but it includes a section that isn't on any public plan. Past the maintenance corridor on Level B, there's a door marked with a small red 7.\n\nSomewhere below you, there is a Platform 7.",
+      "overlays": [
+        {
+          "text": "She said don't. She was specific. And here is exactly where 'don't' is drawn on this map.",
+          "requires": { "called_mira": true },
+          "position": "before"
+        }
+      ],
+      "choices": [
+        { "label": "Go down to Level B", "next": "platform_7" },
+        { "label": "Leave the station and forget this ever happened", "next": "abandoned" }
+      ]
+    },
+
+    "find_worker": {
+      "text": "You track down a cleaner mopping near the shuttered ticket office. You explain about the bag. He looks at it, looks at you, and picks up his radio.\n\n'Control, I've got an unattended item at Platform 3. Calling it in.'\n\nWithin minutes the station is being cleared. You end up giving a statement to two officers who take the bag and your details. It takes two hours. The bag is never mentioned in the news.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+
+    "platform_7": {
+      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\nYou hear footsteps on the other side.",
+      "overlays": [
+        {
+          "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
+          "requires": { "called_mira": true },
+          "position": "before"
+        },
+        {
+          "text": "The circled P7 on the map. You're exactly where it pointed.",
+          "requires": { "has_phone": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Knock and announce yourself", "next": "caught" },
+        {
+          "label": "You think of Mira's voice. You back away, slowly, silently.",
+          "next": "safe_escape",
+          "requires": { "called_mira": true }
+        }
+      ]
+    },
+
+    "caught": {
+      "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.\n\nThe light goes red again.",
+      "overlays": [
+        {
+          "text": "First ring. She knew you'd find it. She knew you'd come anyway.",
+          "requires": { "called_mira": true },
+          "position": "after"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    },
+
+    "abandoned": {
+      "text": "You drop the bag by the exit and walk out into the rain. You don't look back.\n\nYou never find out what was in it. Some nights you think that was the right call.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+
+    "safe_escape": {
+      "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    }
+  }
+}

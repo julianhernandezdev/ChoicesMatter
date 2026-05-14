@@ -1,0 +1,286 @@
+{
+  "meta": {
+    "id": "watcher_in_the_light",
+    "title": "The Watcher in the Light",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "arrival"
+  },
+  "nodes": {
+
+    "arrival": {
+      "text": "The coast guard's boat doesn't linger. You watch it shrink into the grey horizon until it disappears, then turn to face Blackrock Lighthouse.\n\nThe light is already cycling — too early for dusk, but no one told it that. Taped to the iron door: a handover sheet. Near the bottom, two lines circled in red biro by a different hand: \"Do not alter the light cycle under any circumstances.\" And below it: \"If you hear something from the water at night — do not answer it.\"\n\nEdmund Hale. Eight months stationed. Missing three weeks. Presumed deceased.",
+      "choices": [
+        { "label": "Enter the lighthouse", "next": "first_inspection" },
+        { "label": "Read the rest of the handover sheet carefully", "next": "read_handover" }
+      ]
+    },
+
+    "read_handover": {
+      "text": "The supply manifest is the last thing Edmund signed. Everything accounted for — food, fuel, spare bulbs. He wasn't running low on anything. He wasn't planning to leave.\n\nThe coast guard note says \"presumed deceased\" but someone has underlined \"presumed\" twice in pencil, hard enough to score the paper. No body was recovered. No distress call was ever logged.\n\nWhatever happened, it happened quietly.",
+      "choices": [
+        { "label": "Enter the lighthouse", "next": "first_inspection" }
+      ]
+    },
+
+    "first_inspection": {
+      "text": "The ground floor is immaculate. Kitchen wiped clean, equipment racked with military precision. Edmund's operations logbook open on the desk, pen set neatly beside it — as if he stepped out mid-entry and simply never came back.\n\nA staircase leads up to the living quarters. Above that, the lamp room. At the end of the corridor, a third door — unmarked, shut.",
+      "choices": [
+        { "label": "Go up to the living quarters", "next": "living_quarters" },
+        { "label": "Try the unmarked door", "next": "unmarked_door" }
+      ]
+    },
+
+    "living_quarters": {
+      "text": "Edmund's room. A cot made with military corners. A desk bare of everything except a leather journal and a small brass key placed conspicuously on top of it — like a gift left for someone expected.\n\nA photograph leans against the wall: a woman and a boy, maybe eight years old. Edmund's jaw in both of them. His family, presumably. They don't know what's on the handover sheet.",
+      "overlays": [
+        {
+          "text": "Edmund stopped mentioning his family in the journal entries after April. Stopped mentioning anything personal at all — like he was slowly reducing himself to the minimum required for the task.",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Open the journal", "next": "logbook_choice" },
+        { "label": "Leave it. Check the unmarked door first.", "next": "unmarked_door" }
+      ]
+    },
+
+    "logbook_choice": {
+      "text": "The journal is dense — eight months of entries. The early pages are weather reports and maintenance logs, precise and impersonal. But around page forty, the handwriting changes. Tighter. The margins start filling with diagrams: curved lines, converging patterns, wave interference maps drawn with obsessive care.\n\nThe last dated entry is three weeks ago. The page after it is torn out.",
+      "choices": [
+        {
+          "label": "Read the changed entries. All of them.",
+          "next": "read_logbook_node",
+          "sets": { "read_logbook": true }
+        },
+        { "label": "Close it. Some things shouldn't be known.", "next": "first_night" }
+      ]
+    },
+
+    "read_logbook_node": {
+      "text": "Edmund documented everything.\n\nIn February he noticed a pattern in the wave interference — a rhythm that didn't match tide or weather. He called it \"the frequency.\" By March he was logging it nightly, obsessively cross-referencing it with the light cycle. Then, on March 19th: \"It responds. When the light sweeps the pattern, the pattern moves toward it. I have been answering it without knowing.\"\n\nThe entries after that grow smaller. Like he was trying to take up less space.\n\nThe last full entry: \"I understand what it wants. I think I've always understood. The light keeps it far enough away that it only reaches in one direction. If the light ever goes dark —\"\n\nThe sentence ends there.",
+      "choices": [
+        { "label": "Set the journal down. Go up to the lamp room.", "next": "first_night" }
+      ]
+    },
+
+    "unmarked_door": {
+      "text": "A maintenance closet: spare bulbs, oil cans, a rusted wrench. Nothing unusual — until you crouch to check the lower shelf and see the floor.\n\nA dark stain, large. Someone scrubbed at it. Not hard enough.\n\nAnd scratched into the plaster at eye level, obsessively repeated in diminishing size until the last marks are barely a fingernail wide: a symbol. Three curved lines converging toward a point. Like a wave. Like a signal. Like something trying to describe itself.",
+      "overlays": [
+        {
+          "text": "Edmund drew this in every margin from March onward. He never named it, just called it \"the shape.\" He wrote: \"I don't think I invented it. I think it showed me.\"",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Go back and read the journal. You need to know what this is.", "next": "logbook_choice" },
+        { "label": "Leave it. Head up to the lamp room.", "next": "first_night" }
+      ]
+    },
+
+    "first_night": {
+      "text": "Night arrives like a held breath releasing. You run the lamp check — the light cycles automatically, but protocol requires a manual confirm every two hours.\n\nAt midnight, standing at the lamp room window, you see it for the first time.\n\nBelow, where the rocks meet the water: the waves are moving wrong. Not against the wind. Not with the tide. A slow, deliberate rhythm — almost like breathing. And every time the beam sweeps across that section of water, the movement pauses. Then resumes. Slightly closer than before.",
+      "overlays": [
+        {
+          "text": "Edmund's handwriting surfaces unbidden: \"The first night you'll think it's the sea. By the third night you'll know what it is. Don't let there be a third night.\"",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Watch it. Try to understand the pattern.", "next": "the_signal" },
+        { "label": "Log it as a rip current anomaly and go back to bed.", "next": "the_signal" }
+      ]
+    },
+
+    "the_signal": {
+      "text": "By the second night, there is no pretending.\n\nThe pattern is deliberate. It mirrors the light's rotation — two pulses, pause, three pulses, pause — then shifts into something longer, something that makes your back teeth ache in a way that isn't quite pain. You've been watching for two hours when you understand: you are not observing it. You are in correspondence with it.\n\nThen the fog rolls in. Through it: running lights. A fishing boat, moving toward the rocks.",
+      "overlays": [
+        {
+          "text": "\"By night two it will have found your rhythm,\" Edmund had written. \"Your breathing. Your blink rate. It is patient in ways that are not human.\"",
+          "requires": { "read_logbook": true },
+          "position": "before"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Activate the fog horn — get that boat away from here.",
+          "next": "warn_boat",
+          "sets": { "warned_boat": true }
+        },
+        { "label": "Guide the boat in. The harbour is safer than open water in this fog.", "next": "guide_boat" }
+      ]
+    },
+
+    "warn_boat": {
+      "text": "You hit the fog horn and grab the radio.\n\n\"Vessel approaching Blackrock, this is the lighthouse keeper — do not approach. Hazardous conditions. Alter course immediately, bearing two-seven-zero. Repeat, alter course.\"\n\nA long silence. Then a crackling voice: \"Copy that, Blackrock. Altering course. Thank you.\"\n\nYou watch the running lights swing away and dissolve into the fog. The relief lasts about thirty seconds. Because the pattern in the water doesn't follow the boat. It stays. It waits.\n\nIt was never interested in the boat.",
+      "choices": [
+        { "label": "Stay at the window until dawn.", "next": "edmond_room" }
+      ]
+    },
+
+    "guide_boat": {
+      "text": "You key the radio. \"Vessel approaching Blackrock, this is the lighthouse. Follow the light. Safe approach on bearing zero-nine-zero.\"\n\n\"Thank you, Blackrock. Following your light.\"\n\nYou watch the running lights turn and begin their approach.\n\nAt 2:47 AM the radio goes silent mid-sentence.\n\nAt dawn, you find wreckage on the southern rocks. Planking. A life ring stencilled with the name MARIE. No survivors. No bodies.",
+      "choices": [
+        { "label": "Report the wreckage to the coast guard.", "next": "after_wreckage" }
+      ]
+    },
+
+    "after_wreckage": {
+      "text": "The coast guard patrol takes three hours to arrive. You give your account: fog, a vessel, standard guidance on standard bearing. The officer writes it down without expression.\n\n\"Light guided it onto the rocks,\" he says, almost to himself. \"Same as the last one.\"\n\nHe doesn't elaborate. You don't ask.\n\nWhen the patrol boat leaves, you're alone again with the light and the water and the thing that moves in both.",
+      "overlays": [
+        {
+          "text": "Edmund's entry from April 3rd: \"I guided the Heron's Call in last night. I told myself the fog made it necessary. I know what I did. I know why I did it. The frequency asked and I gave it what it wanted.\"",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "Search the lighthouse. There are rooms you haven't opened.", "next": "edmond_room" }
+      ]
+    },
+
+    "edmond_room": {
+      "text": "On the third day you find the room behind the equipment shelves.\n\nA panel that doesn't sit flush. Behind it: a space barely wide enough to stand in. Edmund had been using it as a study. Charts pinned to the walls — the frequency mapped across months, growing more complex. A shortwave radio modified to transmit on frequencies outside any civilian band. A notebook separate from the journal, filled edge-to-edge with transcriptions.\n\nAt the top of the first page, in Edmund's hand: What it says.",
+      "overlays": [
+        {
+          "text": "This is where he went. Not the rocks. Not the water. Here, in this dark, narrow space — learning the language of something that should not have one.",
+          "requires": { "read_logbook": true },
+          "position": "before"
+        }
+      ],
+      "choices": [
+        { "label": "Read the transcriptions.", "next": "evidence_choice" }
+      ]
+    },
+
+    "evidence_choice": {
+      "text": "The transcriptions run sixty pages. You skim the first few, then stop skimming. Then sit down on the floor and read every word.\n\nIt isn't language exactly — more like the grammar underneath language, the part that existed before words. Edmund translated it anyway. The phrase at the centre of everything reads, in his approximation: I have always been here. I will always be here. You are already part of the pattern.\n\nHis last transcription entry: \"It's right. It was right from the beginning.\"\n\nYou're holding these pages. Decide.",
+      "choices": [
+        {
+          "label": "Burn it. The charts, the notebook, all of it. This should not exist.",
+          "next": "burn_notes",
+          "sets": { "destroyed_evidence": true }
+        },
+        { "label": "Keep it. If you're going to fight this, you need to understand it.", "next": "keep_notes" }
+      ]
+    },
+
+    "burn_notes": {
+      "text": "You use the kitchen stove. The charts take longest — thick paper, resistant ink. The notebook goes page by page. You watch Edmund's translations curl and blacken and become nothing.\n\nWhen it's done your hands are shaking. You feel lighter. You also feel blind — like you've destroyed the only map in a place with no landmarks.\n\nThe frequency is still out there. You just made yourself unable to read it.",
+      "choices": [
+        { "label": "Go up to the lamp room. Face it without the map.", "next": "voice_contact" }
+      ]
+    },
+
+    "keep_notes": {
+      "text": "You bring the notebook to your quarters and read it again. By morning you understand the pattern well enough to anticipate it — two pulses, pause, the ache in your back teeth, pause, the longer sequence Edmund had annotated simply: it is asking.\n\nAsking what, he never wrote down.\n\nBut you think you know.",
+      "choices": [
+        { "label": "Go up to the lamp room.", "next": "voice_contact" }
+      ]
+    },
+
+    "voice_contact": {
+      "text": "You're at the lamp room window when it speaks.\n\nNot sound. Pressure — behind the eyes, in the chest cavity, in the spaces between thoughts. It doesn't use words. It uses the shape of words: intention without form. And what it shapes is:\n\nStay.\n\nNot a command. Not a request. A description of what you are already doing. What you will do. What you were always going to do.",
+      "overlays": [
+        {
+          "text": "Edmund's last entry surfaces: \"I understand what it wants. I think I've always understood.\" You understand too, now. The question is whether understanding is the same as consent.",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Answer it. Speak out loud, into the dark: \"I hear you.\"",
+          "next": "answer_it",
+          "sets": { "answered_it": true }
+        },
+        { "label": "Turn away from the window. Do not give it the satisfaction of a response.", "next": "resist_voice" }
+      ]
+    },
+
+    "answer_it": {
+      "text": "You say: \"I hear you.\"\n\nThe pressure stops — replaced by something worse. Clarity. A sudden, cold understanding of the scale of it. Not a creature. Not a presence. A process. Something that has been running longer than the lighthouse, longer than the cliffs, longer than the distinction between land and sea.\n\nAnd it has found, in you, a useful point of contact.\n\nYou stand at the window for a long time. When you finally move, it's to pick up Edmund's pen.",
+      "choices": [
+        { "label": "Set the pen down. Go find Edmund.", "next": "lamp_room" }
+      ]
+    },
+
+    "resist_voice": {
+      "text": "You press your back to the wall beneath the window. Eyes shut. Not looking at the water. Not answering.\n\nThe pressure builds for twenty minutes. Then it recedes. Not gone. Not satisfied. Just patient.\n\nYou spend the rest of the night on the floor with every light on.\n\nIn the morning, your nose has bled sometime in the night. You didn't notice.",
+      "choices": [
+        { "label": "Search the lamp room. You haven't been all the way up yet.", "next": "lamp_room" }
+      ]
+    },
+
+    "lamp_room": {
+      "text": "You find him on the fourth day.\n\nEdmund Hale is in the lamp room, seated in the chair facing the seaward window. He is not decomposed — that's the first wrong thing. He looks like a man who sat down to watch the water and simply stopped. Hands in his lap. Eyes open. Oriented toward the light, toward the frequency, toward whatever moves below the surface of this particular stretch of sea.\n\nIn his expression: not peace. Not terror. Recognition.\n\nHe knew this was where he would end up. He chose to end up here.",
+      "overlays": [
+        {
+          "text": "The journal's last page — you realise now it wasn't torn out. It was completed somewhere else. He wrote the ending in a different place, and put himself here.",
+          "requires": { "read_logbook": true },
+          "position": "after"
+        },
+        {
+          "text": "He looks like you felt last night, when it spoke. Like someone who finally heard the answer to a question they'd been asking their whole life.",
+          "requires": { "answered_it": true },
+          "position": "after"
+        }
+      ],
+      "choices": [
+        { "label": "This ends here. Find the mechanism. Break the light.", "next": "the_offer" }
+      ]
+    },
+
+    "the_offer": {
+      "text": "The lamp mechanism: a column of brass and glass as tall as you are, the motor humming with perfect steadiness. A heavy wrench and three minutes would end it.\n\nBut the moment you reach for the tool shelf, the pressure returns. Not language. Images. Edmund's family from the photograph — the woman and the boy, sitting down to breakfast somewhere, not knowing. The coast guard officer who didn't elaborate. The name on the life ring: MARIE.\n\nIt shows you these things calmly. It is not threatening them. It is simply showing you how small you are. How little breaking this light will change.\n\nEdmund watches from his chair with his open, recognising eyes.",
+      "overlays": [
+        {
+          "text": "Edmund had written in the margin of the last readable entry: \"Don't let it reason with you. It doesn't reason. It reflects. It will show you your own doubts and let you mistake them for its arguments.\"",
+          "requires": { "read_logbook": true },
+          "position": "before"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Break it. Whatever comes after — the cycle ends here.",
+          "next": "ending_good",
+          "requires": { "warned_boat": true }
+        },
+        { "label": "You can't be certain. Leave — get out now, report everything, let someone else decide.", "next": "ending_neutral" },
+        { "label": "It's right. It was right from the beginning. Take Edmund's chair.", "next": "ending_bad" }
+      ]
+    },
+
+    "ending_good": {
+      "text": "The wrench is in your hand before you've decided.\n\nThree minutes, like you thought. The motor shrieks and goes silent. The lens cracks through its centre. That perfect, terrible rhythm — dies.\n\nThe pressure becomes pain becomes silence.\n\nThe coast guard arrives the next morning. You'd filed a maintenance emergency at 4 AM. They find you sitting on the rocks below the lighthouse. You've been there since the light went dark. You tell them the mechanism failed. You tell them you need to go home.\n\nThey let you go.\n\nThe water at Blackrock stays still. You check the shipping news for months afterward. Nothing runs aground on those rocks again.\n\nYou are not okay. But the light is dark. And whatever was answering it has nothing left to call home.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    },
+
+    "ending_neutral": {
+      "text": "You make it to the boat in twenty minutes. You file a mandatory psychological withdrawal — \"unfit for continued posting\" — and the coast guard doesn't push back hard.\n\nYou tell the debrief officer about Edmund's body. They recover it the following week. Cause of death: exposure. No one questions the seated position. No one asks about the open eyes.\n\nYou don't tell them about the frequency. You don't tell them about the notebook you left in the hidden room. You don't tell them that someone else will take the posting.\n\nThat the light is still cycling.\n\nThat whatever is in the water is still patient.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+
+    "ending_bad": {
+      "text": "You sit down in Edmund's chair.\n\nIt fits. The angle of the window, the height of the seat — shaped, over eight months, by someone who watched this stretch of water the way you are watching it now. Not controlling it. Not afraid of it. Just aware.\n\nThe pressure doesn't return. There's no need for it to. You are already part of the pattern.\n\nThe light keeps cycling. The water breathes its slow, deliberate rhythm below you. Days pass without meaning. Weeks, perhaps.\n\nSomeday they'll send a replacement. A handover sheet. A name on a manifest.\n\nYou'll leave a journal. The key on top.",
+      "overlays": [
+        {
+          "text": "Edmund had written in the transcription notebook — the one you burned, or read, or left behind: \"The worst part isn't that it took me. The worst part is that I let it, and I would let it again. And so will the next one.\"",
+          "requires": { "answered_it": true },
+          "position": "before"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    }
+
+  }
+}

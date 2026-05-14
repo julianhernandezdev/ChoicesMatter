@@ -102,3 +102,194 @@ def test_play_again_false_returns(saves_dir: Path, two_node_story: Story) -> Non
     engine = Engine(two_node_story, sm, display)
     engine.run()  # must return (not loop forever)
     display.prompt_play_again.assert_called_once()
+
+
+# ------------------------------------------------------------------
+# Flag system tests
+# ------------------------------------------------------------------
+
+@pytest.fixture
+def flag_story() -> Story:
+    """Story where the only path to the good ending requires a flag."""
+    return _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[
+                Choice(label="Set flag", next="middle", sets={"key_found": True}),
+                Choice(label="Skip flag", next="middle"),
+            ],
+        ),
+        "middle": Node(
+            text="You are here.",
+            choices=[
+                Choice(label="Normal end", next="bad_end"),
+                Choice(label="Flag end", next="good_end", requires={"key_found": True}),
+            ],
+        ),
+        "bad_end": Node(text="Bad.", choices=[], is_ending=True, ending_type="bad"),
+        "good_end": Node(text="Good.", choices=[], is_ending=True, ending_type="good"),
+    })
+
+
+def test_unmet_requires_hides_choice(saves_dir: Path, flag_story: Story) -> None:
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    display.prompt_play_again.return_value = False
+    # Choose "Skip flag" (index 2) at start, then "Normal end" (index 1) at middle
+    display.prompt_choice.side_effect = [2, 1]
+
+    sm = SaveManager(saves_dir)
+    engine = Engine(flag_story, sm, display)
+    engine.run()
+
+    # At "middle" node without the flag, only "Normal end" should be visible
+    middle_show_call = [
+        c for c in display.show_choices.call_args_list
+        if any(ch.label == "Normal end" for ch in c.args[0])
+    ]
+    assert len(middle_show_call) == 1
+    visible = middle_show_call[0].args[0]
+    assert all(c.label != "Flag end" for c in visible)
+
+
+def test_met_requires_shows_choice(saves_dir: Path, flag_story: Story) -> None:
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    display.prompt_play_again.return_value = False
+    # Choose "Set flag" (index 1) at start, then "Flag end" (index 2) at middle
+    display.prompt_choice.side_effect = [1, 2]
+
+    sm = SaveManager(saves_dir)
+    engine = Engine(flag_story, sm, display)
+    engine.run()
+
+    middle_show_call = [
+        c for c in display.show_choices.call_args_list
+        if any(ch.label == "Normal end" for ch in c.args[0])
+    ]
+    visible = middle_show_call[0].args[0]
+    assert any(c.label == "Flag end" for c in visible)
+
+
+def test_sets_applies_flag_after_advance(saves_dir: Path, flag_story: Story) -> None:
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    display.prompt_play_again.return_value = False
+    display.prompt_choice.side_effect = [1, 2]  # Set flag → Flag end
+
+    sm = SaveManager(saves_dir)
+    engine = Engine(flag_story, sm, display)
+    engine.run()
+
+    # After advancing past "start" with sets={"key_found": True}, the save should include it
+    # (save is deleted on ending, so check via engine's internal state through side effects)
+    # The fact that "Flag end" was reachable proves the flag was applied
+    display.show_ending.assert_called_once()
+    args = display.show_ending.call_args.args
+    assert args[0] == "Good."  # reached the good ending
+
+
+def test_state_saved_and_restored(saves_dir: Path, flag_story: Story) -> None:
+    sm = SaveManager(saves_dir)
+
+    # First run: set the flag, stop at middle (simulate by writing save manually)
+    sm.write(SaveState(
+        story_id="test_story",
+        current_node="middle",
+        history=["start"],
+        state={"key_found": True},
+    ))
+
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = True  # continue saved game
+    display.prompt_play_again.return_value = False
+    display.prompt_choice.return_value = 2  # choose "Flag end" (index 2 when flag is set)
+
+    engine = Engine(flag_story, sm, display)
+    engine.run()
+
+    # Flag end is only reachable if state was restored correctly
+    display.show_ending.assert_called_once()
+    assert display.show_ending.call_args.args[0] == "Good."
+
+
+def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Here.",
+            choices=[Choice(label="Go", next="end")],
+            overlays=[Overlay(text="Secret.", requires={"secret_flag": True}, position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call = display.show_choices.call_args_list[0]
+    after = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
+    assert not after
+
+
+def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Here.",
+            choices=[Choice(label="Set flag", next="mid", sets={"secret_flag": True})],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="End", next="end")],
+            overlays=[Overlay(text="Secret revealed.", requires={"secret_flag": True}, position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_choices.call_args_list[1]
+    after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
+    assert after == ["Secret revealed."]
+
+
+def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
+    from story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Scene.",
+            choices=[Choice(label="Go", next="end")],
+            overlays=[
+                Overlay(text="Before whisper.", position="before"),
+                Overlay(text="After whisper.", position="after"),
+            ],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    call = display.show_choices.call_args_list[0]
+    before = call.args[1] if len(call.args) > 1 else call.kwargs.get("before_overlays", [])
+    after  = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
+    assert before == ["Before whisper."]
+    assert after  == ["After whisper."]
+
+
+def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    # Play once setting flag, then play again without setting it
+    display.prompt_play_again.side_effect = [True, False]
+    # First run: Set flag → Flag end; Second run: Skip flag → Normal end
+    display.prompt_choice.side_effect = [1, 2, 2, 1]
+
+    sm = SaveManager(saves_dir)
+    engine = Engine(flag_story, sm, display)
+    engine.run()
+
+    ending_calls = display.show_ending.call_args_list
+    assert len(ending_calls) == 2
+    assert ending_calls[0].args[0] == "Good."   # first run reached good end
+    assert ending_calls[1].args[0] == "Bad."    # second run state was cleared
