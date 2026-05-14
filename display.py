@@ -41,6 +41,8 @@ _ENDING_COLORS = {
 
 _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
+_PUNCTUATION_PAUSE = {".": 0.15, "!": 0.15, "?": 0.15, "…": 0.20}
+
 
 class Display:
     def __init__(self) -> None:
@@ -198,7 +200,7 @@ class Display:
                 displayed += char
                 live.update(make_panel(displayed))
                 live.refresh()
-                time.sleep(delay_s)
+                time.sleep(delay_s + _PUNCTUATION_PAUSE.get(char, 0.0))
 
     def _node_panel(
         self,
