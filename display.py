@@ -55,14 +55,24 @@ class Display:
     def show_story_picker(self, entries: list[dict]) -> None:
         """Each entry: {"index": int, "label": str, "error": bool}"""
         self.console.print(Rule("[bold cyan]Select a Story[/bold cyan]"))
+        self.console.print()
+        self.console.print(
+            "  [dim]Choices Matter is a text adventure engine. Each story is a self-contained\n"
+            "  world built from a JSON file — your progress saves after every choice.\n"
+            "  Reach an ending to complete a run. Press [bold]Q[/bold] at any time to return here.[/dim]"
+        )
+        self.console.print()
+        self.console.print(Rule())
+        self.console.print()
         for entry in entries:
             num = entry["index"]
             label = entry["label"]
             if entry.get("error"):
-                self.console.print(f"  [dim]{num}.[/dim] [red]{label}  -ERROR[/red]")
+                self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             else:
-                self.console.print(f"  [bold cyan]{num}.[/bold cyan] {label}")
-        self.console.print(f"  [dim]Q.[/dim] [dim]Quit[/dim]")
+                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}")
+        self.console.print()
+        self.console.print(f"  [dim]Q.[/dim]  [dim]Quit[/dim]")
         self.console.print()
 
     def show_picker_error(self, name: str, message: str) -> None:
@@ -141,7 +151,7 @@ class Display:
     def prompt_story_select(self, count: int) -> int | None:
         """Return 1-based index, or None if the user quits."""
         while True:
-            raw = self.console.input("  [bold]Your choice:[/bold] ").strip().lower()
+            raw = self.console.input("  [bold]Enter a number, or Q to quit:[/bold] ").strip().lower()
             if raw == "q":
                 return None
             if raw.isdigit():
@@ -163,15 +173,17 @@ class Display:
                 return False
             self.console.print("  [red]Press C to continue or N for a new game.[/red]")
 
-    def prompt_choice(self, choices: list[Choice]) -> int:
-        """Return 1-based index of chosen choice."""
+    def prompt_choice(self, choices: list[Choice]) -> int | None:
+        """Return 1-based index, or None if the player quits to menu."""
         while True:
-            raw = self.console.input("  [bold]Your choice:[/bold] ").strip()
+            raw = self.console.input("  [bold]Your choice (or Q to return to menu):[/bold] ").strip().lower()
+            if raw == "q":
+                return None
             if raw.isdigit():
                 value = int(raw)
                 if 1 <= value <= len(choices):
                     return value
-            self.console.print(f"  [red]Enter a number between 1 and {len(choices)}.[/red]")
+            self.console.print(f"  [red]Enter a number between 1 and {len(choices)}, or Q to return to the story menu.[/red]")
 
     def prompt_play_again(self) -> bool:
         """Return True to play again, False to return to picker."""

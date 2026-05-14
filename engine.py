@@ -40,6 +40,8 @@ class Engine:
             self.display.show_node(self.story.title, node.text)
             self.display.show_choices(visible, before, after)
             idx = self.display.prompt_choice(visible)
+            if idx is None:
+                return
             choice = visible[idx - 1]
             self._advance(choice)
 
