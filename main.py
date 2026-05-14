@@ -4,6 +4,7 @@ from pathlib import Path
 
 from display import Display
 from engine import Engine
+from gallery import GalleryManager
 from save import SaveManager
 from story import StoryLoader, StoryValidationError
 
@@ -19,6 +20,7 @@ def main() -> None:
     display.show_title_screen()
 
     save_manager = SaveManager(SAVES_DIR)
+    gallery_manager = GalleryManager(SAVES_DIR)
     errors: dict[Path, str] = {}
 
     while True:
@@ -28,11 +30,17 @@ def main() -> None:
             display.show_no_stories()
             return
 
-        display.show_story_picker(_build_entries(paths, errors, save_manager))
+        display.show_story_picker(_build_entries(paths, errors, save_manager, gallery_manager))
 
         selection = display.prompt_story_select(len(paths))
         if selection is None:
             return
+        if selection == "clear":
+            if display.prompt_clear_confirm():
+                save_manager.clear_all()
+                gallery_manager.clear_all()
+                display.show_clear_complete()
+            continue
 
         chosen_path = paths[selection - 1]
 
@@ -47,13 +55,14 @@ def main() -> None:
             display.show_picker_error(chosen_path.name, str(e))
             continue
 
-        Engine(story, save_manager, display).run()
+        Engine(story, save_manager, display, gallery_manager).run()
 
 
 def _build_entries(
     paths: list[Path],
     errors: dict[Path, str],
     save_manager: SaveManager,
+    gallery_manager: GalleryManager,
 ) -> list[dict]:
     entries = []
     for i, path in enumerate(paths, start=1):
@@ -65,9 +74,11 @@ def _build_entries(
         title, story_id, node_count, ending_count, est_time = info
 
         has_save = False
+        endings_found = 0
         if story_id:
             try:
                 has_save = save_manager.has_save(story_id)
+                endings_found = gallery_manager.get_count(story_id)
             except ValueError:
                 pass
 
@@ -78,6 +89,7 @@ def _build_entries(
             "has_save": has_save,
             "node_count": node_count,
             "ending_count": ending_count,
+            "endings_found": endings_found,
             "est_time": est_time,
         })
     return entries

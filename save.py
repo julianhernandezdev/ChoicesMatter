@@ -68,6 +68,10 @@ class SaveManager:
         if path.exists():
             path.unlink()
 
+    def clear_all(self) -> None:
+        for p in self.saves_dir.glob("*.save.json"):
+            p.unlink()
+
     def _validate_story_id(self, story_id: str) -> None:
         if not isinstance(story_id, str) or not _SAFE_STORY_ID.fullmatch(story_id):
             raise ValueError(

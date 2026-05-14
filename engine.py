@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 from display import Display
+from gallery import GalleryManager
 from save import SaveManager, SaveState
 from story import Choice, Story
 
 
 class Engine:
-    def __init__(self, story: Story, save_manager: SaveManager, display: Display) -> None:
+    def __init__(
+        self,
+        story: Story,
+        save_manager: SaveManager,
+        display: Display,
+        gallery_manager: GalleryManager | None = None,
+    ) -> None:
         self.story = story
         self.save_manager = save_manager
         self.display = display
+        self.gallery_manager = gallery_manager
         self._current_node: str = story.start_node
         self._history: list[str] = []
         self._state: dict[str, bool] = {}
@@ -35,6 +43,8 @@ class Engine:
 
             if node.is_ending or not visible:
                 self.display.show_ending(node.text, node.ending_type, overlays=before + after)
+                if self.gallery_manager:
+                    self.gallery_manager.record_ending(self.story.id, self._current_node)
                 self.save_manager.delete(self.story.id)
                 if self.display.prompt_play_again():
                     self._reset()

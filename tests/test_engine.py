@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from engine import Engine
+from gallery import GalleryManager
 from save import SaveManager, SaveState
 from story import Choice, Node, Story
 
@@ -339,6 +340,49 @@ def test_before_and_after_insets_split_correctly(saves_dir: Path) -> None:
     after  = call.args[3] if len(call.args) > 3 else call.kwargs.get("after_insets", [])
     assert len(before) == 1 and before[0].text == "Header."
     assert len(after)  == 1 and after[0].text  == "Footer."
+
+
+# ------------------------------------------------------------------
+# Gallery integration tests
+# ------------------------------------------------------------------
+
+def test_gallery_records_ending_node(saves_dir: Path, two_node_story: Story) -> None:
+    display = _make_display(play_again=False)
+    sm = SaveManager(saves_dir)
+    gm = GalleryManager(saves_dir)
+    Engine(two_node_story, sm, display, gm).run()
+
+    assert gm.get_count("test_story") == 1
+    assert "ending" in gm.get_found("test_story")
+
+
+def test_gallery_accumulates_across_playthroughs(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[
+            Choice(label="Good path", next="good_end"),
+            Choice(label="Bad path", next="bad_end"),
+        ]),
+        "good_end": Node(text="Good.", choices=[], is_ending=True, ending_type="good"),
+        "bad_end": Node(text="Bad.", choices=[], is_ending=True, ending_type="bad"),
+    })
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    display.prompt_play_again.side_effect = [True, False]
+    # First run: good path (choice 1), second run: bad path (choice 2)
+    display.prompt_choice.side_effect = [1, 2]
+
+    gm = GalleryManager(saves_dir)
+    Engine(story, SaveManager(saves_dir), display, gm).run()
+
+    assert gm.get_count("test_story") == 2
+    assert gm.get_found("test_story") == {"good_end", "bad_end"}
+
+
+def test_gallery_not_required(saves_dir: Path, two_node_story: Story) -> None:
+    display = _make_display(play_again=False)
+    sm = SaveManager(saves_dir)
+    # No gallery_manager passed — should run without error
+    Engine(two_node_story, sm, display).run()
 
 
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:

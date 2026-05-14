@@ -67,9 +67,10 @@ class Display:
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{resume}")
                 node_count = entry.get("node_count", 0)
                 ending_count = entry.get("ending_count", 0)
+                endings_found = entry.get("endings_found", 0)
                 est_time = entry.get("est_time", "")
                 if node_count or est_time:
-                    endings_str = "?" if ending_count == 1 else str(ending_count)
+                    endings_str = f"{endings_found}/{ending_count}"
                     stats = f"{node_count} nodes · {endings_str} endings · {est_time}"
                     self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
@@ -186,17 +187,35 @@ class Display:
     # Input prompts
     # ------------------------------------------------------------------
 
-    def prompt_story_select(self, count: int) -> int | None:
-        """Return 1-based index, or None if the user quits."""
+    def prompt_story_select(self, count: int) -> int | None | str:
+        """Return 1-based index, None to quit, or 'clear' to clear save data."""
         while True:
-            raw = self.console.input("  [bold]Enter a number, or Q to quit:[/bold] ").strip().lower()
+            raw = self.console.input(
+                "  [bold]Enter a number, Q to quit, or C to clear save data:[/bold] "
+            ).strip().lower()
             if raw == "q":
                 return None
+            if raw == "c":
+                return "clear"
             if raw.isdigit():
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
-            self.console.print("  [red]Please enter a number from the list, or Q to quit.[/red]")
+            self.console.print("  [red]Please enter a number from the list, Q to quit, or C to clear save data.[/red]")
+
+    def prompt_clear_confirm(self) -> bool:
+        """Return True if the user confirms clearing all save data."""
+        self.console.print(
+            "\n  [yellow]This will delete all active saves and ending progress for every story.[/yellow]"
+        )
+        while True:
+            raw = self.console.input(
+                "  [bold]Confirm? ([red]Y[/red] to clear, any other key to cancel):[/bold] "
+            ).strip().lower()
+            return raw in ("y", "yes")
+
+    def show_clear_complete(self) -> None:
+        self.console.print("  [dim green]✓ All save data cleared.[/dim green]\n")
 
     def prompt_continue_or_new(self) -> bool:
         """Return True to continue saved game, False for new game."""
