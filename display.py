@@ -41,7 +41,6 @@ _ENDING_COLORS = {
 
 _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
-_PUNCTUATION_PAUSE = {".": 0.15, "!": 0.15, "?": 0.15, "…": 0.20, "—": 0.10}
 
 
 class Display:
@@ -189,6 +188,8 @@ class Display:
         return max(0.0, cfg.get("delay_ms", 20) / 1000)
 
     def _typewrite(self, make_panel, text: str, delay_s: float) -> None:
+        raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
+        pauses = {k: v / 1000 for k, v in raw_pauses.items()}
         with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
             displayed = ""
             for char in text:
@@ -200,7 +201,7 @@ class Display:
                 displayed += char
                 live.update(make_panel(displayed))
                 live.refresh()
-                time.sleep(delay_s + _PUNCTUATION_PAUSE.get(char, 0.0))
+                time.sleep(delay_s + pauses.get(char, 0.0))
 
     def _node_panel(
         self,

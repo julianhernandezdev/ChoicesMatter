@@ -9,6 +9,13 @@ _DEFAULTS: dict = {
     "typewriter": {
         "enabled": False,
         "delay_ms": 20,
+        "punctuation_pauses": {
+            ".": 150,
+            "!": 150,
+            "?": 150,
+            "…": 200,
+            "—": 100,
+        },
     },
     "overlay": {
         "color": "cyan",

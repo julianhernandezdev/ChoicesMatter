@@ -105,6 +105,10 @@ def test_typewriter_defaults_present(tmp_path: Path) -> None:
     cfg = load_settings(tmp_path / "nonexistent.json")
     assert cfg["typewriter"]["enabled"] is False
     assert cfg["typewriter"]["delay_ms"] == 20
+    pauses = cfg["typewriter"]["punctuation_pauses"]
+    assert pauses["."] == 150
+    assert pauses["—"] == 100
+    assert pauses["…"] == 200
 
 
 def test_typewriter_override_in_settings(tmp_path: Path) -> None:
