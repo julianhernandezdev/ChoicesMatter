@@ -67,7 +67,8 @@ class Display:
                 ending_count = entry.get("ending_count", 0)
                 est_time = entry.get("est_time", "")
                 if node_count or est_time:
-                    stats = f"{node_count} nodes · {ending_count} endings · {est_time}"
+                    endings_str = "?" if ending_count == 1 else str(ending_count)
+                    stats = f"{node_count} nodes · {endings_str} endings · {est_time}"
                     self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
 
