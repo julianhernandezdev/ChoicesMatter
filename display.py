@@ -41,7 +41,7 @@ _ENDING_COLORS = {
 
 _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
-_PUNCTUATION_PAUSE = {".": 0.15, "!": 0.15, "?": 0.15, "…": 0.20}
+_PUNCTUATION_PAUSE = {".": 0.15, "!": 0.15, "?": 0.15, "…": 0.20, "—": 0.10}
 
 
 class Display:
