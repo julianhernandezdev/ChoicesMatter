@@ -8,13 +8,13 @@ _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefi
 _DEFAULTS: dict = {
     "typewriter": {
         "enabled": False,
-        "delay_ms": 20,
+        "delay_ms": 35,
         "punctuation_pauses": {
-            ".": 150,
-            "!": 150,
-            "?": 150,
-            "…": 200,
-            "—": 100,
+            ".": 550,
+            "!": 250,
+            "?": 350,
+            "…": 700,
+            "—": 600,
         },
     },
     "overlay": {

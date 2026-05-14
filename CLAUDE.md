@@ -18,14 +18,15 @@ python main.py
 |---|---|
 | `main.py` | Entry point — story picker, wires together all components |
 | `engine.py` | Game loop, navigation, flag state, save triggers, ending detection |
-| `story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`), JSON loader, validation |
+| `story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
 | `save.py` | Persistent save state — read/write/delete per story |
+| `gallery.py` | Ending gallery — tracks found endings per story across runs |
 | `display.py` | All `rich` rendering — nothing else imports `rich` |
 | `config.py` | Loads `settings.json`, deep-merges with hardcoded defaults |
 
 ```
 /stories             Drop .json story files here — auto-discovered at startup
-/saves               Auto-generated at runtime — one .save.json per story
+/saves               Auto-generated at runtime — one .save.json + one .gallery.json per story
 settings.json        Gitignored, per-user visual style overrides
 settings.example.json  Committed template
 ```
@@ -36,12 +37,13 @@ settings.example.json  Committed template
 
 ```
 main.py
-  └── StoryLoader (story.py)      loads + validates JSON
-  └── Display (display.py)        all terminal rendering
+  └── StoryLoader (story.py)             loads + validates JSON
+  └── Display (display.py)               all terminal rendering
   └── Engine (engine.py)
-        └── Story (story.py)      data model, node resolver
-        └── SaveManager (save.py) read/write save state
-        └── Display (display.py)  render calls only
+        └── Story (story.py)             data model, node resolver
+        └── SaveManager (save.py)        read/write save state
+        └── GalleryManager (gallery.py)  record + persist found endings
+        └── Display (display.py)         render calls only
 ```
 
 `config.py` is imported only by `display.py`.
@@ -69,7 +71,8 @@ Stories have two top-level keys: `meta` and `nodes`.
 |---|---|---|
 | `text` | Yes | Scene description shown to the player |
 | `choices` | Yes | Array of choice objects (see below) |
-| `overlays` | No | Array of overlay objects (see below) |
+| `insets` | No | Array of inset objects — styled text inside the story panel |
+| `overlays` | No | Array of overlay objects — flavour text around the choice list |
 | `is_ending` | No | Marks terminal node — triggers ending screen |
 | `ending_type` | No | `good`, `bad`, or `neutral` — controls ending panel color |
 
@@ -84,12 +87,24 @@ An empty `choices` array is treated as an ending even without `is_ending: true`.
 | `requires` | No | `{ "flag": true/false }` — hides choice if not matched |
 | `sets` | No | `{ "flag": true/false }` — applies to player state on advance |
 
+**Inset object:**
+
+| Field | Required | Notes |
+|---|---|---|
+| `text` | Yes | Line rendered inside the story panel |
+| `position` | No | `"before"` (default) or `"after"` the main text |
+| `style` | No | Named style key (`system`, `memory`, etc.); `""` renders as dim italic |
+| `requires` | No | Same flag dict as choices — hides inset if not matched |
+
+Insets are separated from the main text by a dim rule line inside the panel.
+
 **Overlay object:**
 
 | Field | Required | Notes |
 |---|---|---|
 | `text` | Yes | Whispered line of text |
 | `position` | No | `"before"` or `"after"` (default: `"after"`) |
+| `style` | No | Named style key; `""` uses the default overlay config |
 | `requires` | No | Same flag dict as choices — hides overlay if not matched |
 
 Overlays render around the choice list: `before` above the choices, `after` below. On ending nodes, all overlays appear before the ending panel.
@@ -121,10 +136,17 @@ Fail fast at load with a clear error — never mid-game. In `main.py`, validatio
 
 ## Save System
 
-- **Location:** `/saves/<story_id>.save.json`
+**Active save** (`/saves/<story_id>.save.json`):
 - **Written:** on every node advance (autosave)
 - **Deleted:** when an ending is reached, on New Game, or on play-again reset
 - **Structure:** `story_id`, `current_node`, `history` (breadcrumb), `state` (flag dict), `timestamp`
+
+**Ending gallery** (`/saves/<story_id>.gallery.json`):
+- **Written:** each time an ending node is reached — accumulates found ending node IDs
+- **Survives** active save deletion — persists across playthroughs
+- **Cleared:** only via "C → clear all save data" at the story picker, or `GalleryManager.clear_all()`
+- **Structure:** `story_id`, `endings_found` (sorted list of node IDs)
+- **Displayed:** story picker shows `X/Y endings` (or `X/?` for single-ending stories)
 
 ## Display Layer
 
@@ -133,21 +155,50 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | Method | Signature |
 |---|---|
 | `show_title_screen()` | — |
-| `show_node(story_title, node_text)` | Story panel only — no overlay params |
-| `show_choices(choices, before_overlays, after_overlays)` | Overlays wrap the choice list |
+| `show_node(story_title, node_text, before_insets, after_insets)` | Story panel with optional insets |
+| `show_choices(choices, before_overlays, after_overlays)` | Overlays wrap the choice list; staggers when typewriter is on |
 | `show_ending(node_text, ending_type, overlays)` | Overlays appear before the ending panel |
 | `show_save_indicator()` | — |
 | `show_story_picker(entries)` | — |
 | `show_no_stories()` | — |
 | `show_picker_error(name, message)` | — |
-| `prompt_story_select(count)` | Returns 1-based int or None (quit) |
+| `show_clear_complete()` | — |
+| `toggle_typewriter()` | Flips `typewriter.enabled` in-memory; prints new state |
+| `prompt_story_select(count)` | Returns 1-based int, `None` (quit), `"clear"`, or `"toggle_typewriter"` |
 | `prompt_continue_or_new()` | Returns True (continue) / False (new) |
-| `prompt_choice(choices)` | Returns 1-based int |
+| `prompt_clear_confirm()` | Returns True/False |
+| `prompt_choice(choices)` | Returns 1-based int or None (Q to menu) |
 | `prompt_play_again()` | Returns True/False |
 
 Ending color map: `good` → bright green, `bad` → bright red, `neutral` → bright yellow.
 
 Invalid input is caught and re-prompted in `display.py` — `Engine` never sees bad input.
+
+## Typewriter Effect
+
+When `typewriter.enabled` is true, `show_node` and `show_ending` stream the main prose character by character via `rich.live.Live`. Insets appear instantly. Any keypress skips to the full text.
+
+After prose finishes, `show_choices` waits 250ms then reveals each line (overlays and choices) at 60ms intervals.
+
+Per-character extra pauses are configurable in `settings.json`:
+
+```json
+{
+  "typewriter": {
+    "enabled": false,
+    "delay_ms": 20,
+    "punctuation_pauses": {
+      ".": 150,
+      "!": 150,
+      "?": 150,
+      "…": 200,
+      "—": 100
+    }
+  }
+}
+```
+
+`T` at the story picker toggles the effect for the current session. `settings.json` controls the permanent default.
 
 ## Key Design Constraints
 

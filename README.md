@@ -24,7 +24,13 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The engine discovers all `.json` files in `/stories/`, presents a numbered picker with node count, ending count, and estimated read time, and runs whichever story you select. Stories with an active save show a `● RESUME` badge. Progress autosaves after every choice. Saves are per-story and deleted automatically when you reach an ending.
+The engine discovers all `.json` files in `/stories/`, presents a numbered picker with node count, endings found, and estimated read time, and runs whichever story you select. Stories with an active save show a `● RESUME` badge. Progress autosaves after every choice. Saves are per-story and deleted automatically when you reach an ending.
+
+At the picker prompt:
+- **Number** — select a story
+- **Q** — quit
+- **C** — clear all save data and ending progress (with confirmation)
+- **T** — toggle typewriter mode on/off for the session
 
 ## Writing a Story
 
@@ -180,6 +186,32 @@ Copy `settings.example.json` to `settings.json` (gitignored, per-user). Override
 
 `overlay` sets the default style for overlays with no `style` key. Missing or malformed `settings.json` silently falls back to built-in defaults.
 
+## Typewriter Mode
+
+Enable character-by-character text streaming in `settings.json`:
+
+```json
+{
+  "typewriter": {
+    "enabled": true,
+    "delay_ms": 35,
+    "punctuation_pauses": {
+      ".": 550,
+      "!": 250,
+      "?": 350,
+      "…": 700,
+      "—": 600
+    }
+  }
+}
+```
+
+- `delay_ms` — base delay per character in milliseconds
+- `punctuation_pauses` — extra pause (ms) after specific characters; set any to `0` to remove it
+- Press any key mid-animation to skip to the full text
+- After prose finishes, choices stagger in at 60ms each after a short breath
+- Toggle on/off at the story picker with **T** without editing `settings.json`
+
 ## Adding a Story
 
 Drop any `.json` file into `/stories/`. No code changes needed. Malformed stories show as `-ERROR` in the picker and can be selected to see the validation message.
@@ -191,12 +223,13 @@ main.py              Entry point — story picker, wires components
 engine.py            Game loop, navigation, save triggers, ending detection
 story.py             Data models (Story, Node, Choice, Overlay, Inset), loader, validation
 save.py              Persistent save state — read/write/delete per story
+gallery.py           Ending gallery — tracks found endings across runs
 display.py           All rich rendering — nothing else imports rich
 config.py            Loads settings.json, merges with defaults
 
 /stories             Drop .json story files here — auto-discovered at startup
-/saves               Auto-generated — one .save.json per story
-settings.example.json  Committed style template (overlay defaults + named styles)
+/saves               Auto-generated — one .save.json + one .gallery.json per story
+settings.example.json  Committed template (typewriter, overlay, named styles)
 ```
 
 ## Running Tests
