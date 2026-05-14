@@ -11,6 +11,9 @@
 
     "arrival": {
       "text": "The coast guard's boat doesn't linger. You watch it shrink into the grey horizon until it disappears, then turn to face Blackrock Lighthouse.\n\nThe light is already cycling — too early for dusk, but no one told it that. Taped to the iron door: a handover sheet. Near the bottom, two lines circled in red biro by a different hand: \"Do not alter the light cycle under any circumstances.\" And below it: \"If you hear something from the water at night — do not answer it.\"\n\nEdmund Hale. Eight months stationed. Missing three weeks. Presumed deceased.",
+      "insets": [
+        { "text": "Blackrock Lighthouse. Day one.", "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Enter the lighthouse", "next": "first_inspection" },
         { "label": "Read the rest of the handover sheet carefully", "next": "read_handover" }
@@ -38,7 +41,8 @@
         {
           "text": "Edmund stopped mentioning his family in the journal entries after April. Stopped mentioning anything personal at all — like he was slowly reducing himself to the minimum required for the task.",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "memory"
         }
       ],
       "choices": [
@@ -72,7 +76,8 @@
         {
           "text": "Edmund drew this in every margin from March onward. He never named it, just called it \"the shape.\" He wrote: \"I don't think I invented it. I think it showed me.\"",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "echo"
         }
       ],
       "choices": [
@@ -83,11 +88,15 @@
 
     "first_night": {
       "text": "Night arrives like a held breath releasing. You run the lamp check — the light cycles automatically, but protocol requires a manual confirm every two hours.\n\nAt midnight, standing at the lamp room window, you see it for the first time.\n\nBelow, where the rocks meet the water: the waves are moving wrong. Not against the wind. Not with the tide. A slow, deliberate rhythm — almost like breathing. And every time the beam sweeps across that section of water, the movement pauses. Then resumes. Slightly closer than before.",
+      "insets": [
+        { "text": "00:00. Lamp check nominal. Manual confirm logged.", "position": "before", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "Edmund's handwriting surfaces unbidden: \"The first night you'll think it's the sea. By the third night you'll know what it is. Don't let there be a third night.\"",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "echo"
         }
       ],
       "choices": [
@@ -98,11 +107,15 @@
 
     "the_signal": {
       "text": "By the second night, there is no pretending.\n\nThe pattern is deliberate. It mirrors the light's rotation — two pulses, pause, three pulses, pause — then shifts into something longer, something that makes your back teeth ache in a way that isn't quite pain. You've been watching for two hours when you understand: you are not observing it. You are in correspondence with it.\n\nThen the fog rolls in. Through it: running lights. A fishing boat, moving toward the rocks.",
+      "insets": [
+        { "text": "Night two. Visibility: near zero. Fog bank: stationary.", "position": "before", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "\"By night two it will have found your rhythm,\" Edmund had written. \"Your breathing. Your blink rate. It is patient in ways that are not human.\"",
           "requires": { "read_logbook": true },
-          "position": "before"
+          "position": "before",
+          "style": "echo"
         }
       ],
       "choices": [
@@ -135,7 +148,8 @@
         {
           "text": "Edmund's entry from April 3rd: \"I guided the Heron's Call in last night. I told myself the fog made it necessary. I know what I did. I know why I did it. The frequency asked and I gave it what it wanted.\"",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "echo"
         }
       ],
       "choices": [
@@ -145,11 +159,15 @@
 
     "edmond_room": {
       "text": "On the third day you find the room behind the equipment shelves.\n\nA panel that doesn't sit flush. Behind it: a space barely wide enough to stand in. Edmund had been using it as a study. Charts pinned to the walls — the frequency mapped across months, growing more complex. A shortwave radio modified to transmit on frequencies outside any civilian band. A notebook separate from the journal, filled edge-to-edge with transcriptions.\n\nAt the top of the first page, in Edmund's hand: What it says.",
+      "insets": [
+        { "text": "Day three. Undisclosed location, behind equipment shelf B-7.", "position": "before", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "This is where he went. Not the rocks. Not the water. Here, in this dark, narrow space — learning the language of something that should not have one.",
           "requires": { "read_logbook": true },
-          "position": "before"
+          "position": "before",
+          "style": "memory"
         }
       ],
       "choices": [
@@ -189,7 +207,8 @@
         {
           "text": "Edmund's last entry surfaces: \"I understand what it wants. I think I've always understood.\" You understand too, now. The question is whether understanding is the same as consent.",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "echo"
         }
       ],
       "choices": [
@@ -218,16 +237,21 @@
 
     "lamp_room": {
       "text": "You find him on the fourth day.\n\nEdmund Hale is in the lamp room, seated in the chair facing the seaward window. He is not decomposed — that's the first wrong thing. He looks like a man who sat down to watch the water and simply stopped. Hands in his lap. Eyes open. Oriented toward the light, toward the frequency, toward whatever moves below the surface of this particular stretch of sea.\n\nIn his expression: not peace. Not terror. Recognition.\n\nHe knew this was where he would end up. He chose to end up here.",
+      "insets": [
+        { "text": "Day four. Edmund Hale located. Status: undetermined.", "position": "before", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "The journal's last page — you realise now it wasn't torn out. It was completed somewhere else. He wrote the ending in a different place, and put himself here.",
           "requires": { "read_logbook": true },
-          "position": "after"
+          "position": "after",
+          "style": "memory"
         },
         {
           "text": "He looks like you felt last night, when it spoke. Like someone who finally heard the answer to a question they'd been asking their whole life.",
           "requires": { "answered_it": true },
-          "position": "after"
+          "position": "after",
+          "style": "whisper"
         }
       ],
       "choices": [
@@ -241,7 +265,8 @@
         {
           "text": "Edmund had written in the margin of the last readable entry: \"Don't let it reason with you. It doesn't reason. It reflects. It will show you your own doubts and let you mistake them for its arguments.\"",
           "requires": { "read_logbook": true },
-          "position": "before"
+          "position": "before",
+          "style": "warning"
         }
       ],
       "choices": [
@@ -271,11 +296,15 @@
 
     "ending_bad": {
       "text": "You sit down in Edmund's chair.\n\nIt fits. The angle of the window, the height of the seat — shaped, over eight months, by someone who watched this stretch of water the way you are watching it now. Not controlling it. Not afraid of it. Just aware.\n\nThe pressure doesn't return. There's no need for it to. You are already part of the pattern.\n\nThe light keeps cycling. The water breathes its slow, deliberate rhythm below you. Days pass without meaning. Weeks, perhaps.\n\nSomeday they'll send a replacement. A handover sheet. A name on a manifest.\n\nYou'll leave a journal. The key on top.",
+      "insets": [
+        { "text": "Blackrock Lighthouse. Day one.", "position": "after", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "Edmund had written in the transcription notebook — the one you burned, or read, or left behind: \"The worst part isn't that it took me. The worst part is that I let it, and I would let it again. And so will the next one.\"",
           "requires": { "answered_it": true },
-          "position": "before"
+          "position": "before",
+          "style": "echo"
         }
       ],
       "choices": [],
