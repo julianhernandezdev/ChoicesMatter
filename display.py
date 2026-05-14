@@ -56,14 +56,6 @@ class Display:
         """Each entry: {"index": int, "label": str, "error": bool}"""
         self.console.print(Rule("[bold cyan]Select a Story[/bold cyan]"))
         self.console.print()
-        self.console.print(
-            "  [dim]Choices Matter is a text adventure engine. Each story is a self-contained\n"
-            "  world built from a JSON file — your progress saves after every choice.\n"
-            "  Reach an ending to complete a run. Press [bold]Q[/bold] at any time to return here.[/dim]"
-        )
-        self.console.print()
-        self.console.print(Rule())
-        self.console.print()
         for entry in entries:
             num = entry["index"]
             label = entry["label"]
