@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git mv *)",
+      "Bash(del stories\\\\examplestory.json)",
+      "Bash(python *)",
+      "Bash(gh pr *)",
+      "PowerShell(gh pr *)",
+      "Bash(git pull *)"
+    ]
+  }
+}
