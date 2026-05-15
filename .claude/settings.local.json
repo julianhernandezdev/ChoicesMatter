@@ -12,7 +12,8 @@
       "PowerShell(gh pr *)",
       "Bash(git pull *)",
       "Bash(git check-ignore *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(Get-Content *)"
     ]
   }
 }
