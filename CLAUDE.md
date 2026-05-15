@@ -227,6 +227,6 @@ Drop a `.json` file into `/stories/`. No code changes needed.
 
 ## Extension Points
 
-- **Story validator CLI:** `python validate_story.py stories/your_story.json` — all validation logic already lives in `story.py`.
+- **Story validator CLI:** `python validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments.
 - **Multiple save slots:** Change `SaveManager` to accept a slot index; save path becomes `<story_id>.<slot>.save.json`.
 - **Graph branching (convergent nodes):** No engine changes needed — just point multiple `next` values at the same node ID.
