@@ -31,6 +31,7 @@ At the picker prompt:
 - **Q** — quit
 - **C** — clear all save data and ending progress (with confirmation)
 - **T** — toggle typewriter mode on/off for the session
+- **S** — open settings (typewriter speed and punctuation pauses; writes to `settings.json`)
 
 ## Writing a Story
 
@@ -237,3 +238,12 @@ settings.example.json  Committed template (typewriter, overlay, named styles)
 ```bash
 pytest
 ```
+
+## Contributing
+
+Suggestions, bug reports, and code contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide.
+
+The short version:
+- **Feature idea** → open a GitHub Issue with the `suggestion` label, or PR [`SUGGESTIONS.md`](SUGGESTIONS.md) directly using the template at the bottom of that file
+- **Bug** → open a GitHub Issue with steps to reproduce
+- **Code PR** → check that the feature is accepted in `SUGGESTIONS.md` first, include tests, keep it focused
