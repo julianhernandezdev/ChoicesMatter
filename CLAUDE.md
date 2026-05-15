@@ -89,6 +89,7 @@ An empty `choices` array is treated as an ending even without `is_ending: true`.
 | `requires` | No | `{ "flag": true/false }` — hides choice if not matched |
 | `sets` | No | `{ "flag": true/false }` — applies to player state on advance |
 | `color` | No | `rich` color name or hex — overrides the node-level `choice_number_color` (or default `cyan`) for this choice's number prefix |
+| `obfuscated` | No | If `true`, renders the label as dim `[REDACTED ██████]` — player can still select it; the real label is never shown |
 
 **Inset object:**
 
@@ -138,6 +139,7 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `scene` present but not a non-empty string
 - `choice_number_color` present but not a non-empty string
 - Choice `color` present but not a non-empty string
+- Choice `obfuscated` present but not a boolean
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 

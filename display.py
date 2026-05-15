@@ -147,7 +147,8 @@ class Display:
                 time.sleep(stagger)
         for i, choice in enumerate(choices, start=1):
             num_color = choice.color or choice_number_color or "cyan"
-            self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {choice.label}")
+            label = "[dim]████ ██████ ████ ████████[/dim]" if choice.obfuscated else choice.label
+            self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {label}")
             if stagger:
                 time.sleep(stagger)
         for overlay in (after_overlays or []):

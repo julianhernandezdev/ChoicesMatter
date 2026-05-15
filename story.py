@@ -22,6 +22,7 @@ class Choice:
     requires: dict[str, bool] = field(default_factory=dict)
     sets: dict[str, bool] = field(default_factory=dict)
     color: str | None = None
+    obfuscated: bool = False
 
 
 @dataclass
@@ -256,6 +257,11 @@ class StoryLoader:
                         f"'{file_name}': {location} field 'color' must be a non-empty string if provided"
                     )
                 choice_color = color_raw.strip()
+            obfuscated_raw = choice_data.get("obfuscated", False)
+            if not isinstance(obfuscated_raw, bool):
+                raise StoryValidationError(
+                    f"'{file_name}': {location} field 'obfuscated' must be true or false"
+                )
             choices.append(
                 Choice(
                     label=StoryLoader._required_string(choice_data, "label", file_name, location),
@@ -263,6 +269,7 @@ class StoryLoader:
                     requires=StoryLoader._parse_flags(choice_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     sets=StoryLoader._parse_flags(choice_data.get("sets", {}), file_name, f"{location} field 'sets'"),
                     color=choice_color,
+                    obfuscated=obfuscated_raw,
                 )
             )
         return choices

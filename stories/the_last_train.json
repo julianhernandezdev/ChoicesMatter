@@ -90,7 +90,7 @@
       "insets": [
         { "text": "Level B  —  00:12", "position": "before", "style": "system" }
       ],
-      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\nYou hear footsteps on the other side.",
+      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel, a blinking red light, and something stencilled beside it in letters worn past reading.\n\nYou hear footsteps on the other side.",
       "overlays": [
         {
           "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
@@ -107,6 +107,7 @@
       ],
       "choices": [
         { "label": "Knock and announce yourself", "next": "caught" },
+        { "label": "Touch the stencilled marking beside the panel.", "next": "panel_touched", "obfuscated": true },
         {
           "label": "You think of Mira's voice. You back away, slowly, silently.",
           "next": "safe_escape",
@@ -146,6 +147,34 @@
       "choices": [],
       "is_ending": true,
       "ending_type": "good"
+    },
+
+    "panel_touched": {
+      "scene": "Level B — Platform 7",
+      "choice_number_color": "bright_red",
+      "insets": [
+        { "text": "00:14  —  UNAUTHORISED ACCESS  —  LEVEL B", "position": "before", "style": "system" }
+      ],
+      "text": "The panel is warm under your palm. The red light blinks once — twice — and turns green.\n\nThe door clicks open a centimetre. Cold air pushes through the gap. Beyond it: a platform that shouldn't exist, a track on no map, and a train — unlit, idling, pointing somewhere with no name.\n\nThey haven't heard you. Not yet.",
+      "overlays": [
+        {
+          "text": "The circled 7 on the map. You found it. And now it's open.",
+          "position": "before",
+          "style": "system"
+        }
+      ],
+      "choices": [
+        { "label": "Step through. You came this far.", "next": "beyond_platform_7", "color": "bright_red" },
+        { "label": "Pull the door shut and run.", "next": "safe_escape", "color": "green" }
+      ]
+    },
+
+    "beyond_platform_7": {
+      "scene": "Platform 7",
+      "text": "The door seals behind you with a sound like a lock engaging from the inside.\n\nThe platform stretches longer than the building should allow. The train is unmarked — no number, no operator, no destination board. The doors are open.\n\nSomething steps off.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
     }
   }
 }
