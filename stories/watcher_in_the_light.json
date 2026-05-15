@@ -5,7 +5,8 @@
     "version": "1.0",
     "author": "Choices Matter",
     "start_node": "arrival",
-    "est_time": "15–25 min"
+    "est_time": "15–25 min",
+    "warnings": ["suicide", "mass death"]
   },
   "nodes": {
 

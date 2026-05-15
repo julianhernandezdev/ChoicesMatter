@@ -89,7 +89,8 @@ class Display:
                 self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             else:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
-                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{resume}")
+                warn = "  [yellow]⚠[/yellow]" if entry.get("has_warnings") else ""
+                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{warn}{resume}")
                 node_count = entry.get("node_count", 0)
                 ending_count = entry.get("ending_count", 0)
                 endings_found = entry.get("endings_found", 0)
@@ -292,6 +293,30 @@ class Display:
 
     def show_clear_complete(self) -> None:
         self.console.print("  [dim green]✓ All save data cleared.[/dim green]\n")
+
+    def show_content_warnings(self, title: str, warnings: list[str]) -> bool:
+        """Show warning panel. Returns True to proceed, False to go back."""
+        lines = "\n".join(f"  · {w}" for w in warnings)
+        self.console.print()
+        self.console.print(
+            Panel(
+                f"[bold]This story contains:[/bold]\n\n{lines}",
+                title="[bold yellow]⚠  Content Warnings[/bold yellow]",
+                subtitle=f"[dim]{title}[/dim]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+        self.console.print()
+        while True:
+            raw = self.console.input(
+                "  [bold]Proceed? ([green]Y[/green] to continue, [red]N[/red] to go back):[/bold] "
+            ).strip().lower()
+            if raw in ("y", "yes"):
+                return True
+            if raw in ("n", "no"):
+                return False
+            self.console.print("  [red]Press Y to continue or N to go back.[/red]")
 
     def prompt_continue_or_new(self) -> bool:
         """Return True to continue saved game, False for new game."""

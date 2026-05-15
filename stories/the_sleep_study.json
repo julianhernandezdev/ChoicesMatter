@@ -5,7 +5,8 @@
     "version": "1.0",
     "author": "Claude",
     "start_node": "intake",
-    "est_time": "20–30 min"
+    "est_time": "20–30 min",
+    "warnings": ["body horror", "institutional harm", "non-consensual experimentation"]
   },
   "nodes": {
     "intake": {

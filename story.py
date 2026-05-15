@@ -61,6 +61,7 @@ class Story:
     node_count: int = 0
     ending_count: int = 0
     est_time: str = ""
+    warnings: list[str] = field(default_factory=list)
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -162,6 +163,17 @@ class StoryLoader:
         else:
             est_time = StoryLoader._compute_est_time(nodes)
 
+        raw_warnings = meta.get("warnings")
+        warnings: list[str] = []
+        if raw_warnings is not None:
+            if not isinstance(raw_warnings, list) or not all(
+                isinstance(w, str) and w.strip() for w in raw_warnings
+            ):
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'warnings' must be a list of non-empty strings"
+                )
+            warnings = [w.strip() for w in raw_warnings]
+
         return Story(
             id=story_id,
             title=title,
@@ -173,6 +185,7 @@ class StoryLoader:
             node_count=node_count,
             ending_count=ending_count,
             est_time=est_time,
+            warnings=warnings,
         )
 
     @staticmethod

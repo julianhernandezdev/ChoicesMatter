@@ -52,7 +52,7 @@ main.py
 
 Stories have two top-level keys: `meta` and `nodes`.
 
-**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count.
+**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count. `warnings` is optional; if present, a warning screen is shown before the story launches.
 
 ```json
 {
@@ -131,6 +131,7 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - Overlay `position` not `before` or `after`
 - Flag dicts (`requires`, `sets`) mapping non-string keys or non-boolean values
 - `est_time` present but not a non-empty string
+- `warnings` present but not a list of non-empty strings
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 

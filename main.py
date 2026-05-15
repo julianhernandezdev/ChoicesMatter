@@ -58,6 +58,10 @@ def main() -> None:
             display.show_picker_error(chosen_path.name, str(e))
             continue
 
+        if story.warnings:
+            if not display.show_content_warnings(story.title, story.warnings):
+                continue
+
         Engine(story, save_manager, display, gallery_manager).run()
 
 
@@ -74,7 +78,7 @@ def _build_entries(
             continue
 
         info = _load_story_info(path)
-        title, story_id, node_count, ending_count, est_time = info
+        title, story_id, node_count, ending_count, est_time, has_warnings = info
 
         has_save = False
         endings_found = 0
@@ -94,16 +98,17 @@ def _build_entries(
             "ending_count": ending_count,
             "endings_found": endings_found,
             "est_time": est_time,
+            "has_warnings": has_warnings,
         })
     return entries
 
 
-def _load_story_info(path: Path) -> tuple[str, str, int, int, str]:
+def _load_story_info(path: Path) -> tuple[str, str, int, int, str, bool]:
     try:
         s = StoryLoader.load(path)
-        return (s.title, s.id, s.node_count, s.ending_count, s.est_time)
+        return (s.title, s.id, s.node_count, s.ending_count, s.est_time, bool(s.warnings))
     except StoryValidationError:
-        return (path.stem, "", 0, 0, "")
+        return (path.stem, "", 0, 0, "", False)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
 {
   "meta": {
     "id": "the_vulture_corridor",
-    "title": "The Vulture Corridor - GRAPHIC",
+    "title": "The Vulture Corridor",
+    "warnings": ["graphic violence", "body horror", "mass death", "institutional harm"],
     "version": "1.0",
     "author": "Julian H + GPT-5.5 Thinking",
     "start_node": "intro",

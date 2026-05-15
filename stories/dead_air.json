@@ -5,7 +5,8 @@
     "version": "1.0",
     "author": "Choices Matter",
     "start_node": "intro",
-    "est_time": "5–8 min"
+    "est_time": "5–8 min",
+    "warnings": ["death"]
   },
   "nodes": {
     "intro": {

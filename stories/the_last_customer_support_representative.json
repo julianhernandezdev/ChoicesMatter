@@ -5,7 +5,8 @@
     "version": "1.0",
     "author": "Julian H.",
     "start_node": "intro",
-    "est_time": "25–35 min"
+    "est_time": "25–35 min",
+    "warnings": ["death", "institutional harm"]
   },
   "nodes": {
     "intro": {
