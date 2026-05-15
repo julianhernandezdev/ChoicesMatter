@@ -2,12 +2,16 @@
   "meta": {
     "id": "the_last_train",
     "title": "The Last Train",
-    "version": "1.0",
+    "version": "2.0",
     "author": "Choices Matter",
-    "start_node": "intro"
+    "start_node": "intro",
+    "est_time": "5–10 min"
   },
   "nodes": {
     "intro": {
+      "insets": [
+        { "text": "Platform 3  —  23:58", "position": "before", "style": "system" }
+      ],
       "text": "You've missed the last train. The platform is empty, the fluorescent lights humming in the silence. On the bench beside the ticket machine sits an abandoned bag — unzipped, like someone left in a hurry.",
       "choices": [
         { "label": "Check the bag", "next": "check_bag" },
@@ -17,6 +21,9 @@
 
     "check_bag": {
       "text": "Inside: a cracked phone, a folded map with a location circled in red ink, and a train ticket stub — tonight's date, Platform 7. You glance at the station board. This station has no Platform 7.",
+      "insets": [
+        { "text": "Ticket stub  —  tonight's date  —  Dep. 23:47  —  Arr. —", "position": "after", "style": "system" }
+      ],
       "choices": [
         {
           "label": "Turn on the phone",
@@ -28,6 +35,9 @@
     },
 
     "phone_on": {
+      "insets": [
+        { "text": "UNSENT  —  MIRA  —  00:03", "position": "before", "style": "system" }
+      ],
       "text": "The screen flickers on. One contact pinned to the top: MIRA. Below it, an unsent message — 'I'm sorry. I had no choice. Don't let them get the—'\n\nThe message cuts off.",
       "choices": [
         {
@@ -49,6 +59,17 @@
 
     "study_map": {
       "text": "The map is a hand-drawn layout of this station — but it includes a section that isn't on any public plan. Past the maintenance corridor on Level B, there's a door marked with a small red 7.\n\nSomewhere below you, there is a Platform 7.",
+      "insets": [
+        { "text": "Level B  —  Maintenance Corridor  —  ⬤  P7", "position": "after", "style": "system" }
+      ],
+      "overlays": [
+        {
+          "text": "She said don't. She was specific. And here is exactly where 'don't' is drawn on this map.",
+          "requires": { "called_mira": true },
+          "position": "before",
+          "style": "echo"
+        }
+      ],
       "choices": [
         { "label": "Go down to Level B", "next": "platform_7" },
         { "label": "Leave the station and forget this ever happened", "next": "abandoned" }
@@ -63,17 +84,22 @@
     },
 
     "platform_7": {
+      "insets": [
+        { "text": "Level B  —  00:12", "position": "before", "style": "system" }
+      ],
       "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\nYou hear footsteps on the other side.",
       "overlays": [
         {
           "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
           "requires": { "called_mira": true },
-          "position": "before"
+          "position": "before",
+          "style": "echo"
         },
         {
           "text": "The circled P7 on the map. You're exactly where it pointed.",
           "requires": { "has_phone": true },
-          "position": "after"
+          "position": "after",
+          "style": "system"
         }
       ],
       "choices": [
@@ -88,6 +114,14 @@
 
     "caught": {
       "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.\n\nThe light goes red again.",
+      "overlays": [
+        {
+          "text": "First ring. She knew you'd find it. She knew you'd come anyway.",
+          "requires": { "called_mira": true },
+          "position": "after",
+          "style": "echo"
+        }
+      ],
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
@@ -101,6 +135,9 @@
     },
 
     "safe_escape": {
+      "insets": [
+        { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
+      ],
       "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
       "choices": [],
       "is_ending": true,
