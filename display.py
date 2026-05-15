@@ -91,13 +91,18 @@ class Display:
             )
         )
 
-    def show_story_picker(self, entries: list[dict]) -> None:
-        self.console.print(Rule("[bold cyan]Select a Story[/bold cyan]"))
+    def show_story_picker(self, entries: list[dict], title: str = "Select a Story") -> None:
+        self.console.print(Rule(f"[bold cyan]{title}[/bold cyan]"))
         self.console.print()
         for entry in entries:
             num = entry["index"]
             label = entry["label"]
-            if entry.get("error"):
+            if entry.get("type") == "folder":
+                count = entry.get("story_count", 0)
+                noun = "story" if count == 1 else "stories"
+                self.console.print(f"  [bold cyan]{num}.[/bold cyan]  [bold]📁 {label}/[/bold]")
+                self.console.print(f"      [dim]{count} {noun}[/dim]")
+            elif entry.get("error"):
                 self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             else:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
@@ -273,27 +278,33 @@ class Display:
     # Input prompts
     # ------------------------------------------------------------------
 
-    def prompt_story_select(self, count: int) -> int | None | str:
-        """Return 1-based index, None to quit, 'clear', 'toggle_typewriter', or 'settings'."""
+    def prompt_story_select(self, count: int, has_back: bool = False) -> int | None | str:
+        """Return 1-based index, None to quit, 'back', 'clear', 'toggle_typewriter', or 'settings'."""
         while True:
             enabled = self._cfg.get("typewriter", {}).get("enabled", False)
             tw_label = "[green]ON[/green]" if enabled else "[dim]OFF[/dim]"
-            self.console.print("  [bold]Enter a number, Q to quit, C to clear saves, or S for settings:[/bold]")
-            self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
+            if has_back:
+                self.console.print("  [bold]Enter a number, B to go back, or Q to quit:[/bold]")
+            else:
+                self.console.print("  [bold]Enter a number, Q to quit, C to clear saves, or S for settings:[/bold]")
+                self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
             raw = self.console.input("  › ").strip().lower()
             if raw == "q":
                 return None
-            if raw == "c":
-                return "clear"
-            if raw == "t":
-                return "toggle_typewriter"
-            if raw == "s":
-                return "settings"
+            if has_back and raw == "b":
+                return "back"
+            if not has_back:
+                if raw == "c":
+                    return "clear"
+                if raw == "t":
+                    return "toggle_typewriter"
+                if raw == "s":
+                    return "settings"
             if raw.isdigit():
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
-            self.console.print("  [red]Please enter a valid number, Q, C, S, or T.[/red]")
+            self.console.print("  [red]Please enter a valid number.[/red]")
 
     def show_settings_screen(self) -> None:
         draft = copy.deepcopy(self._cfg)

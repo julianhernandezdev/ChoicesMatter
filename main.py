@@ -25,15 +25,17 @@ def main() -> None:
     errors: dict[Path, str] = {}
 
     while True:
-        paths = StoryLoader.discover(STORIES_DIR)
+        root_paths, folders = StoryLoader.discover_with_folders(STORIES_DIR)
 
-        if not paths:
+        if not root_paths and not folders:
             display.show_no_stories()
             return
 
-        display.show_story_picker(_build_entries(paths, errors, save_manager, gallery_manager))
+        entries = _build_top_level_entries(root_paths, folders, errors, save_manager, gallery_manager)
+        display.show_story_picker(entries)
 
-        selection = display.prompt_story_select(len(paths))
+        total = len(root_paths) + len(folders)
+        selection = display.prompt_story_select(total)
         if selection is None:
             return
         if selection == "toggle_typewriter":
@@ -49,25 +51,87 @@ def main() -> None:
                 display.show_clear_complete()
             continue
 
-        chosen_path = paths[selection - 1]
+        chosen_entry = entries[selection - 1]
 
-        if chosen_path in errors:
+        if chosen_entry.get("type") == "folder":
+            folder_name = chosen_entry["label"]
+            folder_paths = folders[folder_name]
+            chosen_path = _run_folder_picker(
+                folder_name, folder_paths, errors, save_manager, gallery_manager, display
+            )
+            if chosen_path is None:
+                continue
+        else:
+            chosen_path = root_paths[selection - 1]
+
+        _launch_story(chosen_path, errors, save_manager, gallery_manager, display)
+
+
+def _run_folder_picker(
+    folder_name: str,
+    paths: list[Path],
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+    display: Display,
+) -> Path | None:
+    """Show the contents of a folder. Returns chosen Path or None (back)."""
+    while True:
+        display.clear_screen()
+        entries = _build_entries(paths, errors, save_manager, gallery_manager)
+        display.show_story_picker(entries, title=f"📁 {folder_name}/")
+        selection = display.prompt_story_select(len(paths), has_back=True)
+        if selection is None or selection == "back":
+            display.clear_screen()
+            return None
+        chosen_entry = entries[selection - 1]
+        chosen_path = paths[selection - 1]
+        if chosen_entry.get("error"):
             display.show_picker_error(chosen_path.name, errors[chosen_path])
             continue
+        return chosen_path
 
-        try:
-            story = StoryLoader.load(chosen_path)
-        except StoryValidationError as e:
-            errors[chosen_path] = str(e)
-            display.show_picker_error(chosen_path.name, str(e))
-            continue
 
-        if story.warnings:
-            if not display.show_content_warnings(story.title, story.warnings):
-                continue
+def _launch_story(
+    path: Path,
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+    display: Display,
+) -> None:
+    if path in errors:
+        display.show_picker_error(path.name, errors[path])
+        return
+    try:
+        story = StoryLoader.load(path)
+    except StoryValidationError as e:
+        errors[path] = str(e)
+        display.show_picker_error(path.name, str(e))
+        return
+    if story.warnings:
+        if not display.show_content_warnings(story.title, story.warnings):
+            return
+    Engine(story, save_manager, display, gallery_manager).run()
+    display.clear_screen()
 
-        Engine(story, save_manager, display, gallery_manager).run()
-        display.clear_screen()
+
+def _build_top_level_entries(
+    root_paths: list[Path],
+    folders: dict[str, list[Path]],
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+) -> list[dict]:
+    entries = _build_entries(root_paths, errors, save_manager, gallery_manager)
+    offset = len(root_paths)
+    for i, (name, paths) in enumerate(folders.items(), start=1):
+        entries.append({
+            "index": offset + i,
+            "type": "folder",
+            "label": name,
+            "story_count": len(paths),
+        })
+    return entries
 
 
 def _build_entries(

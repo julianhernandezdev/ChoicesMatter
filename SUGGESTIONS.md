@@ -34,7 +34,10 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ## Accepted
 
-*Nothing here yet — accepted suggestions move into the internal roadmap and get implemented.*
+### Subfolder Directory Navigation
+**What:** The story picker supports subfolders inside `/stories/`. Top-level shows root stories alongside named folder entries; selecting a folder drills into it with a back option.
+**Why:** As a story library grows, a flat list becomes unwieldy — authors can organise by genre, series, or status without any engine changes.
+**Suggested by:** maintainer
 
 ---
 

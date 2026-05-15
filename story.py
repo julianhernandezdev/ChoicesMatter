@@ -79,6 +79,21 @@ class StoryLoader:
         return sorted(stories_dir.glob("*.json"))
 
     @staticmethod
+    def discover_with_folders(
+        stories_dir: Path,
+    ) -> tuple[list[Path], dict[str, list[Path]]]:
+        """Return (root_paths, {folder_name: sorted_paths}) for stories_dir."""
+        if not stories_dir.exists():
+            return [], {}
+        root = sorted(stories_dir.glob("*.json"))
+        folders: dict[str, list[Path]] = {}
+        for d in sorted(p for p in stories_dir.iterdir() if p.is_dir() and not p.name.startswith(".")):
+            paths = sorted(d.glob("*.json"))
+            if paths:
+                folders[d.name] = paths
+        return root, folders
+
+    @staticmethod
     def load(path: Path) -> Story:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
