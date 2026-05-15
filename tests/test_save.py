@@ -54,6 +54,19 @@ def test_save_path_format(saves_dir: Path) -> None:
     assert sm.save_path("my_story") == saves_dir / "my_story.save.json"
 
 
+def test_clear_all_removes_saves(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write(SaveState(story_id="story_a", current_node="x"))
+    sm.write(SaveState(story_id="story_b", current_node="y"))
+    sm.clear_all()
+    assert not sm.has_save("story_a")
+    assert not sm.has_save("story_b")
+
+
+def test_clear_all_empty_dir_no_error(saves_dir: Path) -> None:
+    SaveManager(saves_dir).clear_all()  # must not raise
+
+
 @pytest.mark.parametrize("bad_story_id", ["../escape", "a/b", "", "story id"])
 def test_save_path_rejects_unsafe_story_ids(saves_dir: Path, bad_story_id: str) -> None:
     sm = SaveManager(saves_dir)

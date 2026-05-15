@@ -284,3 +284,209 @@ def test_inset_missing_text_raises(tmp_path: Path, sample_story_dict: dict) -> N
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     with pytest.raises(StoryValidationError, match="text"):
         StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# Load-level errors
+# ------------------------------------------------------------------
+
+def test_invalid_json_raises(tmp_path: Path) -> None:
+    path = tmp_path / "bad.json"
+    path.write_text("{ not valid json", encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="Invalid JSON"):
+        StoryLoader.load(path)
+
+
+def test_root_not_object_raises(tmp_path: Path) -> None:
+    path = tmp_path / "list.json"
+    path.write_text(json.dumps([1, 2, 3]), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="root must be a JSON object"):
+        StoryLoader.load(path)
+
+
+def test_missing_nodes_block_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    del sample_story_dict["nodes"]
+    path = tmp_path / "no_nodes.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="nodes"):
+        StoryLoader.load(path)
+
+
+def test_node_not_object_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"] = "not an object"
+    path = tmp_path / "bad_node.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="must be an object"):
+        StoryLoader.load(path)
+
+
+def test_is_ending_not_bool_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["ending"]["is_ending"] = "yes"
+    path = tmp_path / "bad_is_ending.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="is_ending"):
+        StoryLoader.load(path)
+
+
+def test_invalid_ending_type_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["ending"]["ending_type"] = "terrible"
+    path = tmp_path / "bad_ending_type.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="ending_type"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# scene and choice_number_color validation
+# ------------------------------------------------------------------
+
+def test_scene_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["scene"] = "The Vault"
+    path = tmp_path / "scene_story.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].scene == "The Vault"
+
+
+def test_scene_empty_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["scene"] = ""
+    path = tmp_path / "bad_scene_empty.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="scene"):
+        StoryLoader.load(path)
+
+
+def test_scene_not_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["scene"] = 42
+    path = tmp_path / "bad_scene_type.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="scene"):
+        StoryLoader.load(path)
+
+
+def test_choice_number_color_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choice_number_color"] = "bright_red"
+    path = tmp_path / "cnc_story.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choice_number_color == "bright_red"
+
+
+def test_choice_number_color_empty_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choice_number_color"] = ""
+    path = tmp_path / "bad_cnc.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="choice_number_color"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# warnings validation
+# ------------------------------------------------------------------
+
+def test_warnings_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["warnings"] = ["Violence", "Horror"]
+    path = tmp_path / "warned_story.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.warnings == ["Violence", "Horror"]
+
+
+def test_warnings_not_list_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["warnings"] = "a single string"
+    path = tmp_path / "bad_warnings.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="warnings"):
+        StoryLoader.load(path)
+
+
+def test_warnings_empty_string_item_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["warnings"] = [""]
+    path = tmp_path / "bad_warnings_empty.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="warnings"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# choices / choice field validation
+# ------------------------------------------------------------------
+
+def test_choices_not_list_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"] = "not a list"
+    path = tmp_path / "choices_not_list.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="choices"):
+        StoryLoader.load(path)
+
+
+def test_choice_not_object_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"] = ["not an object"]
+    path = tmp_path / "choice_not_object.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="must be an object"):
+        StoryLoader.load(path)
+
+
+def test_choice_color_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["color"] = "bright_red"
+    path = tmp_path / "color_story.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].color == "bright_red"
+
+
+def test_choice_color_empty_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["color"] = ""
+    path = tmp_path / "bad_color.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="color"):
+        StoryLoader.load(path)
+
+
+def test_choice_obfuscated_not_bool_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["obfuscated"] = "yes"
+    path = tmp_path / "bad_obfuscated.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="obfuscated"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# overlays / insets element validation
+# ------------------------------------------------------------------
+
+def test_overlays_not_list_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = "not a list"
+    path = tmp_path / "overlays_not_list.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="overlays"):
+        StoryLoader.load(path)
+
+
+def test_overlay_not_object_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = ["not an object"]
+    path = tmp_path / "overlay_not_object.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="must be an object"):
+        StoryLoader.load(path)
+
+
+def test_inset_not_object_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["insets"] = ["not an object"]
+    path = tmp_path / "inset_not_object.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="must be an object"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# _parse_flags: requires/sets not a dict
+# ------------------------------------------------------------------
+
+def test_choice_requires_not_dict_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = ["flag_a"]
+    path = tmp_path / "requires_not_dict.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="requires"):
+        StoryLoader.load(path)

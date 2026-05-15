@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from config import load_settings
+from config import load_settings, save_settings
 
 
 def test_returns_defaults_when_file_missing(tmp_path: Path) -> None:
@@ -117,6 +117,23 @@ def test_typewriter_override_in_settings(tmp_path: Path) -> None:
     cfg = load_settings(path)
     assert cfg["typewriter"]["enabled"] is True
     assert cfg["typewriter"]["delay_ms"] == 10
+
+
+def test_save_settings_writes_file(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    save_settings({"typewriter": {"enabled": False, "delay_ms": 10}}, path)
+    assert path.exists()
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["typewriter"]["enabled"] is False
+    assert loaded["typewriter"]["delay_ms"] == 10
+
+
+def test_save_settings_roundtrips_with_load(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    data = load_settings(tmp_path / "nonexistent.json")
+    data["typewriter"]["delay_ms"] = 99
+    save_settings(data, path)
+    assert load_settings(path)["typewriter"]["delay_ms"] == 99
 
 
 def test_typewriter_partial_override_preserves_defaults(tmp_path: Path) -> None:

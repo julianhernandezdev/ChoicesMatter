@@ -36,6 +36,10 @@ _DEFAULTS: dict = {
 }
 
 
+def save_settings(data: dict, path: Path = Path("settings.json")) -> None:
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def load_settings(path: Path = Path("settings.json")) -> dict:
     if not path.exists():
         return _deep_copy(_DEFAULTS)

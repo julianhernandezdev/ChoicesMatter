@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import sys
 import time
 
@@ -10,7 +11,7 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
-from config import load_settings
+from config import load_settings, save_settings
 from story import Choice, Inset, Overlay
 
 try:
@@ -40,6 +41,14 @@ _ENDING_COLORS = {
 }
 
 _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
+
+_TW_SPEED_PRESETS = [
+    ("Slowest", 60),
+    ("Slow",    40),
+    ("Normal",  35),
+    ("Fast",    15),
+    ("Fastest",  5),
+]
 
 
 
@@ -265,12 +274,12 @@ class Display:
     # ------------------------------------------------------------------
 
     def prompt_story_select(self, count: int) -> int | None | str:
-        """Return 1-based index, None to quit, 'clear', or 'toggle_typewriter'."""
+        """Return 1-based index, None to quit, 'clear', 'toggle_typewriter', or 'settings'."""
         while True:
             enabled = self._cfg.get("typewriter", {}).get("enabled", False)
             tw_label = "[green]ON[/green]" if enabled else "[dim]OFF[/dim]"
-            self.console.print("  [bold]Enter a number, Q to quit, or C to clear save data:[/bold]")
-            self.console.print(f"  [dim]T · Toggle typewriter[/dim]  {tw_label}")
+            self.console.print("  [bold]Enter a number, Q to quit, C to clear saves, or S for settings:[/bold]")
+            self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
             raw = self.console.input("  › ").strip().lower()
             if raw == "q":
                 return None
@@ -278,11 +287,95 @@ class Display:
                 return "clear"
             if raw == "t":
                 return "toggle_typewriter"
+            if raw == "s":
+                return "settings"
             if raw.isdigit():
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
-            self.console.print("  [red]Please enter a valid number, Q, C, or T.[/red]")
+            self.console.print("  [red]Please enter a valid number, Q, C, S, or T.[/red]")
+
+    def show_settings_screen(self) -> None:
+        draft = copy.deepcopy(self._cfg)
+
+        while True:
+            self.clear_screen()
+            tw = draft.setdefault("typewriter", {})
+            enabled = tw.get("enabled", True)
+            delay = tw.get("delay_ms", 35)
+            pauses = tw.setdefault("punctuation_pauses", {})
+            tw_state = "[green]on[/green]" if enabled else "[dim]off[/dim]"
+
+            self.console.print()
+            self.console.print(Rule("[bold cyan]Settings — Typewriter[/bold cyan]"))
+            self.console.print()
+            self.console.print(f"  [cyan]1.[/cyan]  Enabled          {tw_state}")
+            self.console.print(f"  [cyan]2.[/cyan]  Speed            [bold]{delay} ms[/bold]")
+            self.console.print(f"  [cyan]3.[/cyan]  Pause after  .   [bold]{pauses.get('.', 550)} ms[/bold]")
+            self.console.print(f"  [cyan]4.[/cyan]  Pause after  !   [bold]{pauses.get('!', 250)} ms[/bold]")
+            self.console.print(f"  [cyan]5.[/cyan]  Pause after  ?   [bold]{pauses.get('?', 350)} ms[/bold]")
+            self.console.print(f"  [cyan]6.[/cyan]  Pause after  …   [bold]{pauses.get('…', 700)} ms[/bold]")
+            self.console.print(f"  [cyan]7.[/cyan]  Pause after  —   [bold]{pauses.get('—', 600)} ms[/bold]")
+            self.console.print()
+            self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
+            raw = self.console.input("  › ").strip().lower()
+
+            if raw == "s":
+                save_settings(draft)
+                self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
+                self.console.input("\n  [dim]Press Enter to return.[/dim] ")
+                return
+            if raw == "x":
+                return
+            if raw == "1":
+                tw["enabled"] = not enabled
+            elif raw == "2":
+                self._settings_edit_speed(tw)
+            elif raw in ("3", "4", "5", "6", "7"):
+                punct_map = {3: (".", 550), 4: ("!", 250), 5: ("?", 350), 6: ("…", 700), 7: ("—", 600)}
+                key, default = punct_map[int(raw)]
+                self._settings_edit_pause(pauses, key, pauses.get(key, default))
+
+    def _settings_edit_speed(self, tw: dict) -> None:
+        self.clear_screen()
+        self.console.print()
+        self.console.print(Rule("[bold cyan]Settings — Typewriter Speed[/bold cyan]"))
+        self.console.print()
+        current_ms = tw.get("delay_ms", 35)
+        for i, (label, ms) in enumerate(_TW_SPEED_PRESETS, start=1):
+            marker = "[bold green]›[/bold green]" if ms == current_ms else " "
+            self.console.print(f"  {marker} [cyan]{i}.[/cyan]  {label:<10} {ms} ms")
+        self.console.print(f"    [cyan]6.[/cyan]  Custom")
+        self.console.print()
+        while True:
+            raw = self.console.input("  › ").strip()
+            if raw in ("1", "2", "3", "4", "5"):
+                tw["delay_ms"] = _TW_SPEED_PRESETS[int(raw) - 1][1]
+                return
+            if raw == "6":
+                while True:
+                    val = self.console.input("  Enter ms (5–200): ").strip()
+                    if val.isdigit() and 5 <= int(val) <= 200:
+                        tw["delay_ms"] = int(val)
+                        return
+                    self.console.print("  [red]Enter a number between 5 and 200.[/red]")
+            self.console.print("  [red]Enter 1–6.[/red]")
+
+    def _settings_edit_pause(self, pauses: dict, key: str, current: int) -> None:
+        self.clear_screen()
+        self.console.print()
+        self.console.print(Rule("[bold cyan]Settings — Typewriter[/bold cyan]"))
+        self.console.print()
+        self.console.print(f"  Pause after [bold]'{key}'[/bold]  —  current: [bold]{current} ms[/bold]")
+        self.console.print()
+        while True:
+            raw = self.console.input("  Enter ms (0–2000, or Enter to keep): ").strip()
+            if raw == "":
+                return
+            if raw.isdigit() and 0 <= int(raw) <= 2000:
+                pauses[key] = int(raw)
+                return
+            self.console.print("  [red]Enter a number between 0 and 2000.[/red]")
 
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})

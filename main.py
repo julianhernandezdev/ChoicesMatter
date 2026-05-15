@@ -39,6 +39,9 @@ def main() -> None:
         if selection == "toggle_typewriter":
             display.toggle_typewriter()
             continue
+        if selection == "settings":
+            display.show_settings_screen()
+            continue
         if selection == "clear":
             if display.prompt_clear_confirm():
                 save_manager.clear_all()

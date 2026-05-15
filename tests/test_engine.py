@@ -51,7 +51,7 @@ def test_advance_moves_to_next_node(saves_dir: Path, two_node_story: Story) -> N
     engine = Engine(two_node_story, sm, display)
     engine.run()
 
-    display.show_node.assert_any_call("Test Story", "You begin.", [], [])
+    display.show_node.assert_any_call("Test Story", "You begin.", [], [], None)
     display.show_ending.assert_any_call("You win.", "good", overlays=[])
 
 
@@ -383,6 +383,27 @@ def test_gallery_not_required(saves_dir: Path, two_node_story: Story) -> None:
     sm = SaveManager(saves_dir)
     # No gallery_manager passed — should run without error
     Engine(two_node_story, sm, display).run()
+
+
+def test_scene_tracked_in_show_node(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")], scene="Act I"),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+    display.show_node.assert_any_call("Test Story", "Begin.", [], [], "Act I")
+
+
+def test_quit_to_menu_returns_without_ending(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")]),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.return_value = None
+    Engine(story, SaveManager(saves_dir), display).run()
+    display.show_ending.assert_not_called()
 
 
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
