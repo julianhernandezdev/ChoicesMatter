@@ -88,6 +88,8 @@ class Engine:
         self._state.update(choice.sets)
         self._history.append(self._current_node)
         self._current_node = choice.next
+        if self.story.auto_visited_flags:
+            self._state[f"visited_{self._current_node}"] = True
         state = SaveState(
             story_id=self.story.id,
             current_node=self._current_node,

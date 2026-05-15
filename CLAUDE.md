@@ -52,7 +52,7 @@ main.py
 
 Stories have two top-level keys: `meta` and `nodes`.
 
-**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count. `warnings` is optional; if present, a warning screen is shown before the story launches.
+**`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count. `warnings` is optional; if present, a warning screen is shown before the story launches. `auto_visited_flags` defaults to `true`; set to `false` to disable automatic `visited_` flag tracking.
 
 ```json
 {
@@ -119,6 +119,7 @@ Overlays render around the choice list: `before` above the choices, `after` belo
 
 - `choice.requires` — checked before presenting choices; unmet choices are hidden entirely
 - `choice.sets` — applied to `_state` when a choice is taken (in `_advance`)
+- `visited_<node_id>` — automatically set to `true` every time a node is entered via `_advance`; use in `requires` to detect revisits. The `visited_` prefix is reserved — manually setting it via `choice.sets` raises a validation error unless `meta.auto_visited_flags` is `false`.
 - `overlay.requires` — same check; unmet overlays are not passed to `display.show_choices`
 
 Flags accumulate within a run and are persisted in the save file. `_reset()` clears them.
