@@ -2,10 +2,11 @@
   "meta": {
     "id": "the_last_train",
     "title": "The Last Train",
-    "version": "1.2",
+    "version": "1.3",
     "author": "Choices Matter",
     "start_node": "intro",
-    "est_time": "5–10 min"
+    "est_time": "5–10 min",
+    "warnings": []
   },
   "nodes": {
     "intro": {
@@ -21,6 +22,7 @@
     },
 
     "check_bag": {
+      "choice_number_color": "yellow",
       "text": "Inside: a cracked phone, a folded map with a location circled in red ink, and a train ticket stub — tonight's date, Platform 7. You glance at the station board. This station has no Platform 7.",
       "insets": [
         { "text": "Ticket stub — tonight's date — Dep. 23:47 — Arr. —", "position": "after", "style": "system" }
@@ -40,11 +42,15 @@
       "insets": [
         { "text": "UNSENT  —  MIRA  —  00:03", "position": "before", "style": "system" }
       ],
+      "overlays": [
+        { "text": "Don't let them get the—", "position": "after", "style": "echo" }
+      ],
       "choices": [
         {
           "label": "Call Mira",
           "next": "call_mira",
-          "sets": { "called_mira": true }
+          "sets": { "called_mira": true },
+          "color": "yellow"
         },
         { "label": "Pocket the phone and study the map", "next": "study_map" }
       ]
@@ -52,6 +58,9 @@
 
     "call_mira": {
       "text": "She picks up on the first ring. Her voice is tight.\n\n'You found it. Listen to me carefully — do not go to Platform 7. Leave the station right now and drop the bag in the first bin you find. Don't look back.'\n\nShe hangs up before you can speak.",
+      "overlays": [
+        { "text": "First ring. She was waiting.", "position": "after", "style": "echo" }
+      ],
       "choices": [
         { "label": "Do exactly what she said", "next": "safe_escape", "color": "green" },
         { "label": "Go find Platform 7 anyway", "next": "platform_7", "color": "bright_red" }
@@ -59,6 +68,7 @@
     },
 
     "study_map": {
+      "choice_number_color": "yellow",
       "text": "The map is a hand-drawn layout of this station — but it includes a section that isn't on any public plan. Past the maintenance corridor on Level B, there's a door marked with a small red 7.\n\nSomewhere below you, there is a Platform 7.",
       "insets": [
         { "text": "Level B  —  Maintenance Corridor  —  ⬤  P7", "position": "after", "style": "system" }
@@ -69,15 +79,17 @@
           "requires": { "called_mira": true },
           "position": "before",
           "style": "echo"
-        }
+        },
+        { "text": "The station has no Platform 7.", "position": "after", "style": "whisper" }
       ],
       "choices": [
-        { "label": "Go down to Level B", "next": "platform_7" },
-        { "label": "Leave the station and forget this ever happened", "next": "abandoned" }
+        { "label": "Go down to Level B", "next": "platform_7", "color": "bright_red" },
+        { "label": "Leave the station and forget this ever happened", "next": "abandoned", "color": "green" }
       ]
     },
 
     "find_worker": {
+      "scene": "Station Concourse",
       "text": "You track down a cleaner mopping near the shuttered ticket office. You explain about the bag. He looks at it, looks at you, and picks up his radio.\n\n'Control, I've got an unattended item at Platform 3. Calling it in.'\n\nWithin minutes the station is being cleared. You end up giving a statement to two officers who take the bag and your details. It takes two hours. The bag is never mentioned in the news.",
       "choices": [],
       "is_ending": true,
@@ -119,6 +131,9 @@
 
     "caught": {
       "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.\n\nThe light goes red again.",
+      "insets": [
+        { "text": "DEVICE SEIZED  —  LEVEL B  —  00:12", "requires": { "has_phone": true }, "position": "after", "style": "system" }
+      ],
       "overlays": [
         {
           "text": "First ring. She knew you'd find it. She knew you'd come anyway.",
@@ -133,6 +148,7 @@
     },
 
     "abandoned": {
+      "scene": "Station Exit",
       "text": "You drop the bag by the exit and walk out into the rain. You don't look back.\n\nYou never find out what was in it. Some nights you think that was the right call.",
       "choices": [],
       "is_ending": true,
@@ -140,6 +156,7 @@
     },
 
     "safe_escape": {
+      "scene": "Station Exit",
       "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
       "insets": [
         { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
@@ -172,6 +189,9 @@
     "beyond_platform_7": {
       "scene": "Platform 7",
       "text": "The door seals behind you with a sound like a lock engaging from the inside.\n\nThe platform stretches longer than the building should allow. The train is unmarked — no number, no operator, no destination board. The doors are open.\n\nSomething steps off.",
+      "overlays": [
+        { "text": "The doors were open. They were waiting.", "position": "before", "style": "echo" }
+      ],
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"

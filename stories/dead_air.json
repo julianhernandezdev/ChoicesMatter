@@ -2,14 +2,15 @@
   "meta": {
     "id": "dead_air",
     "title": "Dead Air",
-    "version": "1.0",
+    "version": "1.1",
     "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "5–8 min",
-    "warnings": ["death"]
+    "warnings": []
   },
   "nodes": {
     "intro": {
+      "scene": "WKTR 91.4 — Studio B",
       "insets": [
         { "text": "WKTR 91.4  —  DEAD AIR  —  02:03", "position": "before", "style": "system" }
       ],
@@ -25,17 +26,24 @@
         { "text": "LINE 2  —  02:14  —  CALLER: wrong number, sorry", "position": "after", "style": "system" }
       ],
       "text": "You announce the lines and let the silence do the work. The first two calls are nothing — a hang-up and a wrong number. You're halfway through your cold coffee when Line 3 lights up.\n\nYou answer. The voice on the other end is calm. Unhurried.\n\n'Good evening. I was hoping to reach—' a pause, '—you.' Not your on-air name. Your name. Your full name.",
+      "overlays": [
+        { "text": "Nobody calls between two and three.", "position": "after", "style": "echo" }
+      ],
       "choices": [
-        { "label": "Stay on the line. Keep them talking.", "next": "engage", "sets": { "engaged": true } },
+        { "label": "Stay on the line. Keep them talking.", "next": "engage", "sets": { "engaged": true }, "color": "yellow" },
         { "label": "Cut the call.", "next": "cut_call" }
       ]
     },
 
     "engage": {
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "LINE 3  —  02:17  —  DURATION: 00:02:41", "position": "before", "style": "system" }
       ],
       "text": "The voice continues as if it expected you to stay.\n\n'Same way Nora did,' they say. 'She called this line every Tuesday for a year before you even started working here.'\n\nNora. Your sister. Dead three years. Nobody calls her Nora anymore — that was the family name, the private one. Her friends called her something else entirely.\n\n'Who is this?' Your hand is on the disconnect button.",
+      "overlays": [
+        { "text": "They knew your name.", "position": "after", "style": "echo" }
+      ],
       "choices": [
         { "label": "Trace the call while keeping them talking.", "next": "trace_result", "sets": { "traced": true } },
         { "label": "Ask what they want.", "next": "the_address" }
@@ -43,17 +51,22 @@
     },
 
     "cut_call": {
+      "choice_number_color": "bright_red",
       "text": "You cut the line. The light on the desk goes dark.\n\nFor eleven seconds, nothing.\n\nThen Line 5 lights up. The line you never give out.",
       "insets": [
         { "text": "LINE 5  —  02:19  —  NUMBER: UNLISTED", "position": "after", "style": "system" }
       ],
+      "overlays": [
+        { "text": "You counted. Eleven seconds.", "position": "before", "style": "echo" }
+      ],
       "choices": [
-        { "label": "Answer it.", "next": "engage", "sets": { "engaged": true } },
-        { "label": "Leave it. Log it. End the show early.", "next": "ending_walk_away" }
+        { "label": "Answer it.", "next": "engage", "sets": { "engaged": true }, "color": "bright_red" },
+        { "label": "Leave it. Log it. End the show early.", "next": "ending_walk_away", "color": "green" }
       ]
     },
 
     "trace_result": {
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "TRACE INITIATED  —  LINE 3  —  02:21", "position": "before", "style": "system" },
         { "text": "RESULT: DISCONNECTED  —  REGISTERED: N. [REDACTED]  —  DEACTIVATED: 3 YRS AGO", "position": "after", "style": "system" }
@@ -64,11 +77,15 @@
       ],
       "choices": [
         { "label": "Ask what they want.", "next": "the_address" },
-        { "label": "Put them on air. Let someone else hear this.", "next": "ending_broadcast" }
+        { "label": "Put them on air. Let someone else hear this.", "next": "ending_broadcast", "color": "green" }
       ]
     },
 
     "the_address": {
+      "choice_number_color": "bright_red",
+      "insets": [
+        { "text": "TRACE ACTIVE  —  LINE 3  —  REGISTERED: N. [REDACTED]  —  DEACTIVATED ACCOUNT", "requires": { "traced": true }, "position": "before", "style": "system" }
+      ],
       "text": "'I only want to give you something she left. There's an address — you already know the street. The house with the blue door. She said you'd come if someone asked the right way.'\n\nA pause.\n\n'This is the right way.'",
       "overlays": [
         {
@@ -86,13 +103,14 @@
         { "text": "You already know the street.", "position": "after", "style": "whisper" }
       ],
       "choices": [
-        { "label": "Go to the address.", "next": "ending_follow" },
-        { "label": "Put them on air. Let someone else hear this.", "next": "ending_broadcast" },
+        { "label": "Go to the address.", "next": "ending_follow", "color": "bright_red", "obfuscated": true },
+        { "label": "Put them on air. Let someone else hear this.", "next": "ending_broadcast", "color": "green" },
         { "label": "Cut the line and go home.", "next": "ending_walk_away" }
       ]
     },
 
     "ending_follow": {
+      "scene": "Eastfield — The Childhood Home",
       "insets": [
         { "text": "WKTR 91.4  —  TRANSMISSION ENDED  —  02:31", "position": "before", "style": "system" }
       ],
@@ -116,6 +134,7 @@
     },
 
     "ending_walk_away": {
+      "scene": "The Drive Home",
       "text": "You log the call — time, duration, content — and leave the sheet on the overnight manager's desk on your way out.\n\nThe drive home is quiet. You sit in the car outside your flat for a while before going in.\n\nYou don't call anyone. There's no one to call.",
       "insets": [
         { "text": "INCIDENT LOG FILED  —  03:01", "position": "after", "style": "system" }

@@ -26,3 +26,7 @@ saves/*
 
 # User settings (per-user customization — see settings.example.json)
 settings.json
+
+# Stories not ready for commit
+stories/the_sleep_study.json
+stories/the_vulture_corridor.json

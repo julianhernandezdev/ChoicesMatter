@@ -2,16 +2,21 @@
   "meta": {
     "id": "the_locked_room",
     "title": "The Locked Room",
-    "version": "1.2",
+    "version": "1.3",
     "author": "Choices Matter Dev",
     "start_node": "intro",
-    "est_time": "5–10 min"
+    "est_time": "5–10 min",
+    "warnings": []
   },
   "nodes": {
     "intro": {
+      "scene": "The Room",
       "text": "You wake up on a cold stone floor. The room is dim — a single bulb flickers overhead. There's a heavy door to your left and a cluttered desk to your right.",
       "insets": [
         { "text": "Location unknown. Time unknown. Duration unknown.", "position": "before", "style": "system" }
+      ],
+      "overlays": [
+        { "text": "You don't remember arriving.", "position": "after", "style": "whisper" }
       ],
       "choices": [
         { "label": "Try the door", "next": "try_door" },
@@ -25,13 +30,16 @@
         { "text": "The scratches are old. Many hands. Many attempts.", "position": "after", "style": "echo" }
       ],
       "choices": [
-        { "label": "Read the note", "next": "read_note" },
+        { "label": "Read the note", "next": "read_note", "sets": { "note_read": true } },
         { "label": "Look for another way out", "next": "search_desk" }
       ]
     },
 
     "search_desk": {
       "text": "The desk is covered in papers and old tools. Underneath a stack of manuals you find a brass key. There's also a battered logbook wedged between the drawers, and a half-written letter that ends mid-sentence: '...do not trust the—'",
+      "insets": [
+        { "text": "The note said: key under the desk.", "requires": { "note_read": true }, "position": "before", "style": "memory" }
+      ],
       "overlays": [
         {
           "text": "The tarnished silver watch sits in your pocket. Harrow knew someone would find it here. He left it for exactly this.",
@@ -72,14 +80,20 @@
     },
 
     "read_letter": {
+      "choice_number_color": "yellow",
       "text": "You piece together the rest of the letter from faint impressions on the page below. It warns of a guard who locks this room from the outside — and that the window at the end of the hall is always left unlatched.\n\nYou now have two options.",
+      "overlays": [
+        { "text": "Do not trust the—", "position": "before", "style": "echo" }
+      ],
       "choices": [
         { "label": "Use the key and take your chances at the door", "next": "use_key" },
-        { "label": "Forget the key — go for the window", "next": "window_escape" }
+        { "label": "Forget the key — go for the window", "next": "window_escape", "color": "green" }
       ]
     },
 
     "use_key": {
+      "scene": "The Corridor",
+      "choice_number_color": "bright_red",
       "text": "The key fits. The lock turns with a satisfying click.\n\nYou ease the door open — and walk straight into the guard. He grabs your arm before you can react, eyes hard.",
       "overlays": [
         {
@@ -90,11 +104,12 @@
         }
       ],
       "choices": [
-        { "label": "Try to push past him", "next": "caught" },
+        { "label": "Try to push past him", "next": "caught", "color": "bright_red", "obfuscated": true },
         {
           "label": "You reach into your pocket and produce the silver watch. His grip loosens.",
           "next": "bribed_escape",
-          "requires": { "logbook_read": true }
+          "requires": { "logbook_read": true },
+          "color": "green"
         }
       ]
     },
@@ -116,15 +131,22 @@
 
     "bribed_escape": {
       "text": "The guard turns the watch over in his palm, weighing it. Then he steps aside without a word.\n\nYou walk out into the corridor. Then the courtyard. Then the street.\n\nHarrow's note paid off. You made it.",
+      "overlays": [
+        { "text": "Harrow's gamble. Your freedom.", "position": "before", "style": "echo" }
+      ],
       "choices": [],
       "is_ending": true,
       "ending_type": "good"
     },
 
     "window_escape": {
+      "scene": "The Hall",
       "text": "You slip down the hall, keeping close to the wall. The window is exactly where the letter said — unlatched, open just enough.\n\nYou squeeze through and drop into the cool night air. Behind you, the building fades into darkness.\n\nYou made it.",
       "insets": [
         { "text": "The window was always open. It just needed someone to look.", "position": "after", "style": "echo" }
+      ],
+      "overlays": [
+        { "text": "The letter was right.", "position": "before", "style": "memory" }
       ],
       "choices": [],
       "is_ending": true,
