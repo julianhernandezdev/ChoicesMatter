@@ -66,6 +66,7 @@ class Story:
     ending_count: int = 0
     est_time: str = ""
     warnings: list[str] = field(default_factory=list)
+    auto_visited_flags: bool = True
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -213,6 +214,26 @@ class StoryLoader:
                 )
             warnings = [w.strip() for w in raw_warnings]
 
+        auto_visited_raw = meta.get("auto_visited_flags")
+        auto_visited_flags = True
+        if auto_visited_raw is not None:
+            if not isinstance(auto_visited_raw, bool):
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'auto_visited_flags' must be true or false"
+                )
+            auto_visited_flags = auto_visited_raw
+
+        if auto_visited_flags:
+            for node_id, node in nodes.items():
+                for choice in node.choices:
+                    for key in choice.sets:
+                        if key.startswith("visited_"):
+                            raise StoryValidationError(
+                                f"'{path.name}': node '{node_id}' choice sets '{key}' — "
+                                f"'visited_' is reserved for auto-generated revisit flags; "
+                                f"set 'auto_visited_flags: false' in meta to manage these manually"
+                            )
+
         return Story(
             id=story_id,
             title=title,
@@ -225,6 +246,7 @@ class StoryLoader:
             ending_count=ending_count,
             est_time=est_time,
             warnings=warnings,
+            auto_visited_flags=auto_visited_flags,
         )
 
     @staticmethod

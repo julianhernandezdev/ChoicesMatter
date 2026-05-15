@@ -490,3 +490,53 @@ def test_choice_requires_not_dict_raises(tmp_path: Path, sample_story_dict: dict
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     with pytest.raises(StoryValidationError, match="requires"):
         StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# auto_visited_flags
+# ------------------------------------------------------------------
+
+def test_auto_visited_flags_defaults_true(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert story.auto_visited_flags is True
+
+
+def test_auto_visited_flags_false_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["auto_visited_flags"] = False
+    path = tmp_path / "no_visited.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.auto_visited_flags is False
+
+
+def test_auto_visited_flags_non_bool_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["auto_visited_flags"] = "yes"
+    path = tmp_path / "bad_avf.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="auto_visited_flags"):
+        StoryLoader.load(path)
+
+
+def test_visited_prefix_in_sets_raises_when_auto_on(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"visited_middle": True}
+    path = tmp_path / "visited_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="visited_"):
+        StoryLoader.load(path)
+
+
+def test_visited_prefix_in_sets_allowed_when_auto_off(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["auto_visited_flags"] = False
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"visited_middle": True}
+    path = tmp_path / "visited_sets_opt_out.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].sets == {"visited_middle": True}
+
+
+def test_visited_prefix_in_requires_is_allowed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"visited_intro": True}
+    path = tmp_path / "visited_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].requires == {"visited_intro": True}

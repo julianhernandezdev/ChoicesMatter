@@ -6,11 +6,12 @@
     "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "5–10 min",
-    "warnings": []
+    "warnings": ["Psychological horror", "Implied threat and coercion"]
   },
   "nodes": {
     "intro": {
       "scene": "Platform 3 — Eastfield Station",
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "Platform 3  —  23:58", "position": "before", "style": "system" }
       ],
@@ -38,6 +39,7 @@
     },
 
     "phone_on": {
+      "choice_number_color": "yellow",
       "text": "The screen flickers on. One contact pinned to the top: MIRA. Below it, an unsent message — 'I'm sorry. I had no choice. Don't let them get the—'\n\nThe message cuts off.",
       "insets": [
         { "text": "UNSENT  —  MIRA  —  00:03", "position": "before", "style": "system" }
@@ -57,6 +59,9 @@
     },
 
     "call_mira": {
+      "insets": [
+        { "text": "OUTGOING CALL  —  MIRA  —  00:04", "position": "before", "style": "system" }
+      ],
       "text": "She picks up on the first ring. Her voice is tight.\n\n'You found it. Listen to me carefully — do not go to Platform 7. Leave the station right now and drop the bag in the first bin you find. Don't look back.'\n\nShe hangs up before you can speak.",
       "overlays": [
         { "text": "First ring. She was waiting.", "position": "after", "style": "echo" }
@@ -74,6 +79,12 @@
         { "text": "Level B  —  Maintenance Corridor  —  ⬤  P7", "position": "after", "style": "system" }
       ],
       "overlays": [
+        {
+          "text": "Don't let them get the—  You saw the message. This is what they were protecting.",
+          "requires": { "visited_phone_on": true },
+          "position": "before",
+          "style": "echo"
+        },
         {
           "text": "She said don't. She was specific. And here is exactly where 'don't' is drawn on this map.",
           "requires": { "called_mira": true },
@@ -111,6 +122,12 @@
           "style": "echo"
         },
         {
+          "text": "You followed the map here. Corridor by corridor, exactly as it was drawn.",
+          "requires": { "visited_study_map": true },
+          "position": "before",
+          "style": "system"
+        },
+        {
           "text": "The circled P7 on the map. You're exactly where it pointed.",
           "requires": { "has_phone": true },
           "position": "after",
@@ -136,6 +153,12 @@
       ],
       "overlays": [
         {
+          "text": "You followed the map. Step by step. All the way here.",
+          "requires": { "visited_study_map": true },
+          "position": "after",
+          "style": "echo"
+        },
+        {
           "text": "First ring. She knew you'd find it. She knew you'd come anyway.",
           "requires": { "called_mira": true },
           "position": "after",
@@ -159,6 +182,7 @@
       "scene": "Station Exit",
       "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
       "insets": [
+        { "text": "You saw it. A platform that shouldn't exist. A train with no destination. You chose not to find out what stepped off.", "requires": { "visited_panel_touched": true }, "position": "before", "style": "echo" },
         { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
       ],
       "choices": [],

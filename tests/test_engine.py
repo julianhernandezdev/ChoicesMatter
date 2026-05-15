@@ -406,6 +406,62 @@ def test_quit_to_menu_returns_without_ending(saves_dir: Path) -> None:
     display.show_ending.assert_not_called()
 
 
+# ------------------------------------------------------------------
+# Node revisit flags
+# ------------------------------------------------------------------
+
+def test_visited_flag_set_on_advance(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")]),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    # visited_end is set when we navigate to "end"
+    assert engine._state.get("visited_end") is True
+
+
+def test_visited_flag_not_set_when_auto_off(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")]),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    story.auto_visited_flags = False
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert "visited_end" not in engine._state
+
+
+def test_visited_flag_gates_revisit_choice(saves_dir: Path) -> None:
+    """A choice requiring visited_loop only appears after returning to the node."""
+    story = _make_story({
+        "start": Node(
+            text="Corridor.",
+            choices=[
+                Choice(label="Go to room", next="room"),
+                Choice(label="You've been here before", next="secret", requires={"visited_start": True}),
+            ],
+        ),
+        "room": Node(text="A room.", choices=[Choice(label="Back", next="start")]),
+        "secret": Node(text="Secret.", choices=[], is_ending=True, ending_type="good"),
+    })
+    display = MagicMock()
+    display.prompt_continue_or_new.return_value = False
+    display.prompt_play_again.return_value = False
+    # First visit to start: only "Go to room" visible (index 1)
+    # At room: back to start (index 1)
+    # Second visit to start: "You've been here before" now visible (index 2)
+    display.prompt_choice.side_effect = [1, 1, 2]
+
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    # Should reach the secret ending
+    display.show_ending.assert_called_once()
+    assert display.show_ending.call_args.args[0] == "Secret."
+
+
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
     display = MagicMock()
     display.prompt_continue_or_new.return_value = False
