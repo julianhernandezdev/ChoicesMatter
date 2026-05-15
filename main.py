@@ -64,6 +64,7 @@ def main() -> None:
                 continue
 
         Engine(story, save_manager, display, gallery_manager).run()
+        display.clear_screen()
 
 
 def _build_entries(
