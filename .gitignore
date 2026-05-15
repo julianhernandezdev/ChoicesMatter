@@ -27,11 +27,5 @@ saves/*
 # User settings (per-user customization — see settings.example.json)
 settings.json
 
-# Stories not ready for commit
-stories/the_sleep_study.json
-stories/the_vulture_corridor.json
-
-# Stories excluded from gen release (too graphic)
-stories/the_locked_room.json
-stories/this_house_remembered.json
-stories/watcher_in_the_light.json
+# Stories excluded from gen release (local backup only)
+storybackup/
