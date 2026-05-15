@@ -75,6 +75,8 @@ Stories have two top-level keys: `meta` and `nodes`.
 | `overlays` | No | Array of overlay objects — flavour text around the choice list |
 | `is_ending` | No | Marks terminal node — triggers ending screen |
 | `ending_type` | No | `good`, `bad`, or `neutral` — controls ending panel color |
+| `scene` | No | Location label displayed as a dim Rule header above the story panel; once set, carries forward to nodes without a `scene` key |
+| `choice_number_color` | No | `rich` color name or hex (e.g. `bright_red`, `#ffaa00`) — node-level fallback for choice number prefixes; overridden per-choice by `choice.color` |
 
 An empty `choices` array is treated as an ending even without `is_ending: true`.
 
@@ -86,6 +88,7 @@ An empty `choices` array is treated as an ending even without `is_ending: true`.
 | `next` | Yes | Node ID to navigate to |
 | `requires` | No | `{ "flag": true/false }` — hides choice if not matched |
 | `sets` | No | `{ "flag": true/false }` — applies to player state on advance |
+| `color` | No | `rich` color name or hex — overrides the node-level `choice_number_color` (or default `cyan`) for this choice's number prefix |
 
 **Inset object:**
 
@@ -132,6 +135,9 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - Flag dicts (`requires`, `sets`) mapping non-string keys or non-boolean values
 - `est_time` present but not a non-empty string
 - `warnings` present but not a list of non-empty strings
+- `scene` present but not a non-empty string
+- `choice_number_color` present but not a non-empty string
+- Choice `color` present but not a non-empty string
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
@@ -156,10 +162,11 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | Method | Signature |
 |---|---|
 | `show_title_screen()` | — |
-| `show_node(story_title, node_text, before_insets, after_insets)` | Story panel with optional insets |
-| `show_choices(choices, before_overlays, after_overlays)` | Overlays wrap the choice list; staggers when typewriter is on |
+| `show_node(story_title, node_text, before_insets, after_insets, current_scene=None)` | Story panel; renders dim Rule above panel when `current_scene` is set |
+| `show_choices(choices, before_overlays, after_overlays, choice_number_color=None)` | Overlays wrap the choice list; staggers when typewriter is on; number color resolved as `choice.color → choice_number_color → "cyan"` |
 | `show_ending(node_text, ending_type, overlays)` | Overlays appear before the ending panel |
 | `show_save_indicator()` | — |
+| `show_content_warnings(title, warnings)` | Warning panel before story launch; returns True (proceed) / False (back) |
 | `show_story_picker(entries)` | — |
 | `show_no_stories()` | — |
 | `show_picker_error(name, message)` | — |

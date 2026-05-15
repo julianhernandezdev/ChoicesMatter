@@ -89,7 +89,7 @@ class Display:
                 self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             else:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
-                warn = "  [yellow]⚠[/yellow]" if entry.get("has_warnings") else ""
+                warn = "  [yellow][!][/yellow]" if entry.get("has_warnings") else ""
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{warn}{resume}")
                 node_count = entry.get("node_count", 0)
                 ending_count = entry.get("ending_count", 0)
@@ -117,8 +117,12 @@ class Display:
         node_text: str,
         before_insets: list[Inset] | None = None,
         after_insets: list[Inset] | None = None,
+        current_scene: str | None = None,
     ) -> None:
         self.console.print()
+        if current_scene:
+            self.console.print(Rule(f"[dim]{current_scene}[/dim]", style="dim"))
+            self.console.print()
         make = lambda t: self._node_panel(story_title, t, before_insets, after_insets)
         delay_s = self._typewriter_delay()
         if delay_s:
@@ -131,6 +135,7 @@ class Display:
         choices: list[Choice],
         before_overlays: list[Overlay] | None = None,
         after_overlays: list[Overlay] | None = None,
+        choice_number_color: str | None = None,
     ) -> None:
         self.console.print()
         stagger = 0.06 if self._typewriter_delay() else 0.0
@@ -141,7 +146,8 @@ class Display:
             if stagger:
                 time.sleep(stagger)
         for i, choice in enumerate(choices, start=1):
-            self.console.print(f"  [bold cyan]{i}.[/bold cyan] {choice.label}")
+            num_color = choice.color or choice_number_color or "cyan"
+            self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {choice.label}")
             if stagger:
                 time.sleep(stagger)
         for overlay in (after_overlays or []):
@@ -301,7 +307,7 @@ class Display:
         self.console.print(
             Panel(
                 f"[bold]This story contains:[/bold]\n\n{lines}",
-                title="[bold yellow]⚠  Content Warnings[/bold yellow]",
+                title="[bold yellow][!] Content Warnings[/bold yellow]",
                 subtitle=f"[dim]{title}[/dim]",
                 border_style="yellow",
                 padding=(1, 2),

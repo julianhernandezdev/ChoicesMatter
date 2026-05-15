@@ -21,6 +21,7 @@ class Choice:
     next: str
     requires: dict[str, bool] = field(default_factory=dict)
     sets: dict[str, bool] = field(default_factory=dict)
+    color: str | None = None
 
 
 @dataclass
@@ -47,6 +48,8 @@ class Node:
     ending_type: str = "neutral"
     overlays: list[Overlay] = field(default_factory=list)
     insets: list[Inset] = field(default_factory=list)
+    scene: str | None = None
+    choice_number_color: str | None = None
 
 
 @dataclass
@@ -133,6 +136,24 @@ class StoryLoader:
                     f"'{path.name}': node '{node_id}' field 'ending_type' must be one of: bad, good, neutral"
                 )
 
+            scene_raw = node_data.get("scene")
+            scene: str | None = None
+            if scene_raw is not None:
+                if not isinstance(scene_raw, str) or not scene_raw.strip():
+                    raise StoryValidationError(
+                        f"'{path.name}': node '{node_id}' field 'scene' must be a non-empty string if provided"
+                    )
+                scene = scene_raw.strip()
+
+            cnc_raw = node_data.get("choice_number_color")
+            choice_number_color: str | None = None
+            if cnc_raw is not None:
+                if not isinstance(cnc_raw, str) or not cnc_raw.strip():
+                    raise StoryValidationError(
+                        f"'{path.name}': node '{node_id}' field 'choice_number_color' must be a non-empty string if provided"
+                    )
+                choice_number_color = cnc_raw.strip()
+
             nodes[node_id] = Node(
                 text=text,
                 choices=choices,
@@ -140,6 +161,8 @@ class StoryLoader:
                 ending_type=ending_type,
                 overlays=overlays,
                 insets=insets,
+                scene=scene,
+                choice_number_color=choice_number_color,
             )
 
         for node_id, node in nodes.items():
@@ -225,12 +248,21 @@ class StoryLoader:
             location = f"node '{node_id}' choice #{idx}"
             if not isinstance(choice_data, dict):
                 raise StoryValidationError(f"'{file_name}': {location} must be an object")
+            color_raw = choice_data.get("color")
+            choice_color: str | None = None
+            if color_raw is not None:
+                if not isinstance(color_raw, str) or not color_raw.strip():
+                    raise StoryValidationError(
+                        f"'{file_name}': {location} field 'color' must be a non-empty string if provided"
+                    )
+                choice_color = color_raw.strip()
             choices.append(
                 Choice(
                     label=StoryLoader._required_string(choice_data, "label", file_name, location),
                     next=StoryLoader._required_string(choice_data, "next", file_name, location),
                     requires=StoryLoader._parse_flags(choice_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     sets=StoryLoader._parse_flags(choice_data.get("sets", {}), file_name, f"{location} field 'sets'"),
+                    color=choice_color,
                 )
             )
         return choices

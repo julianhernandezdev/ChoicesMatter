@@ -2,13 +2,14 @@
   "meta": {
     "id": "the_last_train",
     "title": "The Last Train",
-    "version": "1.1",
+    "version": "1.2",
     "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "5–10 min"
   },
   "nodes": {
     "intro": {
+      "scene": "Platform 3 — Eastfield Station",
       "insets": [
         { "text": "Platform 3  —  23:58", "position": "before", "style": "system" }
       ],
@@ -52,8 +53,8 @@
     "call_mira": {
       "text": "She picks up on the first ring. Her voice is tight.\n\n'You found it. Listen to me carefully — do not go to Platform 7. Leave the station right now and drop the bag in the first bin you find. Don't look back.'\n\nShe hangs up before you can speak.",
       "choices": [
-        { "label": "Do exactly what she said", "next": "safe_escape" },
-        { "label": "Go find Platform 7 anyway", "next": "platform_7" }
+        { "label": "Do exactly what she said", "next": "safe_escape", "color": "green" },
+        { "label": "Go find Platform 7 anyway", "next": "platform_7", "color": "bright_red" }
       ]
     },
 
@@ -84,6 +85,8 @@
     },
 
     "platform_7": {
+      "scene": "Level B — Maintenance Corridor",
+      "choice_number_color": "bright_red",
       "insets": [
         { "text": "Level B  —  00:12", "position": "before", "style": "system" }
       ],
@@ -107,7 +110,8 @@
         {
           "label": "You think of Mira's voice. You back away, slowly, silently.",
           "next": "safe_escape",
-          "requires": { "called_mira": true }
+          "requires": { "called_mira": true },
+          "color": "green"
         }
       ]
     },

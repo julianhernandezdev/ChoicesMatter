@@ -21,6 +21,7 @@ class Engine:
         self._current_node: str = story.start_node
         self._history: list[str] = []
         self._state: dict[str, bool] = {}
+        self._current_scene: str | None = None
 
     # ------------------------------------------------------------------
     # Public
@@ -31,6 +32,9 @@ class Engine:
 
         while True:
             node = self.story.get_node(self._current_node)
+            if node.scene:
+                self._current_scene = node.scene
+
             visible = [c for c in node.choices if self._flag_check(c.requires)]
 
             visible_overlays = [o for o in node.overlays if self._flag_check(o.requires)]
@@ -51,8 +55,8 @@ class Engine:
                     continue
                 return
 
-            self.display.show_node(self.story.title, node.text, before_insets, after_insets)
-            self.display.show_choices(visible, before, after)
+            self.display.show_node(self.story.title, node.text, before_insets, after_insets, self._current_scene)
+            self.display.show_choices(visible, before, after, node.choice_number_color)
             idx = self.display.prompt_choice(visible)
             if idx is None:
                 return
@@ -96,4 +100,5 @@ class Engine:
         self._current_node = self.story.start_node
         self._history = []
         self._state = {}
+        self._current_scene = None
         self.save_manager.delete(self.story.id)
