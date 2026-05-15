@@ -17,6 +17,7 @@ def main() -> None:
     SAVES_DIR.mkdir(exist_ok=True)
 
     display = Display()
+    display.clear_screen()
     display.show_title_screen()
 
     save_manager = SaveManager(SAVES_DIR)

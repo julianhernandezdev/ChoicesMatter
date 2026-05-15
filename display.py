@@ -52,6 +52,9 @@ class Display:
     # Title / chrome
     # ------------------------------------------------------------------
 
+    def clear_screen(self) -> None:
+        self.console.clear()
+
     def show_title_screen(self) -> None:
         self.console.print()
         self.console.print(

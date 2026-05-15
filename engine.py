@@ -29,6 +29,7 @@ class Engine:
 
     def run(self) -> None:
         self._resolve_start()
+        self.display.clear_screen()
 
         while True:
             node = self.story.get_node(self._current_node)
