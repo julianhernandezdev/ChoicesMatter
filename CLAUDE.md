@@ -22,7 +22,7 @@ python main.py
 | `save.py` | Persistent save state — read/write/delete per story |
 | `gallery.py` | Ending gallery — tracks found endings per story across runs |
 | `display.py` | All `rich` rendering — nothing else imports `rich` |
-| `config.py` | Loads `settings.json`, deep-merges with hardcoded defaults |
+| `config.py` | Loads and saves `settings.json`, deep-merges with hardcoded defaults |
 
 ```
 /stories             Drop .json story files here — auto-discovered at startup
@@ -164,6 +164,7 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | Method | Signature |
 |---|---|
 | `show_title_screen()` | — |
+| `clear_screen()` | — |
 | `show_node(story_title, node_text, before_insets, after_insets, current_scene=None)` | Story panel; renders dim Rule above panel when `current_scene` is set |
 | `show_choices(choices, before_overlays, after_overlays, choice_number_color=None)` | Overlays wrap the choice list; staggers when typewriter is on; number color resolved as `choice.color → choice_number_color → "cyan"` |
 | `show_ending(node_text, ending_type, overlays)` | Overlays appear before the ending panel |
@@ -174,7 +175,8 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | `show_picker_error(name, message)` | — |
 | `show_clear_complete()` | — |
 | `toggle_typewriter()` | Flips `typewriter.enabled` in-memory; prints new state |
-| `prompt_story_select(count)` | Returns 1-based int, `None` (quit), `"clear"`, or `"toggle_typewriter"` |
+| `show_settings_screen()` | Typewriter settings screen — edits a draft copy of config, writes to `settings.json` via `config.save_settings()` on confirm; changes take effect next launch |
+| `prompt_story_select(count)` | Returns 1-based int, `None` (quit), `"clear"`, `"toggle_typewriter"`, or `"settings"` |
 | `prompt_continue_or_new()` | Returns True (continue) / False (new) |
 | `prompt_clear_confirm()` | Returns True/False |
 | `prompt_choice(choices)` | Returns 1-based int or None (Q to menu) |
