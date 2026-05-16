@@ -483,7 +483,7 @@ function renderResume(entry, skipWarnings) {
     '<div class="terminal-prose">A save was found for this story.</div>' +
     '<div class="terminal-prompt-line">Continue saved game? ' +
     '(<span style="color:var(--green)">C</span> to continue, ' +
-    '<span style="color:var(--dim)">N</span> for new): ' +
+    '<span style="color:var(--red)">N</span> for new): ' +
     '<span class="terminal-cursor">█</span></div>' +
     '</div>';
 }
@@ -662,7 +662,7 @@ function renderEnding(view) {
     '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
-    '<div class="terminal-prompt-line">Play again? (<span style="color:var(--green)">Y</span> to play again, <span style="color:var(--dim)">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line">Play again? (<span style="color:var(--green)">Y</span> to play again, <span style="color:var(--red)">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
     '</div>';
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), view.node.text);
