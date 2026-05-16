@@ -588,6 +588,63 @@ app.addEventListener('click', function(event) {
   }
 });
 
+document.addEventListener('keydown', function(e) {
+  var key = e.key.toUpperCase();
+
+  if (twAnimation) {
+    e.preventDefault();
+    skipTypewriter();
+    return;
+  }
+
+  if (currentScreen === 'library') {
+    if (key === 'T') { toggleTypewriter(); return; }
+    if (key === 'C') {
+      if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
+      return;
+    }
+    if (key === 'S') { settingsDraft = null; renderSettings(); return; }
+    var n = parseInt(e.key, 10);
+    if (n >= 1 && n <= activeMenuEntries.length) {
+      var me = activeMenuEntries[n - 1];
+      if (me.type === 'folder') renderFolder(me.name);
+      else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    }
+
+  } else if (currentScreen === 'folder') {
+    if (key === 'Q' || key === 'B') { renderLibrary(); return; }
+    var nf = parseInt(e.key, 10);
+    if (nf >= 1 && nf <= activeMenuEntries.length) {
+      var mef = activeMenuEntries[nf - 1];
+      startStory(mef.entry, { resume: !!loadSave(mef.entry.story.meta.id) });
+    }
+
+  } else if (currentScreen === 'warning') {
+    if (key === 'Y') startStory(warningEntry, { resume: warningResume, skipWarnings: true });
+    if (key === 'N') renderLibrary();
+
+  } else if (currentScreen === 'game') {
+    if (key === 'Q') { renderLibrary(); return; }
+    var ng = parseInt(e.key, 10);
+    if (ng >= 1) {
+      var vg = currentView(currentRun);
+      if (ng <= vg.choices.length) choose(ng - 1);
+    }
+
+  } else if (currentScreen === 'ending') {
+    if (key === 'Y') startStory(currentRun.entry, { resume: false, skipWarnings: true });
+    if (key === 'N') renderLibrary();
+
+  } else if (currentScreen === 'settings') {
+    if (key === 'X') { renderLibrary(); return; }
+    if (key === 'S') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
+    if (key === 'ESCAPE' && settingsEditRow !== null) { cancelSettingsEdit(); return; }
+    if (key === 'ENTER' && settingsEditRow !== null) { confirmSettingsEdit(); return; }
+    var ns = parseInt(e.key, 10);
+    if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+  }
+});
+
 async function loadLibrary() {
   const manifestResponse = await fetch("web/stories.json");
   if (!manifestResponse.ok) {

@@ -80,3 +80,8 @@ def test_app_js_has_typewriter() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     assert "function startTypewriter(" in app
     assert "function skipTypewriter(" in app
+
+
+def test_app_js_has_keyboard_handler() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "'keydown'" in app or '"keydown"' in app
