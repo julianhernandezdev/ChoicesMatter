@@ -235,6 +235,7 @@ function renderPicker() {
     '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -538,6 +539,9 @@ app.addEventListener('click', function(event) {
     if (!isTwAnimating()) choose(Number(button.dataset.index));
   } else if (action === 'settings-row') {
     startSettingsEdit(Number(button.dataset.row));
+  } else if (action === 'show-keyboard') {
+    mobileCapture.value = pendingInput;
+    mobileCapture.focus();
   } else if (action === 'speed-preset') {
     settingsDraft.delay_ms = SPEED_PRESETS[Number(button.dataset.index)].ms;
     renderSettings();
@@ -663,20 +667,8 @@ document.addEventListener('keydown', function(e) {
 
 // --- Mobile keyboard capture ---
 
-var mobileFocused = false;
-
-mobileCapture.addEventListener('focus', function() { mobileFocused = true; });
-mobileCapture.addEventListener('blur',  function() { mobileFocused = false; });
-
-window.addEventListener('scroll', function() {
-  if (mobileFocused) window.scrollTo(0, 0);
-});
-
 document.addEventListener('click', function() {
-  if (isTwAnimating()) { skipTypewriter(); return; }
-  if (currentScreen === 'settings' && settingsEditRow !== null) return;
-  mobileCapture.value = pendingInput;
-  mobileCapture.focus();
+  if (isTwAnimating()) { skipTypewriter(); }
 });
 
 mobileCapture.addEventListener('input', function() {
