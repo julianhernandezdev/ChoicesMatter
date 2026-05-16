@@ -301,6 +301,87 @@ function renderPickerEntry(entry, num) {
     '</div>';
 }
 
+var SETTINGS_ROWS = [
+  { key: 'enabled',   label: 'Enabled',        type: 'boolean' },
+  { key: 'delay_ms',  label: 'Speed',           type: 'number', unit: 'ms' },
+  { key: 'pauses.',   label: 'Pause after  .',  type: 'number', unit: 'ms' },
+  { key: 'pauses.!',  label: 'Pause after  !',  type: 'number', unit: 'ms' },
+  { key: 'pauses.?',  label: 'Pause after  ?',  type: 'number', unit: 'ms' },
+  { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms' },
+  { key: 'pauses.—', label: 'Pause after  —', type: 'number', unit: 'ms' },
+];
+
+function getSettingValue(draft, key) {
+  if (key.indexOf('pauses.') === 0) return draft.pauses[key.slice('pauses.'.length)];
+  return draft[key];
+}
+
+function setSettingValue(draft, key, value) {
+  if (key.indexOf('pauses.') === 0) draft.pauses[key.slice('pauses.'.length)] = value;
+  else draft[key] = value;
+}
+
+function renderSettings() {
+  currentScreen = 'settings';
+  if (!settingsDraft) {
+    var s = loadTypewriterSettings();
+    settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses) };
+  }
+  settingsEditRow = null;
+
+  var rows = SETTINGS_ROWS.map(function(row, i) {
+    var val = getSettingValue(settingsDraft, row.key);
+    var display = row.type === 'boolean' ? (val ? 'on' : 'off') : val + (row.unit ? ' ' + row.unit : '');
+    return '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
+      '<span class="setting-num">' + (i + 1) + '.</span>' +
+      '<span class="setting-name">' + escapeHtml(row.label) + '</span>' +
+      '<span class="setting-value">' + escapeHtml(String(display)) + '</span>' +
+      '</div>';
+  }).join('');
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Settings – Typewriter', 'green') +
+    '<div class="terminal-list">' + rows + '</div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">Enter a number to edit · S save · X discard</div>' +
+    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '</div></div>';
+}
+
+function startSettingsEdit(rowIndex) {
+  var row = SETTINGS_ROWS[rowIndex];
+  if (!row) return;
+  settingsEditRow = rowIndex;
+  var val = getSettingValue(settingsDraft, row.key);
+  if (row.type === 'boolean') {
+    setSettingValue(settingsDraft, row.key, !val);
+    settingsEditRow = null;
+    renderSettings();
+    return;
+  }
+  var rowEl = document.querySelector('.terminal-settings-row[data-row="' + rowIndex + '"]');
+  if (!rowEl) return;
+  var valEl = rowEl.querySelector('.setting-value');
+  valEl.innerHTML = '<input class="setting-input" id="settings-edit-input" type="text" value="' + escapeHtml(String(val)) + '" autocomplete="off">';
+  var input = document.getElementById('settings-edit-input');
+  if (input) { input.focus(); input.select(); }
+}
+
+function confirmSettingsEdit() {
+  var input = document.getElementById('settings-edit-input');
+  if (!input || settingsEditRow === null) return;
+  var num = parseInt(input.value, 10);
+  if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, SETTINGS_ROWS[settingsEditRow].key, num);
+  settingsEditRow = null;
+  renderSettings();
+}
+
+function cancelSettingsEdit() {
+  settingsEditRow = null;
+  renderSettings();
+}
+
 function renderLibrary() {
   currentRun = null;
   lastSaved = '';

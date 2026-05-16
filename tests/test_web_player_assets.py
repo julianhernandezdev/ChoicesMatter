@@ -85,3 +85,9 @@ def test_app_js_has_typewriter() -> None:
 def test_app_js_has_keyboard_handler() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     assert "'keydown'" in app or '"keydown"' in app
+
+
+def test_app_js_has_settings_screen() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function renderSettings(" in app
+    assert "SETTINGS_ROWS" in app
