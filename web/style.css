@@ -150,9 +150,6 @@ body {
 .terminal-prompt-line {
   color: var(--dim);
   margin-top: 0.75ch;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
 .terminal-cursor {
