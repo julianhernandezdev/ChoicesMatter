@@ -304,7 +304,7 @@ function renderPickerEntry(entry, num) {
 var SETTINGS_ROWS = [
   { key: 'enabled',   label: 'Enabled',        type: 'boolean' },
   { key: 'delay_ms',  label: 'Speed',           type: 'number', unit: 'ms' },
-  { key: 'pauses.',   label: 'Pause after  .',  type: 'number', unit: 'ms' },
+  { key: 'pauses..',  label: 'Pause after  .',  type: 'number', unit: 'ms' },
   { key: 'pauses.!',  label: 'Pause after  !',  type: 'number', unit: 'ms' },
   { key: 'pauses.?',  label: 'Pause after  ?',  type: 'number', unit: 'ms' },
   { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms' },
@@ -352,16 +352,15 @@ function renderSettings() {
 function startSettingsEdit(rowIndex) {
   var row = SETTINGS_ROWS[rowIndex];
   if (!row) return;
-  settingsEditRow = rowIndex;
   var val = getSettingValue(settingsDraft, row.key);
   if (row.type === 'boolean') {
     setSettingValue(settingsDraft, row.key, !val);
-    settingsEditRow = null;
     renderSettings();
     return;
   }
   var rowEl = document.querySelector('.terminal-settings-row[data-row="' + rowIndex + '"]');
   if (!rowEl) return;
+  settingsEditRow = rowIndex;
   var valEl = rowEl.querySelector('.setting-value');
   valEl.innerHTML = '<input class="setting-input" id="settings-edit-input" type="text" value="' + escapeHtml(String(val)) + '" autocomplete="off">';
   var input = document.getElementById('settings-edit-input');

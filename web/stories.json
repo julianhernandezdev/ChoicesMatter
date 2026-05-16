@@ -9,6 +9,94 @@
       "category": "ChoicesMatterGPT"
     },
     {
+      "path": "stories/examples/01_minimal_story.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/02_branching_endings.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/03_scene_carry_forward.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/04_boolean_flags.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/05_integer_flags.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/06_string_flags.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/07_auto_visited_flags.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/08_insets.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/09_overlays.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/10_named_styles.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/11_choice_colors.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/12_obfuscated_choices.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/13_hub_structure.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/14_parallel_knowledge_routes.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/15_soft_failure.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/16_stateful_endings.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/17_delayed_consequences.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/examples/18_multi_condition_gating.json",
+      "category": "examples"
+    },
+    {
+      "path": "stories/showcase/19_horror_showcase.json",
+      "category": "showcase"
+    },
+    {
+      "path": "stories/showcase/20_scifi_showcase.json",
+      "category": "showcase"
+    },
+    {
+      "path": "stories/showcase/21_mystery_showcase.json",
+      "category": "showcase"
+    },
+    {
+      "path": "stories/showcase/22_full_reference_story.json",
+      "category": "showcase"
+    },
+    {
       "path": "stories/horror/dead_air.json",
       "category": "horror"
     },
