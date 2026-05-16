@@ -435,54 +435,57 @@ function renderStyledLine(item, extraClass) {
 }
 
 function renderGame() {
-  if (!currentRun) {
-    renderLibrary();
-    return;
-  }
-  const view = currentView(currentRun);
-  const { story } = currentRun;
-  if (view.isEnding) {
-    renderEnding(view);
-    return;
-  }
+  if (!currentRun) { renderLibrary(); return; }
+  var view = currentView(currentRun);
+  if (view.isEnding) { renderEnding(view); return; }
 
-  const beforeInsets = view.insets.before.map((item) => renderStyledLine(item, "inset before")).join("");
-  const afterInsets = view.insets.after.map((item) => renderStyledLine(item, "inset after")).join("");
-  const beforeOverlays = view.overlays.before.map((item) => renderStyledLine(item, "overlay")).join("");
-  const afterOverlays = view.overlays.after.map((item) => renderStyledLine(item, "overlay")).join("");
-  const fallbackColor = view.node.choice_number_color || "cyan";
-  const choices = view.choices.map((choice, index) => {
-    const label = choice.obfuscated ? "[REDACTED ██████]" : choice.label;
-    const color = slugClass(choice.color || fallbackColor);
-    return `
-      <button class="choice-button color-${escapeHtml(color)}" data-action="choice" data-index="${index}">
-        <span class="choice-number">${index + 1}.</span>
-        <span>${escapeHtml(label)}</span>
-      </button>
-    `;
-  }).join("");
+  currentScreen = 'game';
+  var node = view.node;
 
-  app.innerHTML = `
-    <section class="game-card">
-      <header class="game-title">
-        <div>
-          <p class="muted">${escapeHtml(currentRun.entry.category || "story")}</p>
-          <h1>${escapeHtml(storyTitle(currentRun.entry))}</h1>
-        </div>
-        <button class="secondary" data-action="library">Back to library</button>
-      </header>
-      ${currentRun.currentScene ? `<div class="scene-rule">${escapeHtml(currentRun.currentScene)}</div>` : ""}
-      <article class="prose-panel">
-        ${beforeInsets}
-        <div class="prose">${escapeHtml(view.node.text)}</div>
-        ${afterInsets}
-      </article>
-      ${beforeOverlays}
-      <div class="choices">${choices}</div>
-      ${afterOverlays}
-      <p class="save-line">${escapeHtml(lastSaved)}</p>
-    </section>
-  `;
+  var sceneRule = currentRun.currentScene ? renderRule(currentRun.currentScene, 'green') : '';
+
+  var sep = '<span class="terminal-separator">' + '─'.repeat(PANEL_RULE_WIDTH) + '</span>';
+  var beforeInsets = view.insets.before.map(function(i) {
+    return '<span class="terminal-inset">' + renderStyledLine(i, '') + '</span>';
+  }).join('');
+  var afterInsets = view.insets.after.map(function(i) {
+    return '<span class="terminal-inset">' + renderStyledLine(i, '') + '</span>';
+  }).join('');
+
+  var fallbackColor = node.choice_number_color || 'cyan';
+  var choiceHtml = view.choices.map(function(choice, i) {
+    var label = choice.obfuscated ? '[REDACTED ██████]' : choice.label;
+    var colorVar = resolveColor(choice.color || fallbackColor);
+    return '<div class="terminal-choice" data-action="choice" data-index="' + i + '">' +
+      '<span class="choice-num" style="color:' + colorVar + '">' + (i + 1) + '.</span>' +
+      '<span class="choice-label">' + escapeHtml(label) + '</span></div>';
+  }).join('');
+
+  var beforeOverlays = view.overlays.before.map(function(o) {
+    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>';
+  }).join('');
+  var afterOverlays = view.overlays.after.map(function(o) {
+    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>';
+  }).join('');
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    sceneRule +
+    '<div class="terminal-panel">' +
+    '<span class="terminal-panel-title">' + escapeHtml(makeRule(storyTitle(currentRun.entry), PANEL_RULE_WIDTH)) + '</span>' +
+    beforeInsets +
+    (view.insets.before.length ? sep : '') +
+    '<div class="terminal-prose" id="prose-text">' + escapeHtml(node.text) + '</div>' +
+    (view.insets.after.length ? sep : '') +
+    afterInsets +
+    '</div>' +
+    beforeOverlays +
+    '<div class="terminal-choices">' + choiceHtml + '</div>' +
+    afterOverlays +
+    '<div class="terminal-prompt-line">Your choice (or Q to return to menu): <span class="terminal-cursor">█</span></div>' +
+    '</div>';
+
+  if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), node.text);
 }
 
 function renderEnding(view) {
