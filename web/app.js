@@ -380,18 +380,21 @@ function findEntry(path) {
 }
 
 function renderWarnings(entry, resume) {
-  const warnings = entry.story.meta.warnings || [];
-  app.innerHTML = `
-    <section class="warning-card">
-      <h1>Content Warning</h1>
-      <p>${escapeHtml(storyTitle(entry))} contains:</p>
-      <ul>${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>
-      <div class="warning-actions">
-        <button data-action="confirm-start" data-path="${escapeHtml(entry.path)}" data-resume="${resume ? "yes" : "no"}">Continue</button>
-        <button class="secondary" data-action="library">Back to library</button>
-      </div>
-    </section>
-  `;
+  currentScreen = 'warning';
+  warningEntry = entry;
+  warningResume = resume;
+  var warnings = entry.story.meta.warnings || [];
+  var items = warnings.map(function(w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('');
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('[!] Content Warnings', 'yellow') +
+    '<div class="terminal-panel warning-panel">' +
+    '<span class="warning-bold">This story contains:</span>' +
+    '<ul class="warning-list">' + items + '</ul>' +
+    '</div>' +
+    renderRule(storyTitle(entry), 'dim') +
+    '<div class="terminal-prompt-line">Proceed? (<span style="color:var(--green)">Y</span> to continue, <span style="color:var(--red)">N</span> to go back): <span class="terminal-cursor">█</span></div>' +
+    '</div>';
 }
 
 function startStory(entry, { resume = false, skipWarnings = false } = {}) {
@@ -483,33 +486,27 @@ function renderGame() {
 }
 
 function renderEnding(view) {
-  const { story } = currentRun;
+  currentScreen = 'ending';
+  var story = currentRun.story;
   recordEnding(story, currentRun.nodeId);
   deleteSave(story.meta.id);
-  const endingType = view.node.ending_type || "neutral";
-  const overlays = [...view.overlays.before, ...view.overlays.after]
-    .map((item) => renderStyledLine(item, "overlay"))
-    .join("");
-  app.innerHTML = `
-    <section class="game-card">
-      <header class="game-title">
-        <div>
-          <p class="muted">${escapeHtml(storyTitle(currentRun.entry))}</p>
-          <h1>Ending Reached</h1>
-        </div>
-        <button class="secondary" data-action="library">Back to library</button>
-      </header>
-      ${overlays}
-      <article class="ending-panel ${escapeHtml(slugClass(endingType))}">
-        <p class="ending-label ${escapeHtml(slugClass(endingType))}">— ${escapeHtml(endingType.toUpperCase())} ENDING —</p>
-        <div class="prose">${escapeHtml(view.node.text)}</div>
-      </article>
-      <div class="ending-actions">
-        <button data-action="play-again">Play again</button>
-        <button class="secondary" data-action="library">Choose another story</button>
-      </div>
-    </section>
-  `;
+
+  var type = view.node.ending_type || 'neutral';
+  var overlays = [].concat(view.overlays.before, view.overlays.after)
+    .map(function(o) { return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>'; })
+    .join('');
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    overlays +
+    '<div class="terminal-panel ' + escapeHtml(type) + '">' +
+    '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
+    '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
+    '</div>' +
+    '<div class="terminal-prompt-line">Play again? (<span style="color:var(--green)">Y</span> to play again, <span style="color:var(--dim)">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
+    '</div>';
+
+  if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), view.node.text);
 }
 
 function choose(index) {
