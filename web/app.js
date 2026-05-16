@@ -440,19 +440,20 @@ function startTypewriter(element, text) {
   var delay = settings.delay_ms || 20;
 
   element.textContent = '';
-  var toReveal = Array.prototype.slice.call(
+  var toReveal = Array.from(
     document.querySelectorAll('.terminal-choice, .terminal-overlay, .terminal-prompt-line')
   );
   toReveal.forEach(function(el) { el.style.visibility = 'hidden'; });
 
+  var chars = Array.from(text);
   var i = 0;
   function step() {
-    if (i >= text.length) {
+    if (i >= chars.length) {
       twAnimation = null;
       revealChoices(toReveal);
       return;
     }
-    var ch = text[i++];
+    var ch = chars[i++];
     element.textContent += ch;
     var extra = pauses[ch] || 0;
     twAnimation = { id: setTimeout(step, delay + extra), text: text, element: element, toReveal: toReveal };
