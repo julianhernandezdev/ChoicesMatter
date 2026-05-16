@@ -40,34 +40,10 @@ body {
   padding: 0 1ch 3.5rem;
 }
 
-/* === MOBILE INPUT BAR === */
-#mobile-bar { display: none; }
-#mobile-capture {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 1rem;
-  text-align: center;
-  border: none;
-  outline: none;
-}
-#mobile-capture::placeholder { color: var(--dim); }
-
+/* === MOBILE KEYBOARD BUTTON === */
 .mobile-keyboard-btn { display: none; }
 
 @media (pointer: coarse) {
-  #app { padding-bottom: 0; }
-  #mobile-bar {
-    display: block;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--bg);
-    border-top: 1px solid var(--dim);
-  }
   .mobile-keyboard-btn {
     display: block;
     width: 100%;
