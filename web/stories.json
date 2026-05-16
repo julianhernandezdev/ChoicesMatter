@@ -1,11 +1,23 @@
 {
   "stories": [
     {
+      "path": "stories/ChoicesMatterGPT/ash_and_receipts.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
+      "path": "stories/ChoicesMatterGPT/the_lantern_rounds.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
       "path": "stories/horror/dead_air.json",
       "category": "horror"
     },
     {
       "path": "stories/horror/the_last_train.json",
+      "category": "horror"
+    },
+    {
+      "path": "stories/horror/this_house_remembered.json",
       "category": "horror"
     },
     {
