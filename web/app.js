@@ -641,7 +641,7 @@ document.addEventListener('keydown', function(e) {
     if (key === 'ESCAPE' && settingsEditRow !== null) { cancelSettingsEdit(); return; }
     if (key === 'ENTER' && settingsEditRow !== null) { confirmSettingsEdit(); return; }
     var ns = parseInt(e.key, 10);
-    if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+    if (settingsEditRow === null && ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
   }
 });
 
