@@ -1,5 +1,6 @@
 /* === VARIABLES === */
 :root {
+  color-scheme: dark;
   --bg: #0a0e14;
   --text: #c8d8e8;
   --bright: #e8f0f8;
@@ -130,7 +131,7 @@ body {
 }
 .terminal-choice:hover .choice-label { color: var(--bright); }
 
-.choice-num   { flex-shrink: 0; min-width: 3ch; }
+.choice-num   { color: var(--cyan); flex-shrink: 0; min-width: 3ch; }
 .choice-label { color: var(--text); }
 
 /* === OVERLAYS & INSETS === */
@@ -197,6 +198,10 @@ body {
   width: 6ch;
   outline: none;
   padding: 0;
+}
+
+.setting-input:focus {
+  outline: 1px solid var(--cyan);
 }
 
 /* === LOADING === */
