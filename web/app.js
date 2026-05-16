@@ -685,6 +685,8 @@ mobileCapture.addEventListener('keydown', function(e) {
     mobileCapture.value = '';
     updatePrompt();
     handleSubmit(input);
+    window.scrollTo(0, 0);
+    setTimeout(function() { mobileCapture.focus(); }, 0);
   }
 });
 
