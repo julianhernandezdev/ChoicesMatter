@@ -62,8 +62,8 @@ Choices Matter is a Python CLI text adventure engine. All story content lives in
 |---|---|---|
 | `label` | Yes | Text shown to the player. |
 | `next` | Yes | Node ID to navigate to. Must exist in `nodes`. |
-| `requires` | No | `{"flag": true/false}` — choice is hidden unless all conditions match current state. |
-| `sets` | No | `{"flag": true/false}` — applied to player state when this choice is taken. Keys must not start with `visited_` unless `meta.auto_visited_flags` is `false`. |
+| `requires` | No | Flag conditions — choice hidden unless all match. `bool` = exact; `int` = threshold (≥); `str` = exact; `list[str]` = membership. |
+| `sets` | No | Applied to state when choice is taken. `bool`/`int`/`str` = direct assignment; `"+N"`/`"-N"` strings = integer delta (unset key defaults to 0). Keys must not start with `visited_` unless `meta.auto_visited_flags` is `false`. |
 | `color` | No | Overrides node-level `choice_number_color` for this choice's number prefix. Non-empty string if provided. |
 | `obfuscated` | No | Boolean. If `true`, the label is replaced with `[REDACTED ██████]` in the choice list. The player can still select it; the real label is never shown. |
 
@@ -112,35 +112,56 @@ Built-in style keys for `style` fields on insets and overlays. User-configurable
 
 ## 9. The flag system
 
-The engine maintains a `state` dictionary of `string → boolean` flags across the run. Flags accumulate and are persisted in the save file. They are cleared on new game.
+The engine maintains a `state` dictionary of `string → bool | int | str` values across the run. State accumulates and is persisted in the save file. It is cleared on new game.
 
 **Three uses:**
-- **`choice.sets`** — applies flags when a choice is taken: `"sets": {"found_key": true}`
-- **`choice.requires`** / **`inset.requires`** / **`overlay.requires`** — hides the element unless all conditions match: `"requires": {"found_key": true}`
+- **`choice.sets`** — applies values when a choice is taken
+- **`choice.requires`** / **`inset.requires`** / **`overlay.requires`** — hides the element unless all conditions match
 
-**Auto-visited flags:** When `meta.auto_visited_flags` is `true` (the default), the engine automatically sets `visited_<node_id>: true` each time a node is entered via navigation. Use these in `requires` to detect revisits without any `sets` boilerplate. `visited_` is a reserved prefix — manually setting it via `sets` raises a validation error unless you opt out with `meta.auto_visited_flags: false`.
+**`sets` value types:**
 
-**Worked example** — flag set on one choice, used on an inset two nodes later:
+| Value | Effect |
+|---|---|
+| `true` / `false` | Boolean assignment |
+| integer (e.g. `5`) | Absolute integer assignment |
+| `"+N"` / `"-N"` (e.g. `"+1"`) | Integer delta — adds/subtracts from current value; unset key defaults to 0 |
+| string (e.g. `"red"`) | String assignment |
+
+**`requires` evaluation:**
+
+| Value | Condition |
+|---|---|
+| `true` / `false` | Exact boolean match |
+| integer (e.g. `3`) | Current value ≥ 3 |
+| string (e.g. `"red"`) | Exact string match |
+| `["red", "blue"]` | Current value is any member of the list |
+
+**Auto-visited flags:** When `meta.auto_visited_flags` is `true` (the default), the engine automatically sets `visited_<node_id>: true` each time a node is entered. Use in `requires` to detect revisits — no `sets` boilerplate needed. `visited_` is reserved; manually setting it raises a validation error unless `meta.auto_visited_flags` is `false`.
+
+**Worked example** — boolean flag, integer counter, and threshold require:
 
 ```json
-"hallway": {
-  "text": "You walk past the letter on the table.",
+"gate": {
+  "text": "The contact studies you.",
   "choices": [
-    { "label": "Pick up the letter", "next": "stairs", "sets": {"read_letter": true} },
-    { "label": "Leave it", "next": "stairs" }
+    { "label": "Help them", "next": "helped", "sets": {"trust": "+2", "aided": true} },
+    { "label": "Decline", "next": "helped" }
   ]
 },
-"stairs": {
-  "text": "The staircase is dark.",
+"helped": {
+  "text": "They nod.",
+  "choices": [
+    { "label": "Ask the question", "next": "secret", "requires": {"trust": 2} },
+    { "label": "Leave",            "next": "exit" }
+  ],
   "insets": [
     {
-      "text": "The letter is still in your pocket.",
-      "requires": {"read_letter": true},
+      "text": "You helped them. They remember.",
+      "requires": {"aided": true},
       "position": "before",
       "style": "memory"
     }
-  ],
-  "choices": [...]
+  ]
 }
 ```
 
@@ -174,7 +195,8 @@ The engine validates at load time and raises a hard error on any violation:
 - `ending_type` must be one of `"good"`, `"bad"`, `"neutral"`
 - `is_ending`, if present, must be `true` or `false`
 - `overlay.position` and `inset.position` must be `"before"` or `"after"`
-- All flag dicts (`requires`, `sets`) must map string keys to boolean values only — no integers, no strings
+- `requires` values must be `bool`, `int`, `str`, or a non-empty `list[str]`; keys must be strings
+- `sets` values must be `bool`, `int`, or `str`; delta strings (`"+1"`, `"-3"`) must match `^[+-]\d+$`
 - `choice.sets` keys must not start with `visited_` unless `meta.auto_visited_flags` is `false`
 - `scene`, `choice_number_color`, and `choice.color` must be non-empty strings if provided
 - `choice.obfuscated`, if present, must be `true` or `false`
@@ -299,8 +321,8 @@ The engine validates at load time and raises a hard error on any violation:
 | `overlays` | node | Styled lines around the choice list |
 | `is_ending` | node | Triggers ending screen; empty `choices` does the same |
 | `ending_type` | node | `"good"` / `"bad"` / `"neutral"` — ending panel color |
-| `requires` | choice / inset / overlay | Show only when all flag conditions match |
-| `sets` | choice | Apply flags when this choice is taken |
+| `requires` | choice / inset / overlay | Show only when all conditions match: bool=exact, int=threshold(≥), str=exact, list[str]=membership |
+| `sets` | choice | Apply state when taken: bool/int/str=direct, `"+N"`/`"-N"`=delta |
 | `color` | choice | Per-choice number prefix color override |
 | `obfuscated` | choice | Replace label with `[REDACTED ██████]` |
 | `position` | inset / overlay | `"before"` or `"after"` relative to prose / choice list |

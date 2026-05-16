@@ -83,27 +83,30 @@ An empty `choices` array is always treated as an ending, even without `is_ending
 
 ### Conditional Choices (Flags)
 
-Choices support `requires` and `sets` to gate content on boolean flags the player has accumulated:
+Choices support `requires` and `sets` to gate and track state. State values can be **booleans**, **integers**, or **strings**.
+
+**`sets`** — applies values to the player's state when this choice is taken:
 
 ```json
-"choices": [
-  {
-    "label": "Take the key",
-    "next": "use_key",
-    "sets": { "has_key": true }
-  },
-  {
-    "label": "Use the silver watch",
-    "next": "bribed_escape",
-    "requires": { "logbook_read": true }
-  }
-]
+{ "sets": { "has_key": true } }           // boolean flag
+{ "sets": { "trust": 3 } }                // absolute integer
+{ "sets": { "trust": "+1" } }             // delta — adds 1 (unset key defaults to 0)
+{ "sets": { "trust": "-2" } }             // delta — subtracts 2
+{ "sets": { "faction": "red" } }          // string assignment
 ```
 
-- `sets` — applies flags to the player's state when this choice is taken
-- `requires` — hides the choice entirely if the player doesn't have the matching flags
+**`requires`** — hides the choice entirely if conditions are not met:
 
-Flags accumulate across the run and are persisted in the save file.
+```json
+{ "requires": { "has_key": true } }                    // boolean exact match
+{ "requires": { "trust": 3 } }                         // integer threshold (trust ≥ 3)
+{ "requires": { "faction": "red" } }                   // string exact match
+{ "requires": { "faction": ["red", "blue"] } }         // string membership (any of)
+```
+
+Multiple conditions in one `requires` dict are ANDed — all must pass for the choice to appear.
+
+State accumulates across the run and is persisted in the save file.
 
 **Auto-visited flags:** The engine automatically sets `visited_<node_id>: true` each time a node is entered. Use these in `requires` to create revisit-aware content with no `sets` boilerplate:
 

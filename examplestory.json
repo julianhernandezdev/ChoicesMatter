@@ -48,7 +48,7 @@
         {
           "label": "Call Mira",
           "next": "call_mira",
-          "sets": { "called_mira": true }
+          "sets": { "called_mira": true, "trust": "+1" }
         },
         { "label": "Pocket the phone and study the map", "next": "study_map" }
       ]
@@ -157,6 +157,7 @@
     "safe_escape": {
       "scene": "Station Exit",
       "insets": [
+        { "text": "She warned you. You trusted her. That's why you're standing here.", "requires": { "trust": 1 }, "position": "before", "style": "memory" },
         { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
       ],
       "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
