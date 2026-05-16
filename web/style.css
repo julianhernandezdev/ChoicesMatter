@@ -41,25 +41,29 @@ body {
 }
 
 /* === MOBILE INPUT BAR === */
-#mobile-capture {
+#mobile-bar {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 0.75rem 1rem;
   background: var(--bg);
+  border-top: 1px solid var(--dim);
+}
+#mobile-capture {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
   color: var(--text);
   font-family: inherit;
   font-size: 1rem;
   text-align: center;
   border: none;
-  border-top: 1px solid var(--dim);
   outline: none;
 }
 #mobile-capture::placeholder { color: var(--dim); }
 @media (pointer: coarse) {
-  #mobile-capture { display: block; }
+  #mobile-bar { display: block; }
 }
 
 /* === TITLE BOX === */
