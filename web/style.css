@@ -151,6 +151,8 @@ body {
   color: var(--dim);
   margin-top: 0.75ch;
 }
+.key-fwd  { color: var(--green); }
+.key-back { color: var(--red); }
 
 .terminal-cursor {
   color: var(--text);

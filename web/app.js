@@ -355,7 +355,7 @@ function renderSettings() {
     renderRule('Settings – Typewriter', 'green') +
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number to edit · <span style="color:var(--green)">S</span> save · <span style="color:var(--red)">X</span> discard</div>' +
+    '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard</div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
 }
@@ -445,7 +445,7 @@ function renderPicker() {
     '<div class="terminal-list">' + items.join('') + '</div>' +
     renderRule('', 'dim') +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, <span style="color:var(--red)">Q</span> to quit, C to clear saves, or <span style="color:var(--green)">S</span> for settings:</div>' +
+    '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to quit, C to clear saves, or <span class="key-fwd">S</span> for settings:</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
@@ -463,7 +463,7 @@ function renderFolder(folderName) {
     renderRule('📁 ' + folderName + '/', 'green') +
     '<div class="terminal-list">' + items.join('') + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, <span style="color:var(--red)">B</span> to go back, or <span style="color:var(--red)">Q</span> to quit:</div>' +
+    '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit:</div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
 }
@@ -482,8 +482,8 @@ function renderResume(entry, skipWarnings) {
     '<div class="terminal-screen">' +
     '<div class="terminal-prose">A save was found for this story.</div>' +
     '<div class="terminal-prompt-line">Continue saved game? ' +
-    '(<span style="color:var(--green)">C</span> to continue, ' +
-    '<span style="color:var(--red)">N</span> for new): ' +
+    '(<span class="key-fwd">C</span> to continue, ' +
+    '<span class="key-back">N</span> for new): ' +
     '<span class="terminal-cursor">█</span></div>' +
     '</div>';
 }
@@ -503,7 +503,7 @@ function renderWarnings(entry, resume) {
     '<ul class="warning-list">' + items + '</ul>' +
     '</div>' +
     renderRule(storyTitle(entry), 'dim') +
-    '<div class="terminal-prompt-line">Proceed? (<span style="color:var(--green)">Y</span> to continue, <span style="color:var(--red)">N</span> to go back): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line">Proceed? (<span class="key-fwd">Y</span> to continue, <span class="key-back">N</span> to go back): <span class="terminal-cursor">█</span></div>' +
     '</div>';
 }
 
@@ -637,7 +637,7 @@ function renderGame() {
     beforeOverlays +
     '<div class="terminal-choices">' + choiceHtml + '</div>' +
     afterOverlays +
-    '<div class="terminal-prompt-line">Your choice (or <span style="color:var(--red)">Q</span> to return to menu): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line">Your choice (or <span class="key-back">Q</span> to return to menu): <span class="terminal-cursor">█</span></div>' +
     '</div>';
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), node.text);
@@ -662,7 +662,7 @@ function renderEnding(view) {
     '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
-    '<div class="terminal-prompt-line">Play again? (<span style="color:var(--green)">Y</span> to play again, <span style="color:var(--red)">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line">Play again? (<span class="key-fwd">Y</span> to play again, <span class="key-back">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
     '</div>';
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), view.node.text);
