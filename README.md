@@ -4,23 +4,14 @@
 
 # Choices Matter
 
-<p align="center">
-  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><strong>▶ Play Now</strong></a>
-</p>
-
 **Every choice leaves a mark. Every ending remembers.**
 
 A Python CLI text adventure engine with a browser play mode. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
 
 ## Play in Browser
-
-The hosted web player runs on GitHub Pages and saves progress in the player's browser.
-
-After GitHub Pages is enabled for this repository, the **Play Now** button opens:
-
-<https://julianhernandezdev.github.io/ChoicesMatter/>
-
-For repository maintainers: enable Pages from **Settings → Pages → Deploy from branch → main → /root**.
+<p align="center">
+  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><strong>Play Now</strong></a>
+</p>
 
 ## Requirements
 
