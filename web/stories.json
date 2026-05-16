@@ -1,0 +1,24 @@
+{
+  "stories": [
+    {
+      "path": "stories/horror/dead_air.json",
+      "category": "horror"
+    },
+    {
+      "path": "stories/horror/the_last_train.json",
+      "category": "horror"
+    },
+    {
+      "path": "stories/sci-fi/the_last_customer_support_representative.json",
+      "category": "sci-fi"
+    },
+    {
+      "path": "stories/sci-fi/the_long_route.json",
+      "category": "sci-fi"
+    },
+    {
+      "path": "stories/sci-fi/the_vulture_corridor_v2_1_demo.json",
+      "category": "sci-fi"
+    }
+  ]
+}
