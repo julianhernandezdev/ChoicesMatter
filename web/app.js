@@ -83,6 +83,7 @@ var warningResume = false;
 var settingsDraft = null;
 var settingsEditRow = null;
 var twAnimation = null;
+var pendingInput = '';
 
 let library = [];
 let currentRun = null;
@@ -321,7 +322,15 @@ function setSettingValue(draft, key, value) {
   else draft[key] = value;
 }
 
+function updatePrompt() {
+  var el = document.querySelector('.terminal-prompt-line');
+  if (!el) return;
+  var prefix = currentScreen === 'game' ? 'Your choice (or Q to return to menu): ' : '&gt; ';
+  el.innerHTML = prefix + escapeHtml(pendingInput) + '<span class="terminal-cursor">█</span>';
+}
+
 function renderSettings() {
+  pendingInput = '';
   currentScreen = 'settings';
   if (!settingsDraft) {
     var s = loadTypewriterSettings();
@@ -389,6 +398,7 @@ function renderLibrary() {
 }
 
 function renderPicker() {
+  pendingInput = '';
   currentScreen = 'library';
   var twOn = isTypewriterOn();
 
@@ -440,6 +450,7 @@ function renderPicker() {
 }
 
 function renderFolder(folderName) {
+  pendingInput = '';
   currentScreen = 'folder';
   currentFolder = folderName;
   var folderEntries = library.filter(function(e) { return e.category === folderName; });
@@ -460,6 +471,7 @@ function findEntry(path) {
 }
 
 function renderWarnings(entry, resume) {
+  pendingInput = '';
   currentScreen = 'warning';
   warningEntry = entry;
   warningResume = resume;
@@ -559,6 +571,7 @@ function revealChoices(elements) {
 }
 
 function renderGame() {
+  pendingInput = '';
   if (!currentRun) { renderLibrary(); return; }
   var view = currentView(currentRun);
   if (view.isEnding) { renderEnding(view); return; }
@@ -613,6 +626,7 @@ function renderGame() {
 }
 
 function renderEnding(view) {
+  pendingInput = '';
   currentScreen = 'ending';
   var story = currentRun.story;
   recordEnding(story, currentRun.nodeId);
@@ -684,20 +698,32 @@ document.addEventListener('keydown', function(e) {
       return;
     }
     if (key === 'S') { settingsDraft = null; renderSettings(); return; }
-    var n = parseInt(e.key, 10);
-    if (n >= 1 && n <= activeMenuEntries.length) {
-      var me = activeMenuEntries[n - 1];
-      if (me.type === 'folder') renderFolder(me.name);
-      else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
+    if (key === 'ENTER' && pendingInput) {
+      var n = parseInt(pendingInput, 10); pendingInput = '';
+      if (n >= 1 && n <= activeMenuEntries.length) {
+        var me = activeMenuEntries[n - 1];
+        if (me.type === 'folder') renderFolder(me.name);
+        else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+      }
+      return;
     }
+    var nd = parseInt(e.key, 10);
+    if (!isNaN(nd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
 
   } else if (currentScreen === 'folder') {
     if (key === 'Q' || key === 'B') { renderLibrary(); return; }
-    var nf = parseInt(e.key, 10);
-    if (nf >= 1 && nf <= activeMenuEntries.length) {
-      var mef = activeMenuEntries[nf - 1];
-      startStory(mef.entry, { resume: !!loadSave(mef.entry.story.meta.id) });
+    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
+    if (key === 'ENTER' && pendingInput) {
+      var nf = parseInt(pendingInput, 10); pendingInput = '';
+      if (nf >= 1 && nf <= activeMenuEntries.length) {
+        var mef = activeMenuEntries[nf - 1];
+        startStory(mef.entry, { resume: !!loadSave(mef.entry.story.meta.id) });
+      }
+      return;
     }
+    var nfd = parseInt(e.key, 10);
+    if (!isNaN(nfd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
 
   } else if (currentScreen === 'warning') {
     if (key === 'Y') startStory(warningEntry, { resume: warningResume, skipWarnings: true });
@@ -705,11 +731,15 @@ document.addEventListener('keydown', function(e) {
 
   } else if (currentScreen === 'game') {
     if (key === 'Q') { renderLibrary(); return; }
-    var ng = parseInt(e.key, 10);
-    if (ng >= 1) {
+    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
+    if (key === 'ENTER' && pendingInput) {
+      var ng = parseInt(pendingInput, 10); pendingInput = '';
       var vg = currentView(currentRun);
-      if (ng <= vg.choices.length) choose(ng - 1);
+      if (ng >= 1 && ng <= vg.choices.length) choose(ng - 1);
+      return;
     }
+    var ngd = parseInt(e.key, 10);
+    if (!isNaN(ngd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
 
   } else if (currentScreen === 'ending') {
     if (key === 'Y') startStory(currentRun.entry, { resume: false, skipWarnings: true });
@@ -720,8 +750,16 @@ document.addEventListener('keydown', function(e) {
     if (key === 'S') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
     if (key === 'ESCAPE' && settingsEditRow !== null) { cancelSettingsEdit(); return; }
     if (key === 'ENTER' && settingsEditRow !== null) { confirmSettingsEdit(); return; }
-    var ns = parseInt(e.key, 10);
-    if (settingsEditRow === null && ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+    if (settingsEditRow === null) {
+      if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
+      if (key === 'ENTER' && pendingInput) {
+        var ns = parseInt(pendingInput, 10); pendingInput = '';
+        if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+        return;
+      }
+      var nsd = parseInt(e.key, 10);
+      if (!isNaN(nsd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
+    }
   }
 });
 
