@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "id": "painted_doors",
+    "title": "Painted Doors",
+    "version": "1.0",
+    "author": "ChoicesMatterGPT",
+    "start_node": "hall"
+  },
+  "nodes": {
+    "hall": {
+      "scene": "The Underground Hall",
+      "choice_number_color": "yellow",
+      "insets": [
+        {
+          "text": "Three painted doors wait beneath a flickering light.",
+          "position": "before",
+          "style": "system"
+        }
+      ],
+      "text": "Red paint peels like dried blood. Blue paint shines fresh as rain. The white door at the end has no handle at all.",
+      "choices": [
+        {
+          "label": "Open the red door",
+          "next": "red_room",
+          "sets": {
+            "chosen_color": "red"
+          },
+          "color": "bright_red"
+        },
+        {
+          "label": "Open the blue door",
+          "next": "blue_room",
+          "sets": {
+            "chosen_color": "blue"
+          },
+          "color": "blue"
+        },
+        {
+          "label": "Inspect the white door",
+          "next": "white_door"
+        }
+      ]
+    },
+
+    "red_room": {
+      "scene": "The Red Room",
+      "text": "Warm air rolls across your face. A lantern burns beside a sleeping guard.",
+      "overlays": [
+        {
+          "text": "The hall already feels far away.",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Take the brass key",
+          "next": "white_door",
+          "sets": {
+            "has_key": true
+          }
+        },
+        {
+          "label": "Return to the hall",
+          "next": "hall"
+        }
+      ]
+    },
+
+    "blue_room": {
+      "scene": "The Blue Room",
+      "text": "Water drips steadily from the ceiling into a dark basin. Something gleams beneath the surface.",
+      "choices": [
+        {
+          "label": "Reach into the basin",
+          "next": "white_door",
+          "sets": {
+            "has_key": true
+          }
+        },
+        {
+          "label": "Return to the hall",
+          "next": "hall"
+        }
+      ]
+    },
+
+    "white_door": {
+      "scene": "The White Door",
+      "insets": [
+        {
+          "text": "You notice scratches around the frame, as if many people tried to force it open.",
+          "requires": {
+            "visited_hall": true
+          },
+          "style": "memory",
+          "position": "before"
+        }
+      ],
+      "text": "The white door stands silent. No hinges. No lock. Just a thin seam of light.",
+      "overlays": [
+        {
+          "text": "The paint on your hands matches one of the other doors.",
+          "requires": {
+            "chosen_color": ["red", "blue"]
+          },
+          "position": "before",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Press your hand against the door",
+          "next": "opened",
+          "requires": {
+            "chosen_color": "red",
+            "has_key": true
+          },
+          "color": "green"
+        },
+        {
+          "label": "Speak the word hidden beneath the water",
+          "next": "opened",
+          "requires": {
+            "chosen_color": "blue",
+            "has_key": true
+          },
+          "color": "green"
+        },
+        {
+          "label": "Go back",
+          "next": "hall"
+        }
+      ]
+    },
+
+    "opened": {
+      "scene": "Beyond",
+      "insets": [
+        {
+          "text": "The white door finally remembers how to open.",
+          "style": "whisper",
+          "position": "before"
+        }
+      ],
+      "text": "The seam widens into brilliant light. For a moment, you see a city hidden inside the walls of the world.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    }
+  }
+}

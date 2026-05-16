@@ -7,6 +7,7 @@ __pycache__/
 env/
 venv/
 .venv/
+
 *.egg-info/
 dist/
 build/
@@ -18,12 +19,6 @@ htmlcov/
 docs/
 .superpowers/
 
-# Project docs (local only)
-ProjectManagement.md
-ProjectChecklist.md
-GameConcept.md
-ROADMAP.md
-DevNotes.md
 
 # Game saves (runtime, not committed)
 saves/*
@@ -34,3 +29,7 @@ settings.json
 
 # Stories excluded from gen release (local backup only)
 storybackup/
+
+# Example and showcase stubs (work in progress, not yet published)
+stories/examples/
+stories/showcase/

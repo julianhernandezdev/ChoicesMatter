@@ -17,16 +17,18 @@ python main.py
 | File | Role |
 |---|---|
 | `main.py` | Entry point — story picker, wires together all components |
-| `engine.py` | Game loop, navigation, flag state, save triggers, ending detection |
-| `story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
-| `save.py` | Persistent save state — read/write/delete per story |
-| `gallery.py` | Ending gallery — tracks found endings per story across runs |
-| `display.py` | All `rich` rendering — nothing else imports `rich` |
-| `config.py` | Loads and saves `settings.json`, deep-merges with hardcoded defaults |
+| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection |
+| `src/story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
+| `src/save.py` | Persistent save state — read/write/delete per story |
+| `src/gallery.py` | Ending gallery — tracks found endings per story across runs |
+| `src/display.py` | All `rich` rendering — nothing else imports `rich` |
+| `src/config.py` | Loads and saves `settings.json`, deep-merges with hardcoded defaults |
 
 ```
+/src                 Python CLI engine package (imported as src.X from main.py and tests/)
 /stories             Drop .json story files here — auto-discovered at startup
 /saves               Auto-generated at runtime — one .save.json + one .gallery.json per story
+/scripts             Developer tools (sync_stories.py, validate_story.py)
 settings.json        Gitignored, per-user visual style overrides
 settings.example.json  Committed template
 ```
@@ -37,16 +39,16 @@ settings.example.json  Committed template
 
 ```
 main.py
-  └── StoryLoader (story.py)             loads + validates JSON
-  └── Display (display.py)               all terminal rendering
-  └── Engine (engine.py)
-        └── Story (story.py)             data model, node resolver
-        └── SaveManager (save.py)        read/write save state
-        └── GalleryManager (gallery.py)  record + persist found endings
-        └── Display (display.py)         render calls only
+  └── StoryLoader (src/story.py)             loads + validates JSON
+  └── Display (src/display.py)               all terminal rendering
+  └── Engine (src/engine.py)
+        └── Story (src/story.py)             data model, node resolver
+        └── SaveManager (src/save.py)        read/write save state
+        └── GalleryManager (src/gallery.py)  record + persist found endings
+        └── Display (src/display.py)         render calls only
 ```
 
-`config.py` is imported only by `display.py`.
+`src/config.py` is imported only by `src/display.py`.
 
 ## Story JSON Format
 
@@ -244,6 +246,6 @@ Drop a `.json` file into `/stories/`. No code changes needed.
 
 ## Extension Points
 
-- **Story validator CLI:** `python validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments.
+- **Story validator CLI:** `python scripts/validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python scripts/validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments.
 - **Multiple save slots:** Change `SaveManager` to accept a slot index; save path becomes `<story_id>.<slot>.save.json`.
 - **Graph branching (convergent nodes):** No engine changes needed — just point multiple `next` values at the same node ID.

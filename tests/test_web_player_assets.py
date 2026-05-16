@@ -39,9 +39,10 @@ def test_github_pages_entrypoint_references_web_player_assets() -> None:
 
 def test_web_player_is_static_and_persists_progress_in_browser() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    storage = (ROOT / "web" / "storage.js").read_text(encoding="utf-8")
 
     assert 'fetch("web/stories.json")' in app
-    assert "localStorage" in app
+    assert "localStorage" in storage
     assert "python" not in app.lower()
     assert "localhost" not in app.lower()
 
@@ -74,16 +75,16 @@ def test_app_js_has_resolve_color() -> None:
 
 
 def test_app_js_has_settings_store() -> None:
-    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
-    assert "TYPEWRITER_DEFAULTS" in app
-    assert "function loadTypewriterSettings(" in app
-    assert "function saveTypewriterSettings(" in app
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "TYPEWRITER_DEFAULTS" in tw
+    assert "function loadTypewriterSettings(" in tw
+    assert "function saveTypewriterSettings(" in tw
 
 
 def test_app_js_has_typewriter() -> None:
-    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
-    assert "function startTypewriter(" in app
-    assert "function skipTypewriter(" in app
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "function startTypewriter(" in tw
+    assert "function skipTypewriter(" in tw
 
 
 def test_app_js_has_keyboard_handler() -> None:

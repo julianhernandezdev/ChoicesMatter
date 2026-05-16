@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from save import SaveManager, SaveState
+from src.save import SaveManager, SaveState
 
 
 def test_has_save_false_when_missing(saves_dir: Path) -> None:

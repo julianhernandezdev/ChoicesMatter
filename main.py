@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from display import Display
-from engine import Engine
-from gallery import GalleryManager
-from save import SaveManager
-from story import StoryLoader, StoryValidationError
+from src.display import Display
+from src.engine import Engine
+from src.gallery import GalleryManager
+from src.save import SaveManager
+from src.story import StoryLoader, StoryValidationError
 
 STORIES_DIR = Path("stories")
 SAVES_DIR = Path("saves")

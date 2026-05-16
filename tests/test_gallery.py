@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from gallery import GalleryManager
+from src.gallery import GalleryManager
 
 
 def test_get_count_zero_when_no_file(saves_dir: Path) -> None:

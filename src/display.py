@@ -11,8 +11,8 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
-from config import load_settings, save_settings
-from story import Choice, Inset, Overlay
+from .config import load_settings, save_settings
+from .story import Choice, Inset, Overlay
 
 try:
     import msvcrt as _msvcrt

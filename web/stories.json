@@ -21,6 +21,10 @@
       "category": "horror"
     },
     {
+      "path": "stories/mystery/painted_doors.json",
+      "category": "mystery"
+    },
+    {
       "path": "stories/sci-fi/the_last_customer_support_representative.json",
       "category": "sci-fi"
     },

@@ -3,10 +3,10 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from engine import Engine
-from gallery import GalleryManager
-from save import SaveManager, SaveState
-from story import Choice, Node, Story
+from src.engine import Engine
+from src.gallery import GalleryManager
+from src.save import SaveManager, SaveState
+from src.story import Choice, Node, Story
 
 
 def _make_story(nodes: dict[str, Node], start: str = "start") -> Story:
@@ -215,7 +215,7 @@ def test_state_saved_and_restored(saves_dir: Path, flag_story: Story) -> None:
 
 
 def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path) -> None:
-    from story import Overlay
+    from src.story import Overlay
     story = _make_story({
         "start": Node(
             text="Here.",
@@ -233,7 +233,7 @@ def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path)
 
 
 def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> None:
-    from story import Overlay
+    from src.story import Overlay
     story = _make_story({
         "start": Node(
             text="Here.",
@@ -256,7 +256,7 @@ def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> No
 
 
 def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
-    from story import Overlay
+    from src.story import Overlay
     story = _make_story({
         "start": Node(
             text="Scene.",
@@ -279,7 +279,7 @@ def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
 
 
 def test_insets_with_unmet_requires_not_passed_to_show_node(saves_dir: Path) -> None:
-    from story import Inset
+    from src.story import Inset
     story = _make_story({
         "start": Node(
             text="Scene.",
@@ -297,7 +297,7 @@ def test_insets_with_unmet_requires_not_passed_to_show_node(saves_dir: Path) -> 
 
 
 def test_insets_with_met_requires_passed_to_show_node(saves_dir: Path) -> None:
-    from story import Inset
+    from src.story import Inset
     story = _make_story({
         "start": Node(
             text="Scene.",
@@ -320,7 +320,7 @@ def test_insets_with_met_requires_passed_to_show_node(saves_dir: Path) -> None:
 
 
 def test_before_and_after_insets_split_correctly(saves_dir: Path) -> None:
-    from story import Inset
+    from src.story import Inset
     story = _make_story({
         "start": Node(
             text="Scene.",

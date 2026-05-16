@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from main import _build_entries, _load_story_info
-from gallery import GalleryManager
-from save import SaveManager, SaveState
+from src.gallery import GalleryManager
+from src.save import SaveManager, SaveState
 
 
 def test_load_story_info_valid(valid_story_path: Path) -> None:

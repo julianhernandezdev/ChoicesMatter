@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from config import load_settings, save_settings
+from src.config import load_settings, save_settings
 
 
 def test_returns_defaults_when_file_missing(tmp_path: Path) -> None:

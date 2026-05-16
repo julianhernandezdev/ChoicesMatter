@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import re
 
-from display import Display
-from gallery import GalleryManager
-from save import SaveManager, SaveState
-from story import Choice, Story
+from .display import Display
+from .gallery import GalleryManager
+from .save import SaveManager, SaveState
+from .story import Choice, Story
 
 _DELTA_RE = re.compile(r"^[+-]\d+$")
 

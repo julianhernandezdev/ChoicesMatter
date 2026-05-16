@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from rich.panel import Panel
 
-from display import Display
-from story import Choice, Inset, Overlay
+from src.display import Display
+from src.story import Choice, Inset, Overlay
 
 
 @pytest.fixture
@@ -311,7 +311,7 @@ def test_show_settings_screen_discard_on_x(display):
 
 def test_show_settings_screen_save_on_s(display):
     display.console.input.side_effect = ["s", ""]  # s=save, ""=press-enter-to-return
-    with patch("display.save_settings") as mock_save:
+    with patch("src.display.save_settings") as mock_save:
         display.show_settings_screen()
         mock_save.assert_called_once()
 

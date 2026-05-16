@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from story import StoryLoader, StoryValidationError
+from src.story import StoryLoader, StoryValidationError
 
 
 def test_valid_story_loads(valid_story_path: Path, sample_story_dict: dict) -> None:

@@ -268,13 +268,13 @@ Stories can be organised into subfolders inside `/stories/`. The picker shows ea
 ## Validating a Story
 
 ```bash
-python validate_story.py stories/your_story.json
+python scripts/validate_story.py stories/your_story.json
 ```
 
 Checks schema (via the engine's own loader), reachability (BFS from `start_node`), and dead-ends (reachable nodes with empty `choices` and no `is_ending`). Accepts multiple files:
 
 ```bash
-python validate_story.py stories/horror/*.json stories/sci-fi/*.json
+python scripts/validate_story.py stories/horror/*.json stories/sci-fi/*.json
 ```
 
 Output: `WARN` for unreachable nodes, `ERROR` for dead-ends and schema failures. Exit codes: `0` = clean, `1` = errors found, `2` = no arguments.
@@ -282,18 +282,22 @@ Output: `WARN` for unreachable nodes, `ERROR` for dead-ends and schema failures.
 ## Project Structure
 
 ```
-main.py              Entry point — story picker, wires components
-engine.py            Game loop, navigation, save triggers, ending detection
-story.py             Data models (Story, Node, Choice, Overlay, Inset), loader, validation
-save.py              Persistent save state — read/write/delete per story
-gallery.py           Ending gallery — tracks found endings across runs
-display.py           All rich rendering — nothing else imports rich
-config.py            Loads settings.json, merges with defaults
-validate_story.py    Story validator — schema, reachability, dead-end detection
-index.html           GitHub Pages entrypoint for browser play
-web/app.js           Browser play mode logic
-web/style.css        Browser play mode styling
-web/stories.json     Static manifest of bundled stories
+main.py                    Entry point — story picker, wires components
+src/engine.py              Game loop, navigation, save triggers, ending detection
+src/story.py               Data models (Story, Node, Choice, Overlay, Inset), loader, validation
+src/save.py                Persistent save state — read/write/delete per story
+src/gallery.py             Ending gallery — tracks found endings across runs
+src/display.py             All rich rendering — nothing else imports rich
+src/config.py              Loads settings.json, merges with defaults
+scripts/validate_story.py  Story validator — schema, reachability, dead-end detection
+scripts/sync_stories.py    Regenerates web/stories.json manifest from stories/
+index.html                 GitHub Pages entrypoint for browser play
+web/app.js                 Browser play mode — rendering, screen state, UI logic
+web/engine.js              Browser engine — pure game logic (no DOM)
+web/storage.js             Browser storage — save/gallery via localStorage
+web/typewriter.js          Browser typewriter — animation and settings
+web/style.css              Browser play mode styling
+web/stories.json           Static manifest of bundled stories (auto-generated)
 
 /stories             Drop .json story files here — auto-discovered at startup (subfolders supported)
 /saves               Auto-generated — one .save.json + one .gallery.json per story

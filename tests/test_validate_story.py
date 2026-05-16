@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from validate_story import reachable_nodes, validate_file
-from story import StoryLoader
+from scripts.validate_story import reachable_nodes, validate_file
+from src.story import StoryLoader
 
 
 # ---------------------------------------------------------------------------

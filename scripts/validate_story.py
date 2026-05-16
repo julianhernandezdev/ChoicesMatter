@@ -24,7 +24,9 @@ import sys
 from collections import deque
 from pathlib import Path
 
-from story import Story, StoryLoader, StoryValidationError
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.story import Story, StoryLoader, StoryValidationError
 
 
 def reachable_nodes(story: Story) -> set[str]:
