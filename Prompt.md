@@ -1,5 +1,7 @@
 # Choices Matter — Story Authoring Reference
 
+**Version: v0.7**
+
 Use this document as a complete reference for writing story JSON files for the Choices Matter engine. No other project knowledge is required.
 
 ---
