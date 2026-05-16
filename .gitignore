@@ -14,6 +14,10 @@ build/
 .coverage
 htmlcov/
 
+# Superpowers brainstorm / specs (local only)
+docs/
+.superpowers/
+
 # Project docs (local only)
 ProjectManagement.md
 ProjectChecklist.md
