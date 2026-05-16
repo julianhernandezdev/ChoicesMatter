@@ -29,6 +29,7 @@ var resumeEntry = null;
 var resumeSkipWarnings = false;
 var settingsDraft = null;
 var settingsEditRow = null;
+var speedCustomEdit = false;
 var pendingInput = '';
 
 // --- App state ---
@@ -120,6 +121,14 @@ function findEntry(path) {
 
 // --- Settings UI helpers ---
 
+var SPEED_PRESETS = [
+  { label: 'Slowest', ms: 60 },
+  { label: 'Slow',    ms: 40 },
+  { label: 'Normal',  ms: 35 },
+  { label: 'Fast',    ms: 15 },
+  { label: 'Fastest', ms:  5 },
+];
+
 var SETTINGS_ROWS = [
   { key: 'enabled',   label: 'Enabled',        type: 'boolean' },
   { key: 'delay_ms',  label: 'Speed',           type: 'number', unit: 'ms' },
@@ -143,10 +152,11 @@ function setSettingValue(draft, key, value) {
 // --- Prompt ---
 
 function promptPrefix() {
-  if (currentScreen === 'game')    return 'Your choice (or <span class="key-back">Q</span> to menu): ';
-  if (currentScreen === 'resume')  return 'Continue? (<span class="key-fwd">C</span> continue &middot; <span class="key-back">N</span> new game): ';
-  if (currentScreen === 'warning') return 'Proceed? (<span class="key-fwd">Y</span> continue &middot; <span class="key-back">N</span> back): ';
-  if (currentScreen === 'ending')  return 'Play again? (<span class="key-fwd">Y</span> yes &middot; <span class="key-back">N</span> library): ';
+  if (currentScreen === 'game')           return 'Your choice (or <span class="key-back">Q</span> to menu): ';
+  if (currentScreen === 'resume')         return 'Continue? (<span class="key-fwd">C</span> continue &middot; <span class="key-back">N</span> new game): ';
+  if (currentScreen === 'warning')        return 'Proceed? (<span class="key-fwd">Y</span> continue &middot; <span class="key-back">N</span> back): ';
+  if (currentScreen === 'ending')         return 'Play again? (<span class="key-fwd">Y</span> yes &middot; <span class="key-back">N</span> library): ';
+  if (currentScreen === 'settings-speed') return speedCustomEdit ? 'Enter ms (5&ndash;200): ' : '&gt; ';
   return '&gt; ';
 }
 
@@ -388,9 +398,51 @@ function renderSettings() {
   updatePrompt();
 }
 
+function renderSpeedPresets() {
+  pendingInput = '';
+  currentScreen = 'settings-speed';
+  speedCustomEdit = false;
+  var current = settingsDraft.delay_ms;
+  var isPreset = SPEED_PRESETS.some(function(p) { return p.ms === current; });
+
+  var rows = SPEED_PRESETS.map(function(p, i) {
+    var active = p.ms === current;
+    var markerHtml = active
+      ? '<span class="key-fwd">›</span>'
+      : '<span class="setting-marker"> </span>';
+    return '<div class="terminal-settings-row" data-action="speed-preset" data-index="' + i + '">' +
+      markerHtml +
+      '<span class="setting-num">' + (i + 1) + '.</span>' +
+      '<span class="setting-name">' + escapeHtml(p.label) + '</span>' +
+      '<span class="setting-value">' + p.ms + ' ms</span>' +
+      '</div>';
+  }).join('');
+
+  var customVal = isPreset ? '' : current + ' ms';
+  var customActive = !isPreset;
+  rows +=
+    '<div class="terminal-settings-row" data-action="speed-custom">' +
+    (customActive ? '<span class="key-fwd">›</span>' : '<span class="setting-marker"> </span>') +
+    '<span class="setting-num">6.</span>' +
+    '<span class="setting-name">Custom</span>' +
+    '<span class="setting-value" id="speed-custom-val">' + escapeHtml(customVal) + '</span>' +
+    '</div>';
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Settings – Typewriter Speed', 'green') +
+    '<div class="terminal-list">' + rows + '</div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">1–5 to pick preset &middot; <span class="key-fwd">6</span> for custom &middot; <span class="key-back">B</span> back. Press Enter to confirm.</div>' +
+    '<div class="terminal-prompt-line"></div>' +
+    '</div></div>';
+  updatePrompt();
+}
+
 function startSettingsEdit(rowIndex) {
   var row = SETTINGS_ROWS[rowIndex];
   if (!row) return;
+  if (row.key === 'delay_ms') { renderSpeedPresets(); return; }
   var val = getSettingValue(settingsDraft, row.key);
   if (row.type === 'boolean') {
     setSettingValue(settingsDraft, row.key, !val);
@@ -484,6 +536,12 @@ app.addEventListener('click', function(event) {
     if (!isTwAnimating()) choose(Number(button.dataset.index));
   } else if (action === 'settings-row') {
     startSettingsEdit(Number(button.dataset.row));
+  } else if (action === 'speed-preset') {
+    settingsDraft.delay_ms = SPEED_PRESETS[Number(button.dataset.index)].ms;
+    renderSettings();
+  } else if (action === 'speed-custom') {
+    speedCustomEdit = true;
+    updatePrompt();
   }
 });
 
@@ -535,6 +593,27 @@ function handleSubmit(input) {
     if (input === 's') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
     var ns = parseInt(input, 10);
     if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+
+  } else if (currentScreen === 'settings-speed') {
+    if (input === 'b') { renderSettings(); return; }
+    if (speedCustomEdit) {
+      var ms = parseInt(input, 10);
+      if (!isNaN(ms) && ms >= 5 && ms <= 200) settingsDraft.delay_ms = ms;
+      speedCustomEdit = false;
+      renderSpeedPresets();
+      return;
+    }
+    var sp = parseInt(input, 10);
+    if (sp >= 1 && sp <= SPEED_PRESETS.length) {
+      settingsDraft.delay_ms = SPEED_PRESETS[sp - 1].ms;
+      renderSettings();
+      return;
+    }
+    if (input === '6') {
+      speedCustomEdit = true;
+      updatePrompt();
+      return;
+    }
   }
 }
 
@@ -554,6 +633,7 @@ document.addEventListener('keydown', function(e) {
     if (keyUp === 'ESCAPE') { cancelSettingsEdit();  return; }
     return;
   }
+  // Speed custom edit uses pendingInput (no real <input>), so falls through normally
 
   if (keyUp === 'BACKSPACE') {
     pendingInput = pendingInput.slice(0, -1);
