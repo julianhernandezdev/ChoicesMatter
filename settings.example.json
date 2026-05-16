@@ -1,4 +1,7 @@
 {
+  "picker": {
+    "page_size": 5
+  },
   "typewriter": {
     "enabled": true,
     "delay_ms": 35,

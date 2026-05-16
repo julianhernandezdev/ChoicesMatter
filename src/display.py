@@ -91,7 +91,16 @@ class Display:
             )
         )
 
-    def show_story_picker(self, entries: list[dict], title: str = "Select a Story") -> None:
+    def get_page_size(self) -> int:
+        return max(1, self._cfg.get("picker", {}).get("page_size", 5))
+
+    def show_story_picker(
+        self,
+        entries: list[dict],
+        title: str = "Select a Story",
+        page: int = 0,
+        total_pages: int = 1,
+    ) -> None:
         self.console.print(Rule(f"[bold cyan]{title}[/bold cyan]"))
         self.console.print()
         for entry in entries:
@@ -118,6 +127,12 @@ class Display:
                     stats = f"{node_count} nodes · {endings_str} endings · {est_time}"
                     self.console.print(f"      [dim]{stats}[/dim]")
         self.console.print()
+        if total_pages > 1:
+            self.console.print(
+                f"  [cyan]Page {page + 1} of {total_pages}[/cyan]  "
+                f"[dim]·  W prev · D next · 0 first page[/dim]"
+            )
+            self.console.print()
 
     def show_picker_error(self, name: str, message: str) -> None:
         self.console.print(
@@ -278,15 +293,27 @@ class Display:
     # Input prompts
     # ------------------------------------------------------------------
 
-    def prompt_story_select(self, count: int, has_back: bool = False) -> int | None | str:
-        """Return 1-based index, None to quit, 'back', 'clear', 'toggle_typewriter', or 'settings'."""
+    def prompt_story_select(
+        self,
+        count: int,
+        has_back: bool = False,
+        total_pages: int = 1,
+    ) -> int | None | str:
+        """Return 1-based index, None to quit, 'back', 'clear', 'toggle_typewriter', 'settings',
+        'prev_page', 'next_page', or 'first_page'."""
         while True:
             enabled = self._cfg.get("typewriter", {}).get("enabled", False)
             tw_label = "[green]ON[/green]" if enabled else "[dim]OFF[/dim]"
             if has_back:
-                self.console.print("  [bold]Enter a number, B to go back, or Q to quit:[/bold]")
+                hint = "Enter a number, B to go back, or Q to quit"
+                if total_pages > 1:
+                    hint += "  ·  W prev · D next · 0 first page"
+                self.console.print(f"  [bold]{hint}:[/bold]")
             else:
-                self.console.print("  [bold]Enter a number, Q to quit, C to clear saves, or S for settings:[/bold]")
+                hint = "Enter a number, Q to quit, C to clear saves, or S for settings"
+                if total_pages > 1:
+                    hint += "  ·  W prev · D next · 0 first page"
+                self.console.print(f"  [bold]{hint}:[/bold]")
                 self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
             raw = self.console.input("  › ").strip().lower()
             if raw == "q":
@@ -300,7 +327,14 @@ class Display:
                     return "toggle_typewriter"
                 if raw == "s":
                     return "settings"
-            if raw.isdigit():
+            if total_pages > 1:
+                if raw == "w":
+                    return "prev_page"
+                if raw == "d":
+                    return "next_page"
+                if raw == "0":
+                    return "first_page"
+            if raw.isdigit() and raw != "0":
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
@@ -312,13 +346,15 @@ class Display:
         while True:
             self.clear_screen()
             tw = draft.setdefault("typewriter", {})
+            picker = draft.setdefault("picker", {})
             enabled = tw.get("enabled", True)
             delay = tw.get("delay_ms", 35)
             pauses = tw.setdefault("punctuation_pauses", {})
+            page_size = picker.get("page_size", 5)
             tw_state = "[green]on[/green]" if enabled else "[dim]off[/dim]"
 
             self.console.print()
-            self.console.print(Rule("[bold cyan]Settings — Typewriter[/bold cyan]"))
+            self.console.print(Rule("[bold cyan]Settings[/bold cyan]"))
             self.console.print()
             self.console.print(f"  [cyan]1.[/cyan]  Enabled          {tw_state}")
             self.console.print(f"  [cyan]2.[/cyan]  Speed            [bold]{delay} ms[/bold]")
@@ -327,6 +363,7 @@ class Display:
             self.console.print(f"  [cyan]5.[/cyan]  Pause after  ?   [bold]{pauses.get('?', 350)} ms[/bold]")
             self.console.print(f"  [cyan]6.[/cyan]  Pause after  …   [bold]{pauses.get('…', 700)} ms[/bold]")
             self.console.print(f"  [cyan]7.[/cyan]  Pause after  —   [bold]{pauses.get('—', 600)} ms[/bold]")
+            self.console.print(f"  [cyan]8.[/cyan]  Stories per page [bold]{page_size}[/bold]")
             self.console.print()
             self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
             raw = self.console.input("  › ").strip().lower()
@@ -346,6 +383,8 @@ class Display:
                 punct_map = {3: (".", 550), 4: ("!", 250), 5: ("?", 350), 6: ("…", 700), 7: ("—", 600)}
                 key, default = punct_map[int(raw)]
                 self._settings_edit_pause(pauses, key, pauses.get(key, default))
+            elif raw == "8":
+                self._settings_edit_page_size(picker)
 
     def _settings_edit_speed(self, tw: dict) -> None:
         self.clear_screen()
@@ -387,6 +426,23 @@ class Display:
                 pauses[key] = int(raw)
                 return
             self.console.print("  [red]Enter a number between 0 and 2000.[/red]")
+
+    def _settings_edit_page_size(self, picker: dict) -> None:
+        self.clear_screen()
+        self.console.print()
+        self.console.print(Rule("[bold cyan]Settings — Stories Per Page[/bold cyan]"))
+        self.console.print()
+        current = picker.get("page_size", 5)
+        self.console.print(f"  Current: [bold]{current}[/bold]")
+        self.console.print()
+        while True:
+            raw = self.console.input("  Enter number (1–50, or Enter to keep): ").strip()
+            if raw == "":
+                return
+            if raw.isdigit() and 1 <= int(raw) <= 50:
+                picker["page_size"] = int(raw)
+                return
+            self.console.print("  [red]Enter a number between 1 and 50.[/red]")
 
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})

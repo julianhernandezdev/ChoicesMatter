@@ -6,6 +6,9 @@ from pathlib import Path
 _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefix")
 
 _DEFAULTS: dict = {
+    "picker": {
+        "page_size": 5,
+    },
     "typewriter": {
         "enabled": True,
         "delay_ms": 35,

@@ -203,6 +203,7 @@ body {
 .terminal-footer    { margin-top: 0.75ch; }
 .footer-hint        { color: var(--text); }
 .footer-typewriter  { color: var(--dim); margin-top: 0.3ch; }
+.footer-page-hint   { color: var(--cyan); margin-bottom: 0.5ch; }
 .tw-state-on        { color: var(--green); }
 .tw-state-off       { color: var(--dim); }
 

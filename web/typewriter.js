@@ -4,6 +4,7 @@ export const TYPEWRITER_DEFAULTS = {
   enabled: true,
   delay_ms: 20,
   pauses: { '.': 150, '!': 150, '?': 150, '…': 200, '—': 100 },
+  page_size: 5,
 };
 
 export function loadTypewriterSettings() {
@@ -14,12 +15,14 @@ export function loadTypewriterSettings() {
       enabled: typeof stored.enabled === 'boolean' ? stored.enabled : TYPEWRITER_DEFAULTS.enabled,
       delay_ms: typeof stored.delay_ms === 'number' ? stored.delay_ms : TYPEWRITER_DEFAULTS.delay_ms,
       pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses, stored.pauses || {}),
+      page_size: (typeof stored.page_size === 'number' && stored.page_size >= 1) ? stored.page_size : TYPEWRITER_DEFAULTS.page_size,
     };
   } catch {
     return {
       enabled: TYPEWRITER_DEFAULTS.enabled,
       delay_ms: TYPEWRITER_DEFAULTS.delay_ms,
       pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses),
+      page_size: TYPEWRITER_DEFAULTS.page_size,
     };
   }
 }

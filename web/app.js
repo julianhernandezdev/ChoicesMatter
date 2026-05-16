@@ -23,6 +23,7 @@ var COLOR_MAP = {
 
 var currentScreen = 'library';
 var currentFolder = null;
+var currentPage = 0;
 var activeMenuEntries = [];
 var warningEntry = null;
 var warningResume = false;
@@ -138,7 +139,19 @@ var SETTINGS_ROWS = [
   { key: 'pauses.?',  label: 'Pause after  ?',  type: 'number', unit: 'ms' },
   { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms' },
   { key: 'pauses.—', label: 'Pause after  —', type: 'number', unit: 'ms' },
+  { key: 'page_size', label: 'Stories per page', type: 'number', unit: '' },
 ];
+
+function getPageSize() { return loadTypewriterSettings().page_size || 5; }
+function getTotalPages(entries) { return Math.max(1, Math.ceil(entries.length / getPageSize())); }
+function getPagedEntries(entries) { var ps = getPageSize(); return entries.slice(currentPage * ps, (currentPage + 1) * ps); }
+
+function changePage(delta) {
+  var total = getTotalPages(activeMenuEntries);
+  currentPage = delta === -Infinity ? 0 : Math.max(0, Math.min(total - 1, currentPage + delta));
+  if (currentScreen === 'library') renderPicker();
+  else if (currentScreen === 'folder') renderFolder(currentFolder);
+}
 
 function getSettingValue(draft, key) {
   if (key.indexOf('pauses.') === 0) return draft.pauses[key.slice('pauses.'.length)];
@@ -199,39 +212,45 @@ function renderPicker() {
     else rootStories.push(entry);
   });
 
-  var items = [];
   var menuEntries = [];
-  var idx = 1;
 
   Object.keys(folders).sort().forEach(function(name) {
-    var count = folders[name].length;
-    items.push(
-      '<div class="terminal-list-item" data-action="open-folder" data-folder="' + escapeHtml(name) + '">' +
-      '<span class="item-num">' + idx + '.</span>' +
-      '<div><div class="item-name">📁 ' + escapeHtml(name) + '/</div>' +
-      '<div class="item-meta">' + count + ' ' + (count === 1 ? 'story' : 'stories') + '</div></div>' +
-      '</div>'
-    );
     menuEntries.push({ type: 'folder', name: name });
-    idx++;
   });
 
   rootStories.forEach(function(entry) {
-    items.push(renderPickerEntry(entry, idx));
     menuEntries.push({ type: 'story', entry: entry });
-    idx++;
   });
 
   activeMenuEntries = menuEntries;
+  var totalPages = getTotalPages(menuEntries);
+  var pagedEntries = getPagedEntries(menuEntries);
+  var pagedItems = pagedEntries.map(function(me, i) {
+    return me.type === 'folder'
+      ? (function(name) {
+          var count = folders[name].length;
+          return '<div class="terminal-list-item" data-action="open-folder" data-folder="' + escapeHtml(name) + '">' +
+            '<span class="item-num">' + (i + 1) + '.</span>' +
+            '<div><div class="item-name">📁 ' + escapeHtml(name) + '/</div>' +
+            '<div class="item-meta">' + count + ' ' + (count === 1 ? 'story' : 'stories') + '</div></div>' +
+            '</div>';
+        })(me.name)
+      : renderPickerEntry(me.entry, i + 1);
+  });
+
+  var pageHint = totalPages > 1
+    ? '<div class="footer-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '  ·  ↑/↓ or W/D to navigate · 0 for first page</div>'
+    : '';
 
   app.innerHTML =
     '<div class="terminal-screen">' +
     '<div class="terminal-title-box">Choices Matter</div>' +
     renderRule('A text adventure engine', 'green') +
     renderRule('Select a Story', 'green') +
-    '<div class="terminal-list">' + items.join('') + '</div>' +
+    '<div class="terminal-list">' + pagedItems.join('') + '</div>' +
     renderRule('', 'dim') +
     '<div class="terminal-footer">' +
+    pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
     '<div class="terminal-prompt-line"></div>' +
@@ -243,17 +262,25 @@ function renderPicker() {
 function renderFolder(folderName) {
   pendingInput = '';
   currentScreen = 'folder';
+  if (folderName !== currentFolder) currentPage = 0;
   currentFolder = folderName;
   var folderEntries = library.filter(function(e) { return e.category === folderName; });
   activeMenuEntries = folderEntries.map(function(entry) { return { type: 'story', entry: entry }; });
-  var items = folderEntries.map(function(entry, i) { return renderPickerEntry(entry, i + 1); });
+  var totalPages = getTotalPages(activeMenuEntries);
+  var pagedEntries = getPagedEntries(activeMenuEntries);
+  var items = pagedEntries.map(function(me, i) { return renderPickerEntry(me.entry, i + 1); });
+  var pageHint = totalPages > 1
+    ? '<div class="footer-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '  ·  ↑/↓ or W/D to navigate · 0 for first page</div>'
+    : '';
   app.innerHTML =
     '<div class="terminal-screen">' +
     renderRule('📁 ' + folderName + '/', 'green') +
     '<div class="terminal-list">' + items.join('') + '</div>' +
     '<div class="terminal-footer">' +
+    pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -267,6 +294,7 @@ function renderResume(entry, skipWarnings) {
     '<div class="terminal-screen">' +
     '<div class="terminal-prose">A save was found for this story.</div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
@@ -287,6 +315,7 @@ function renderWarnings(entry, resume) {
     '</div>' +
     renderRule(storyTitle(entry), 'dim') +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
@@ -340,6 +369,7 @@ function renderGame() {
     '<div class="terminal-choices">' + choiceHtml + '</div>' +
     afterOverlays +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -365,6 +395,7 @@ function renderEnding(view) {
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -376,7 +407,7 @@ function renderSettings() {
   currentScreen = 'settings';
   if (!settingsDraft) {
     var s = loadTypewriterSettings();
-    settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses) };
+    settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses), page_size: s.page_size };
   }
   settingsEditRow = null;
 
@@ -392,11 +423,12 @@ function renderSettings() {
 
   app.innerHTML =
     '<div class="terminal-screen">' +
-    renderRule('Settings – Typewriter', 'green') +
+    renderRule('Settings', 'green') +
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
     '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -438,6 +470,7 @@ function renderSpeedPresets() {
     '<div class="terminal-footer">' +
     '<div class="footer-hint">1–5 to pick preset &middot; <span class="key-fwd">6</span> for custom &middot; <span class="key-back">B</span> back. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -464,8 +497,12 @@ function startSettingsEdit(rowIndex) {
 function confirmSettingsEdit() {
   var input = document.getElementById('settings-edit-input');
   if (!input || settingsEditRow === null) return;
+  var row = SETTINGS_ROWS[settingsEditRow];
   var num = parseInt(input.value, 10);
-  if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, SETTINGS_ROWS[settingsEditRow].key, num);
+  if (!isNaN(num)) {
+    if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
+    if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+  }
   settingsEditRow = null;
   renderSettings();
 }
@@ -481,6 +518,7 @@ function renderLibrary() {
   currentRun = null;
   lastSaved = '';
   currentFolder = null;
+  currentPage = 0;
   renderPicker();
 }
 
@@ -563,8 +601,9 @@ function handleSubmit(input) {
     }
     if (input === 's') { settingsDraft = null; renderSettings(); return; }
     var n = parseInt(input, 10);
-    if (n >= 1 && n <= activeMenuEntries.length) {
-      var me = activeMenuEntries[n - 1];
+    var ps = getPageSize();
+    if (n >= 1 && n <= Math.min(ps, activeMenuEntries.length - currentPage * ps)) {
+      var me = activeMenuEntries[currentPage * ps + (n - 1)];
       if (me.type === 'folder') renderFolder(me.name);
       else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
     }
@@ -572,8 +611,10 @@ function handleSubmit(input) {
   } else if (currentScreen === 'folder') {
     if (input === 'q' || input === 'b') { renderLibrary(); return; }
     var nf = parseInt(input, 10);
-    if (nf >= 1 && nf <= activeMenuEntries.length) {
-      startStory(activeMenuEntries[nf - 1].entry, { resume: !!loadSave(activeMenuEntries[nf - 1].entry.story.meta.id) });
+    var psf = getPageSize();
+    if (nf >= 1 && nf <= Math.min(psf, activeMenuEntries.length - currentPage * psf)) {
+      var fullIdxF = currentPage * psf + (nf - 1);
+      startStory(activeMenuEntries[fullIdxF].entry, { resume: !!loadSave(activeMenuEntries[fullIdxF].entry.story.meta.id) });
     }
 
   } else if (currentScreen === 'resume') {
@@ -643,6 +684,16 @@ document.addEventListener('keydown', function(e) {
   }
   // Speed custom edit uses pendingInput (no real <input>), so falls through normally
 
+  if (currentScreen === 'library' || currentScreen === 'folder') {
+    if (key === 'ArrowUp')   { e.preventDefault(); changePage(-1);        return; }
+    if (key === 'ArrowDown') { e.preventDefault(); changePage(+1);        return; }
+    if (getTotalPages(activeMenuEntries) > 1) {
+      if (keyUp === 'W') { e.preventDefault(); changePage(-1);        return; }
+      if (keyUp === 'D') { e.preventDefault(); changePage(+1);        return; }
+      if (key === '0')   { e.preventDefault(); changePage(-Infinity); return; }
+    }
+  }
+
   if (keyUp === 'BACKSPACE') {
     pendingInput = pendingInput.slice(0, -1);
     updatePrompt();
@@ -672,13 +723,25 @@ document.addEventListener('click', function() {
 });
 
 mobileCapture.addEventListener('input', function() {
-  if (currentScreen === 'settings' && settingsEditRow !== null) return;
+  if (currentScreen === 'settings' && settingsEditRow !== null) {
+    var inline = document.getElementById('settings-edit-input');
+    if (inline) inline.value = mobileCapture.value;
+    return;
+  }
   pendingInput = mobileCapture.value;
   updatePrompt();
 });
 
 mobileCapture.addEventListener('keydown', function(e) {
-  if (currentScreen === 'settings' && settingsEditRow !== null) return;
+  if (currentScreen === 'settings' && settingsEditRow !== null) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      mobileCapture.value = '';
+      confirmSettingsEdit();
+      setTimeout(function() { mobileCapture.focus(); }, 0);
+    }
+    return;
+  }
   if (e.key === 'Enter') {
     e.preventDefault();
     var input = pendingInput.trim().toLowerCase();

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from src.display import Display
@@ -24,6 +25,7 @@ def main() -> None:
     gallery_manager = GalleryManager(SAVES_DIR)
     errors: dict[Path, str] = {}
 
+    page = 0
     while True:
         root_paths, folders = StoryLoader.discover_with_folders(STORIES_DIR)
 
@@ -31,13 +33,30 @@ def main() -> None:
             display.show_no_stories()
             return
 
-        entries = _build_top_level_entries(root_paths, folders, errors, save_manager, gallery_manager)
-        display.show_story_picker(entries)
+        full_entries = _build_top_level_entries(root_paths, folders, errors, save_manager, gallery_manager)
+        page_size = display.get_page_size()
+        total_entries = len(full_entries)
+        total_pages = max(1, math.ceil(total_entries / page_size))
+        page = max(0, min(page, total_pages - 1))
+        start = page * page_size
+        paged = full_entries[start:start + page_size]
+        display_entries = [{**e, "index": i + 1} for i, e in enumerate(paged)]
 
-        total = len(root_paths) + len(folders)
-        selection = display.prompt_story_select(total)
+        display.clear_screen()
+        display.show_story_picker(display_entries, page=page, total_pages=total_pages)
+
+        selection = display.prompt_story_select(len(display_entries), total_pages=total_pages)
         if selection is None:
             return
+        if selection == "prev_page":
+            page = max(0, page - 1)
+            continue
+        if selection == "next_page":
+            page = min(total_pages - 1, page + 1)
+            continue
+        if selection == "first_page":
+            page = 0
+            continue
         if selection == "toggle_typewriter":
             display.toggle_typewriter()
             continue
@@ -51,7 +70,8 @@ def main() -> None:
                 display.show_clear_complete()
             continue
 
-        chosen_entry = entries[selection - 1]
+        full_idx = start + (selection - 1)
+        chosen_entry = full_entries[full_idx]
 
         if chosen_entry.get("type") == "folder":
             folder_name = chosen_entry["label"]
@@ -62,7 +82,7 @@ def main() -> None:
             if chosen_path is None:
                 continue
         else:
-            chosen_path = root_paths[selection - 1]
+            chosen_path = root_paths[full_idx]
 
         _launch_story(chosen_path, errors, save_manager, gallery_manager, display)
 
@@ -76,16 +96,33 @@ def _run_folder_picker(
     display: Display,
 ) -> Path | None:
     """Show the contents of a folder. Returns chosen Path or None (back)."""
+    full_entries = _build_entries(paths, errors, save_manager, gallery_manager)
+    page = 0
     while True:
         display.clear_screen()
-        entries = _build_entries(paths, errors, save_manager, gallery_manager)
-        display.show_story_picker(entries, title=f"📁 {folder_name}/")
-        selection = display.prompt_story_select(len(paths), has_back=True)
+        page_size = display.get_page_size()
+        total_pages = max(1, math.ceil(len(full_entries) / page_size))
+        page = max(0, min(page, total_pages - 1))
+        start = page * page_size
+        paged = full_entries[start:start + page_size]
+        display_entries = [{**e, "index": i + 1} for i, e in enumerate(paged)]
+        display.show_story_picker(display_entries, title=f"📁 {folder_name}/", page=page, total_pages=total_pages)
+        selection = display.prompt_story_select(len(display_entries), has_back=True, total_pages=total_pages)
         if selection is None or selection == "back":
             display.clear_screen()
             return None
-        chosen_entry = entries[selection - 1]
-        chosen_path = paths[selection - 1]
+        if selection == "prev_page":
+            page = max(0, page - 1)
+            continue
+        if selection == "next_page":
+            page = min(total_pages - 1, page + 1)
+            continue
+        if selection == "first_page":
+            page = 0
+            continue
+        full_idx = start + (selection - 1)
+        chosen_entry = full_entries[full_idx]
+        chosen_path = paths[full_idx]
         if chosen_entry.get("error"):
             display.show_picker_error(chosen_path.name, errors[chosen_path])
             continue

@@ -27,6 +27,9 @@ saves/*
 # User settings (per-user customization — see settings.example.json)
 settings.json
 
+# Local MCP server config
+.mcp.json
+
 # Stories excluded from gen release (local backup only)
 storybackup/
 
