@@ -355,7 +355,7 @@ function renderSettings() {
     renderRule('Settings – Typewriter', 'green') +
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number to edit · S save · X discard</div>' +
+    '<div class="footer-hint">Enter a number to edit · <span style="color:var(--green)">S</span> save · <span style="color:var(--red)">X</span> discard</div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
 }
@@ -445,7 +445,7 @@ function renderPicker() {
     '<div class="terminal-list">' + items.join('') + '</div>' +
     renderRule('', 'dim') +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, Q to quit, C to clear saves, or S for settings:</div>' +
+    '<div class="footer-hint">Enter a number, <span style="color:var(--red)">Q</span> to quit, C to clear saves, or <span style="color:var(--green)">S</span> for settings:</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
@@ -463,7 +463,7 @@ function renderFolder(folderName) {
     renderRule('📁 ' + folderName + '/', 'green') +
     '<div class="terminal-list">' + items.join('') + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, B to go back, or Q to quit:</div>' +
+    '<div class="footer-hint">Enter a number, <span style="color:var(--red)">B</span> to go back, or <span style="color:var(--red)">Q</span> to quit:</div>' +
     '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
     '</div></div>';
 }
@@ -637,7 +637,7 @@ function renderGame() {
     beforeOverlays +
     '<div class="terminal-choices">' + choiceHtml + '</div>' +
     afterOverlays +
-    '<div class="terminal-prompt-line">Your choice (or Q to return to menu): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line">Your choice (or <span style="color:var(--red)">Q</span> to return to menu): <span class="terminal-cursor">█</span></div>' +
     '</div>';
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), node.text);
