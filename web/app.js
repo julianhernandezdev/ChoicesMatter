@@ -663,6 +663,15 @@ document.addEventListener('keydown', function(e) {
 
 // --- Mobile keyboard capture ---
 
+var mobileFocused = false;
+
+mobileCapture.addEventListener('focus', function() { mobileFocused = true; });
+mobileCapture.addEventListener('blur',  function() { mobileFocused = false; });
+
+window.addEventListener('scroll', function() {
+  if (mobileFocused) window.scrollTo(0, 0);
+});
+
 document.addEventListener('click', function() {
   if (isTwAnimating()) { skipTypewriter(); return; }
   if (currentScreen === 'settings' && settingsEditRow !== null) return;
