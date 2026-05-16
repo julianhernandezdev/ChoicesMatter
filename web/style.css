@@ -204,6 +204,19 @@ body {
   outline: 1px solid var(--cyan);
 }
 
+/* === SCREEN WRAPPER === */
+.terminal-screen { display: block; }
+
 /* === LOADING === */
 .loading-card { text-align: center; padding: 4ch 2ch; color: var(--dim); }
 .hero-banner  { max-width: 100%; display: block; margin: 0 auto 2ch; }
+
+/* === ERROR === */
+.error-card {
+  border: 1px solid var(--red);
+  padding: 1ch 2ch;
+  margin-top: 4ch;
+  color: var(--text);
+}
+.error-card h1 { color: var(--red); font-size: 1em; margin: 0 0 1ch; }
+.muted { color: var(--dim); }
