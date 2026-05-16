@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import re
+
 from display import Display
 from gallery import GalleryManager
 from save import SaveManager, SaveState
 from story import Choice, Story
+
+_DELTA_RE = re.compile(r"^[+-]\d+$")
 
 
 class Engine:
@@ -20,7 +24,7 @@ class Engine:
         self.gallery_manager = gallery_manager
         self._current_node: str = story.start_node
         self._history: list[str] = []
-        self._state: dict[str, bool] = {}
+        self._state: dict[str, bool | int | str] = {}
         self._current_scene: str | None = None
 
     # ------------------------------------------------------------------
@@ -36,13 +40,13 @@ class Engine:
             if node.scene:
                 self._current_scene = node.scene
 
-            visible = [c for c in node.choices if self._flag_check(c.requires)]
+            visible = [c for c in node.choices if self._check_requires(c.requires)]
 
-            visible_overlays = [o for o in node.overlays if self._flag_check(o.requires)]
+            visible_overlays = [o for o in node.overlays if self._check_requires(o.requires)]
             before = [o for o in visible_overlays if o.position == "before"]
             after  = [o for o in visible_overlays if o.position == "after"]
 
-            visible_insets = [i for i in node.insets if self._flag_check(i.requires)]
+            visible_insets = [i for i in node.insets if self._check_requires(i.requires)]
             before_insets = [i for i in visible_insets if i.position == "before"]
             after_insets  = [i for i in visible_insets if i.position == "after"]
 
@@ -68,8 +72,32 @@ class Engine:
     # Private
     # ------------------------------------------------------------------
 
-    def _flag_check(self, requires: dict[str, bool]) -> bool:
-        return all(self._state.get(k) == v for k, v in requires.items())
+    def _check_requires(self, requires: dict) -> bool:
+        for key, condition in requires.items():
+            current = self._state.get(key)
+            if isinstance(condition, bool):
+                if current != condition:
+                    return False
+            elif isinstance(condition, int):
+                val = current if isinstance(current, int) and not isinstance(current, bool) else 0
+                if val < condition:
+                    return False
+            elif isinstance(condition, str):
+                if current != condition:
+                    return False
+            elif isinstance(condition, list):
+                if current not in condition:
+                    return False
+        return True
+
+    def _apply_sets(self, sets: dict) -> None:
+        for key, value in sets.items():
+            if isinstance(value, str) and _DELTA_RE.fullmatch(value):
+                delta = int(value)
+                current = self._state.get(key, 0)
+                self._state[key] = (current if isinstance(current, int) and not isinstance(current, bool) else 0) + delta
+            else:
+                self._state[key] = value
 
     def _resolve_start(self) -> None:
         if self.save_manager.has_save(self.story.id):
@@ -85,7 +113,7 @@ class Engine:
         self._state = {}
 
     def _advance(self, choice: Choice) -> None:
-        self._state.update(choice.sets)
+        self._apply_sets(choice.sets)
         self._history.append(self._current_node)
         self._current_node = choice.next
         if self.story.auto_visited_flags:

@@ -15,7 +15,7 @@ class SaveState:
     story_id: str
     current_node: str
     history: list[str] = field(default_factory=list)
-    state: dict[str, bool] = field(default_factory=dict)
+    state: dict[str, bool | int | str] = field(default_factory=dict)
     timestamp: str = ""
 
     def to_dict(self) -> dict:

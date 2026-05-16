@@ -115,12 +115,28 @@ Overlays render around the choice list: `before` above the choices, `after` belo
 
 ## Flag System
 
-`Engine` maintains a `_state: dict[str, bool]` across the run.
+`Engine` maintains a `_state: dict[str, bool | int | str]` across the run.
 
 - `choice.requires` — checked before presenting choices; unmet choices are hidden entirely
-- `choice.sets` — applied to `_state` when a choice is taken (in `_advance`)
+- `choice.sets` — applied to `_state` when a choice is taken (via `_apply_sets`)
 - `visited_<node_id>` — automatically set to `true` every time a node is entered via `_advance`; use in `requires` to detect revisits. The `visited_` prefix is reserved — manually setting it via `choice.sets` raises a validation error unless `meta.auto_visited_flags` is `false`.
-- `overlay.requires` — same check; unmet overlays are not passed to `display.show_choices`
+- `overlay.requires` / `inset.requires` — same check; unmet elements are filtered before rendering
+
+**State value types and evaluation:**
+
+| `sets` value | Effect |
+|---|---|
+| `true` / `false` | Boolean assignment |
+| integer (e.g. `5`) | Absolute integer assignment |
+| string (e.g. `"red"`) | String assignment |
+| delta string (e.g. `"+1"`, `"-2"`) | Adds/subtracts from current int value; missing key defaults to 0 |
+
+| `requires` value | Condition |
+|---|---|
+| `true` / `false` | Exact boolean match |
+| integer (e.g. `3`) | Current value ≥ 3 (threshold) |
+| string (e.g. `"red"`) | Exact string match |
+| list of strings (e.g. `["red","blue"]`) | Current value is a member of the list |
 
 Flags accumulate within a run and are persisted in the save file. `_reset()` clears them.
 
@@ -134,7 +150,8 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `story_id` containing characters outside `[A-Za-z0-9_.-]` (path traversal guard)
 - `ending_type` not one of `good`, `bad`, `neutral`
 - Overlay `position` not `before` or `after`
-- Flag dicts (`requires`, `sets`) mapping non-string keys or non-boolean values
+- `requires` dict: non-string keys, or values not in `{bool, int, str, list[str]}`; list values must be non-empty and contain only strings
+- `sets` dict: non-string keys, or values not in `{bool, int, str}`; delta strings must match `^[+-]\d+$`
 - `est_time` present but not a non-empty string
 - `warnings` present but not a list of non-empty strings
 - `scene` present but not a non-empty string

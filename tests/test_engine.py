@@ -478,3 +478,242 @@ def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
     assert len(ending_calls) == 2
     assert ending_calls[0].args[0] == "Good."   # first run reached good end
     assert ending_calls[1].args[0] == "Bad."    # second run state was cleared
+
+
+# ------------------------------------------------------------------
+# Non-boolean state: _check_requires
+# ------------------------------------------------------------------
+
+def test_int_threshold_met(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Build trust", next="mid", sets={"trust": 5})],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="Use power", next="end", requires={"trust": 3})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="good"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Done."
+
+
+def test_int_threshold_not_met_hides_choice(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[
+                Choice(label="Use power", next="gated_end", requires={"trust": 3}),
+                Choice(label="Fallback", next="fallback_end"),
+            ],
+        ),
+        "gated_end": Node(text="Power.", choices=[], is_ending=True, ending_type="good"),
+        "fallback_end": Node(text="Fallback.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine._state["trust"] = 1  # 1 < 3
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Fallback."
+
+
+def test_int_threshold_unset_key_treated_as_zero(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[
+                Choice(label="Use power", next="gated_end", requires={"trust": 1}),
+                Choice(label="Fallback", next="fallback_end"),
+            ],
+        ),
+        "gated_end": Node(text="Power.", choices=[], is_ending=True, ending_type="good"),
+        "fallback_end": Node(text="Fallback.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    # trust not set → treated as 0 → 0 < 1 → choice hidden
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Fallback."
+
+
+def test_string_exact_match_requires(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Join red", next="mid", sets={"allegiance": "red"})],
+        ),
+        "mid": Node(
+            text="Choose.",
+            choices=[
+                Choice(label="Red path", next="red_end", requires={"allegiance": "red"}),
+                Choice(label="Default", next="default_end"),
+            ],
+        ),
+        "red_end": Node(text="Red.", choices=[], is_ending=True, ending_type="good"),
+        "default_end": Node(text="Default.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Red."
+
+
+def test_list_membership_requires_met(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Join blue", next="mid", sets={"allegiance": "blue"})],
+        ),
+        "mid": Node(
+            text="Choose.",
+            choices=[
+                Choice(label="Allied", next="allied_end", requires={"allegiance": ["red", "blue"]}),
+                Choice(label="Neutral", next="neutral_end"),
+            ],
+        ),
+        "allied_end": Node(text="Allied.", choices=[], is_ending=True, ending_type="good"),
+        "neutral_end": Node(text="Neutral.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Allied."
+
+
+def test_list_membership_requires_not_met(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[
+                Choice(label="Allied", next="allied_end", requires={"allegiance": ["red", "blue"]}),
+                Choice(label="Neutral", next="neutral_end"),
+            ],
+        ),
+        "allied_end": Node(text="Allied.", choices=[], is_ending=True, ending_type="good"),
+        "neutral_end": Node(text="Neutral.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine._state["allegiance"] = "green"
+    engine.run()
+    assert display.show_ending.call_args.args[0] == "Neutral."
+
+
+# ------------------------------------------------------------------
+# Non-boolean state: _apply_sets
+# ------------------------------------------------------------------
+
+def test_delta_increments_from_zero(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Gain trust", next="end", sets={"trust": "+3"})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("trust") == 3
+
+
+def test_delta_accumulates_over_multiple_advances(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Go", next="mid", sets={"trust": "+2"})],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="Go", next="end", sets={"trust": "+3"})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("trust") == 5
+
+
+def test_delta_decrements(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Set trust", next="mid", sets={"trust": 5})],
+        ),
+        "mid": Node(
+            text="Middle.",
+            choices=[Choice(label="Lose trust", next="end", sets={"trust": "-1"})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("trust") == 4
+
+
+def test_absolute_int_assignment(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Go", next="end", sets={"level": 7})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("level") == 7
+
+
+def test_string_assignment(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Join red", next="end", sets={"allegiance": "red"})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("allegiance") == "red"
+
+
+def test_counter_gates_choice_integration(saves_dir: Path) -> None:
+    """Delta sets accumulate trust; threshold requires unlocks a choice at trust >= 4."""
+    story = _make_story({
+        "start": Node(
+            text="Meet the contact.",
+            choices=[Choice(label="Help them", next="helped", sets={"trust": "+2"})],
+        ),
+        "helped": Node(
+            text="They nod.",
+            choices=[Choice(label="Again", next="helped2", sets={"trust": "+2"})],
+        ),
+        "helped2": Node(
+            text="Trust grows.",
+            choices=[
+                Choice(label="Ask the secret", next="secret_end", requires={"trust": 4}),
+                Choice(label="Leave", next="neutral_end"),
+            ],
+        ),
+        "secret_end": Node(text="They tell you.", choices=[], is_ending=True, ending_type="good"),
+        "neutral_end": Node(text="You leave.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1, 1]
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    assert engine._state.get("trust") == 4
+    assert display.show_ending.call_args.args[0] == "They tell you."

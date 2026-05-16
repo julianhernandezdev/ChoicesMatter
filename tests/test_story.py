@@ -177,11 +177,11 @@ def test_choice_missing_label_raises(tmp_path: Path, sample_story_dict: dict) ->
         StoryLoader.load(path)
 
 
-def test_choice_requires_must_use_boolean_values(tmp_path: Path, sample_story_dict: dict) -> None:
-    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"flag": "yes"}
+def test_choice_requires_invalid_type_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"flag": {"nested": True}}
     path = tmp_path / "bad_requires.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
-    with pytest.raises(StoryValidationError, match="true/false"):
+    with pytest.raises(StoryValidationError, match="requires"):
         StoryLoader.load(path)
 
 
@@ -540,3 +540,107 @@ def test_visited_prefix_in_requires_is_allowed(tmp_path: Path, sample_story_dict
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     story = StoryLoader.load(path)
     assert story.nodes["start"].choices[0].requires == {"visited_intro": True}
+
+
+# ------------------------------------------------------------------
+# Non-boolean state: _parse_requires
+# ------------------------------------------------------------------
+
+def test_requires_int_threshold_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"trust": 3}
+    path = tmp_path / "int_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].requires == {"trust": 3}
+
+
+def test_requires_string_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"allegiance": "red"}
+    path = tmp_path / "str_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].requires == {"allegiance": "red"}
+
+
+def test_requires_list_of_strings_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"allegiance": ["red", "blue"]}
+    path = tmp_path / "list_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].requires == {"allegiance": ["red", "blue"]}
+
+
+def test_requires_empty_list_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"allegiance": []}
+    path = tmp_path / "empty_list_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="requires"):
+        StoryLoader.load(path)
+
+
+def test_requires_list_with_non_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"allegiance": ["red", 5]}
+    path = tmp_path / "bad_list_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="requires"):
+        StoryLoader.load(path)
+
+
+def test_requires_invalid_type_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["requires"] = {"trust": {"gte": 3}}
+    path = tmp_path / "bad_type_requires.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="requires"):
+        StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# Non-boolean state: _parse_sets
+# ------------------------------------------------------------------
+
+def test_sets_int_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"trust": 5}
+    path = tmp_path / "int_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].sets == {"trust": 5}
+
+
+def test_sets_string_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"allegiance": "red"}
+    path = tmp_path / "str_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].sets == {"allegiance": "red"}
+
+
+def test_sets_delta_plus_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"trust": "+1"}
+    path = tmp_path / "delta_plus_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].sets == {"trust": "+1"}
+
+
+def test_sets_delta_minus_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"trust": "-2"}
+    path = tmp_path / "delta_minus_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].choices[0].sets == {"trust": "-2"}
+
+
+def test_sets_malformed_delta_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"trust": "+abc"}
+    path = tmp_path / "bad_delta_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="delta"):
+        StoryLoader.load(path)
+
+
+def test_sets_invalid_type_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["choices"][0]["sets"] = {"trust": [1, 2]}
+    path = tmp_path / "bad_type_sets.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="sets"):
+        StoryLoader.load(path)
