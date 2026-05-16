@@ -285,50 +285,94 @@ function storyTitle(entry) {
   return entry.story.meta?.title || entry.path.split("/").pop()?.replace(".json", "") || "Untitled Story";
 }
 
+function renderPickerEntry(entry, num) {
+  var story = entry.story;
+  var save = loadSave(story.meta.id);
+  var gallery = loadGallery(story.meta.id);
+  var endings = endingCount(story);
+  var found = gallery.endings_found ? gallery.endings_found.length : 0;
+  var resumeBadge = save ? ' <span class="badge-resume">● RESUME</span>' : '';
+  var warnBadge = story.meta.warnings && story.meta.warnings.length ? ' <span class="badge-warning">[!]</span>' : '';
+  var meta = nodeList(story).length + ' nodes · ' + found + '/' + (endings || '?') + ' endings · ' + escapeHtml(estimateTime(story));
+  return '<div class="terminal-list-item" data-action="pick-story" data-path="' + escapeHtml(entry.path) + '">' +
+    '<span class="item-num">' + num + '.</span>' +
+    '<div><div class="item-name">' + escapeHtml(storyTitle(entry)) + warnBadge + resumeBadge + '</div>' +
+    '<div class="item-meta">' + meta + '</div></div>' +
+    '</div>';
+}
+
 function renderLibrary() {
   currentRun = null;
-  lastSaved = "";
-  const cards = library.map((entry) => {
-    const story = entry.story;
-    const save = loadSave(story.meta.id);
-    const gallery = loadGallery(story.meta.id);
-    const endings = endingCount(story);
-    const found = gallery.endings_found?.length || 0;
-    const warningBadge = story.meta.warnings?.length ? '<span class="badge warning">[!] content warning</span>' : "";
-    const resumeBadge = save ? '<span class="badge resume">● resume</span>' : "";
-    const author = story.meta.author ? ` by ${escapeHtml(story.meta.author)}` : "";
-    return `
-      <article class="story-card">
-        <h2>${escapeHtml(storyTitle(entry))}</h2>
-        <p>${escapeHtml(entry.category || "story")}${author}</p>
-        <div class="badges">
-          <span class="badge">${nodeList(story).length} nodes</span>
-          <span class="badge">${found}/${endings || "?"} endings</span>
-          <span class="badge">${escapeHtml(estimateTime(story))}</span>
-          ${warningBadge}
-          ${resumeBadge}
-        </div>
-        <div class="card-actions">
-          ${save ? `<button data-action="resume" data-path="${escapeHtml(entry.path)}">Continue</button>` : ""}
-          <button data-action="start" data-path="${escapeHtml(entry.path)}">${save ? "New Game" : "Play"}</button>
-        </div>
-      </article>
-    `;
-  }).join("");
+  lastSaved = '';
+  currentFolder = null;
+  renderPicker();
+}
 
-  app.innerHTML = `
-    <section class="library-header">
-      <img src="assets/banner.png" alt="Choices Matter" class="hero-banner">
-      <h1>Choices Matter</h1>
-      <p>Pick a story. Your browser saves progress automatically on this device.</p>
-      <div class="top-actions">
-        <button class="secondary" data-action="clear-progress">Clear all browser saves</button>
-      </div>
-    </section>
-    <section class="story-grid" aria-label="Story library">
-      ${cards}
-    </section>
-  `;
+function renderPicker() {
+  currentScreen = 'library';
+  var twOn = isTypewriterOn();
+
+  var folders = {};
+  var rootStories = [];
+  library.forEach(function(entry) {
+    var cat = entry.category || null;
+    if (cat) { if (!folders[cat]) folders[cat] = []; folders[cat].push(entry); }
+    else rootStories.push(entry);
+  });
+
+  var items = [];
+  var menuEntries = [];
+  var idx = 1;
+
+  Object.keys(folders).sort().forEach(function(name) {
+    var count = folders[name].length;
+    items.push(
+      '<div class="terminal-list-item" data-action="open-folder" data-folder="' + escapeHtml(name) + '">' +
+      '<span class="item-num">' + idx + '.</span>' +
+      '<div><div class="item-name">📁 ' + escapeHtml(name) + '/</div>' +
+      '<div class="item-meta">' + count + ' ' + (count === 1 ? 'story' : 'stories') + '</div></div>' +
+      '</div>'
+    );
+    menuEntries.push({ type: 'folder', name: name });
+    idx++;
+  });
+
+  rootStories.forEach(function(entry) {
+    items.push(renderPickerEntry(entry, idx));
+    menuEntries.push({ type: 'story', entry: entry });
+    idx++;
+  });
+
+  activeMenuEntries = menuEntries;
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    '<div class="terminal-title-box">Choices Matter</div>' +
+    renderRule('A text adventure engine', 'green') +
+    renderRule('Select a Story', 'green') +
+    '<div class="terminal-list">' + items.join('') + '</div>' +
+    renderRule('', 'dim') +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">Enter a number, Q to quit, C to clear saves, or S for settings:</div>' +
+    '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
+    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '</div></div>';
+}
+
+function renderFolder(folderName) {
+  currentScreen = 'folder';
+  currentFolder = folderName;
+  var folderEntries = library.filter(function(e) { return e.category === folderName; });
+  activeMenuEntries = folderEntries.map(function(entry) { return { type: 'story', entry: entry }; });
+  var items = folderEntries.map(function(entry, i) { return renderPickerEntry(entry, i + 1); });
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('📁 ' + folderName + '/', 'green') +
+    '<div class="terminal-list">' + items.join('') + '</div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">Enter a number, B to go back, or Q to quit:</div>' +
+    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '</div></div>';
 }
 
 function findEntry(path) {
@@ -484,32 +528,19 @@ function choose(index) {
   renderGame();
 }
 
-app.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (!button) {
-    return;
-  }
-  const action = button.dataset.action;
-  if (action === "library") {
-    renderLibrary();
-  } else if (action === "start") {
-    startStory(findEntry(button.dataset.path), { resume: false });
-  } else if (action === "resume") {
-    startStory(findEntry(button.dataset.path), { resume: true });
-  } else if (action === "confirm-start") {
-    startStory(findEntry(button.dataset.path), {
-      resume: button.dataset.resume === "yes",
-      skipWarnings: true,
-    });
-  } else if (action === "choice") {
-    choose(Number(button.dataset.index));
-  } else if (action === "play-again") {
-    startStory(currentRun.entry, { resume: false, skipWarnings: true });
-  } else if (action === "clear-progress") {
-    if (confirm("Clear all browser saves and ending progress for Choices Matter?")) {
-      clearAllProgress();
-      renderLibrary();
-    }
+app.addEventListener('click', function(event) {
+  var button = event.target.closest('[data-action]');
+  if (!button) return;
+  var action = button.dataset.action;
+  if (action === 'open-folder') {
+    renderFolder(button.dataset.folder);
+  } else if (action === 'pick-story') {
+    var entry = findEntry(button.dataset.path);
+    if (entry) startStory(entry, { resume: !!loadSave(entry.story.meta.id) });
+  } else if (action === 'choice') {
+    if (!twAnimation) choose(Number(button.dataset.index));
+  } else if (action === 'settings-row') {
+    startSettingsEdit(Number(button.dataset.row));
   }
 });
 
