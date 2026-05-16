@@ -172,9 +172,10 @@ body {
 
 /* === WARNING === */
 .warning-bold { color: var(--bright); font-weight: bold; display: block; margin-bottom: 0.5ch; }
-.warning-list { list-style: none; }
+.warning-list { list-style: none; text-align: center; }
 .warning-list li { margin: 0.3ch 0; }
 .warning-list li::before { content: '\B7  '; color: var(--dim); }
+.terminal-panel.warning-panel { text-align: center; }
 
 /* === SETTINGS === */
 .terminal-settings-row {
