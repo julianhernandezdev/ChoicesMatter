@@ -142,11 +142,18 @@ function setSettingValue(draft, key, value) {
 
 // --- Prompt ---
 
+function promptPrefix() {
+  if (currentScreen === 'game')    return 'Your choice (or <span class="key-back">Q</span> to menu): ';
+  if (currentScreen === 'resume')  return 'Continue? (<span class="key-fwd">C</span> continue &middot; <span class="key-back">N</span> new game): ';
+  if (currentScreen === 'warning') return 'Proceed? (<span class="key-fwd">Y</span> continue &middot; <span class="key-back">N</span> back): ';
+  if (currentScreen === 'ending')  return 'Play again? (<span class="key-fwd">Y</span> yes &middot; <span class="key-back">N</span> library): ';
+  return '&gt; ';
+}
+
 function updatePrompt() {
   var el = document.querySelector('.terminal-prompt-line');
   if (!el) return;
-  var prefix = currentScreen === 'game' ? 'Your choice (or Q to return to menu): ' : '&gt; ';
-  el.innerHTML = prefix + escapeHtml(pendingInput) + '<span class="terminal-cursor">█</span>';
+  el.innerHTML = promptPrefix() + escapeHtml(pendingInput) + '<span class="terminal-cursor">█</span>';
 }
 
 // --- Renderers ---
@@ -213,10 +220,11 @@ function renderPicker() {
     '<div class="terminal-list">' + items.join('') + '</div>' +
     renderRule('', 'dim') +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to quit, C to clear saves, or <span class="key-fwd">S</span> for settings:</div>' +
+    '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
-    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div></div>';
+  updatePrompt();
 }
 
 function renderFolder(folderName) {
@@ -231,9 +239,10 @@ function renderFolder(folderName) {
     renderRule('📁 ' + folderName + '/', 'green') +
     '<div class="terminal-list">' + items.join('') + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit:</div>' +
-    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit. Press Enter to confirm.</div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div></div>';
+  updatePrompt();
 }
 
 function renderResume(entry, skipWarnings) {
@@ -244,11 +253,9 @@ function renderResume(entry, skipWarnings) {
   app.innerHTML =
     '<div class="terminal-screen">' +
     '<div class="terminal-prose">A save was found for this story.</div>' +
-    '<div class="terminal-prompt-line">Continue saved game? ' +
-    '(<span class="key-fwd">C</span> to continue, ' +
-    '<span class="key-back">N</span> for new): ' +
-    '<span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div>';
+  updatePrompt();
 }
 
 function renderWarnings(entry, resume) {
@@ -266,8 +273,9 @@ function renderWarnings(entry, resume) {
     '<ul class="warning-list">' + items + '</ul>' +
     '</div>' +
     renderRule(storyTitle(entry), 'dim') +
-    '<div class="terminal-prompt-line">Proceed? (<span class="key-fwd">Y</span> to continue, <span class="key-back">N</span> to go back): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div>';
+  updatePrompt();
 }
 
 function renderGame() {
@@ -318,8 +326,9 @@ function renderGame() {
     beforeOverlays +
     '<div class="terminal-choices">' + choiceHtml + '</div>' +
     afterOverlays +
-    '<div class="terminal-prompt-line">Your choice (or <span class="key-back">Q</span> to return to menu): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div>';
+  updatePrompt();
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), node.text);
 }
@@ -342,8 +351,9 @@ function renderEnding(view) {
     '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
-    '<div class="terminal-prompt-line">Play again? (<span class="key-fwd">Y</span> to play again, <span class="key-back">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div>';
+  updatePrompt();
 
   if (isTypewriterOn()) startTypewriter(document.getElementById('prose-text'), view.node.text);
 }
@@ -372,9 +382,10 @@ function renderSettings() {
     renderRule('Settings – Typewriter', 'green') +
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard</div>' +
-    '<div class="terminal-prompt-line">&gt; <span class="terminal-cursor">█</span></div>' +
+    '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard. Press Enter to confirm.</div>' +
+    '<div class="terminal-prompt-line"></div>' +
     '</div></div>';
+  updatePrompt();
 }
 
 function startSettingsEdit(rowIndex) {
@@ -476,8 +487,60 @@ app.addEventListener('click', function(event) {
   }
 });
 
+function handleSubmit(input) {
+  if (!input) return;
+
+  if (currentScreen === 'library') {
+    if (input === 'q') { window.location.href = 'https://github.com/julianhernandezdev/ChoicesMatter'; return; }
+    if (input === 't') { toggleTypewriter(); return; }
+    if (input === 'c') {
+      if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
+      return;
+    }
+    if (input === 's') { settingsDraft = null; renderSettings(); return; }
+    var n = parseInt(input, 10);
+    if (n >= 1 && n <= activeMenuEntries.length) {
+      var me = activeMenuEntries[n - 1];
+      if (me.type === 'folder') renderFolder(me.name);
+      else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    }
+
+  } else if (currentScreen === 'folder') {
+    if (input === 'q' || input === 'b') { renderLibrary(); return; }
+    var nf = parseInt(input, 10);
+    if (nf >= 1 && nf <= activeMenuEntries.length) {
+      startStory(activeMenuEntries[nf - 1].entry, { resume: !!loadSave(activeMenuEntries[nf - 1].entry.story.meta.id) });
+    }
+
+  } else if (currentScreen === 'resume') {
+    if (input === 'c') startStory(resumeEntry, { resume: true,  skipWarnings: resumeSkipWarnings, skipResume: true });
+    if (input === 'n') startStory(resumeEntry, { resume: false, skipWarnings: resumeSkipWarnings, skipResume: true });
+
+  } else if (currentScreen === 'warning') {
+    if (input === 'y') startStory(warningEntry, { resume: warningResume, skipWarnings: true });
+    if (input === 'n') renderLibrary();
+
+  } else if (currentScreen === 'game') {
+    if (input === 'q') { renderLibrary(); return; }
+    var ng = parseInt(input, 10);
+    var vg = currentView(currentRun);
+    if (ng >= 1 && ng <= vg.choices.length) choose(ng - 1);
+
+  } else if (currentScreen === 'ending') {
+    if (input === 'y') startStory(currentRun.entry, { resume: false, skipWarnings: true });
+    if (input === 'n') renderLibrary();
+
+  } else if (currentScreen === 'settings') {
+    if (input === 'x') { renderLibrary(); return; }
+    if (input === 's') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
+    var ns = parseInt(input, 10);
+    if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
+  }
+}
+
 document.addEventListener('keydown', function(e) {
-  var key = e.key.toUpperCase();
+  var key = e.key;
+  var keyUp = key.toUpperCase();
 
   if (isTwAnimating()) {
     e.preventDefault();
@@ -485,78 +548,32 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
-  if (currentScreen === 'library') {
-    if (key === 'T') { toggleTypewriter(); return; }
-    if (key === 'C') {
-      if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
-      return;
-    }
-    if (key === 'S') { settingsDraft = null; renderSettings(); return; }
-    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
-    if (key === 'ENTER' && pendingInput) {
-      var n = parseInt(pendingInput, 10); pendingInput = '';
-      if (n >= 1 && n <= activeMenuEntries.length) {
-        var me = activeMenuEntries[n - 1];
-        if (me.type === 'folder') renderFolder(me.name);
-        else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
-      }
-      return;
-    }
-    var nd = parseInt(e.key, 10);
-    if (!isNaN(nd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
+  // Settings row edit — real <input> is focused; Enter confirms, Escape cancels
+  if (currentScreen === 'settings' && settingsEditRow !== null) {
+    if (keyUp === 'ENTER')  { confirmSettingsEdit(); return; }
+    if (keyUp === 'ESCAPE') { cancelSettingsEdit();  return; }
+    return;
+  }
 
-  } else if (currentScreen === 'folder') {
-    if (key === 'Q' || key === 'B') { renderLibrary(); return; }
-    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
-    if (key === 'ENTER' && pendingInput) {
-      var nf = parseInt(pendingInput, 10); pendingInput = '';
-      if (nf >= 1 && nf <= activeMenuEntries.length) {
-        startStory(activeMenuEntries[nf - 1].entry, { resume: !!loadSave(activeMenuEntries[nf - 1].entry.story.meta.id) });
-      }
-      return;
-    }
-    var nfd = parseInt(e.key, 10);
-    if (!isNaN(nfd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
+  if (keyUp === 'BACKSPACE') {
+    pendingInput = pendingInput.slice(0, -1);
+    updatePrompt();
+    e.preventDefault();
+    return;
+  }
 
-  } else if (currentScreen === 'resume') {
-    if (key === 'C' || key === 'ENTER') startStory(resumeEntry, { resume: true,  skipWarnings: resumeSkipWarnings, skipResume: true });
-    if (key === 'N')                    startStory(resumeEntry, { resume: false, skipWarnings: resumeSkipWarnings, skipResume: true });
+  if (keyUp === 'ENTER') {
+    var input = pendingInput.trim().toLowerCase();
+    pendingInput = '';
+    updatePrompt();
+    handleSubmit(input);
+    return;
+  }
 
-  } else if (currentScreen === 'warning') {
-    if (key === 'Y') startStory(warningEntry, { resume: warningResume, skipWarnings: true });
-    if (key === 'N') renderLibrary();
-
-  } else if (currentScreen === 'game') {
-    if (key === 'Q') { renderLibrary(); return; }
-    if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
-    if (key === 'ENTER' && pendingInput) {
-      var ng = parseInt(pendingInput, 10); pendingInput = '';
-      var vg = currentView(currentRun);
-      if (ng >= 1 && ng <= vg.choices.length) choose(ng - 1);
-      return;
-    }
-    var ngd = parseInt(e.key, 10);
-    if (!isNaN(ngd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
-
-  } else if (currentScreen === 'ending') {
-    if (key === 'Y') startStory(currentRun.entry, { resume: false, skipWarnings: true });
-    if (key === 'N') renderLibrary();
-
-  } else if (currentScreen === 'settings') {
-    if (key === 'X') { renderLibrary(); return; }
-    if (key === 'S') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
-    if (key === 'ESCAPE' && settingsEditRow !== null) { cancelSettingsEdit(); return; }
-    if (key === 'ENTER' && settingsEditRow !== null) { confirmSettingsEdit(); return; }
-    if (settingsEditRow === null) {
-      if (key === 'BACKSPACE') { pendingInput = pendingInput.slice(0, -1); updatePrompt(); e.preventDefault(); return; }
-      if (key === 'ENTER' && pendingInput) {
-        var ns = parseInt(pendingInput, 10); pendingInput = '';
-        if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
-        return;
-      }
-      var nsd = parseInt(e.key, 10);
-      if (!isNaN(nsd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
-    }
+  if (key.length === 1) {
+    pendingInput += key;
+    updatePrompt();
+    e.preventDefault();
   }
 });
 
