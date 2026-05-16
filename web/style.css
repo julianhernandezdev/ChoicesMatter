@@ -37,13 +37,29 @@ body {
 #app {
   max-width: 76ch;
   margin: 0 auto;
-  padding: 0 1ch 3.5rem;
+  padding: 0 1ch;
 }
 
-/* === MOBILE KEYBOARD BUTTON === */
-.mobile-keyboard-btn { display: none; }
+/* === MOBILE CAPTURE + BUTTON === */
+#mobile-capture       { display: none; }
+.mobile-keyboard-btn  { display: none; }
 
 @media (pointer: coarse) {
+  #mobile-capture {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    -webkit-appearance: none;
+    padding: 0;
+    margin: 0;
+  }
   .mobile-keyboard-btn {
     display: block;
     width: 100%;
