@@ -13,14 +13,18 @@ class StoryValidationError(Exception):
 _SAFE_STORY_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 _ENDING_TYPES = {"good", "bad", "neutral"}
 _OVERLAY_POSITIONS = {"before", "after"}
+_DELTA_RE = re.compile(r"^[+-]\d+$")
+
+StateValue = bool | int | str
+RequiresValue = bool | int | str | list[str]
 
 
 @dataclass
 class Choice:
     label: str
     next: str
-    requires: dict[str, bool] = field(default_factory=dict)
-    sets: dict[str, bool] = field(default_factory=dict)
+    requires: dict[str, RequiresValue] = field(default_factory=dict)
+    sets: dict[str, StateValue] = field(default_factory=dict)
     color: str | None = None
     obfuscated: bool = False
 
@@ -28,7 +32,7 @@ class Choice:
 @dataclass
 class Overlay:
     text: str
-    requires: dict[str, bool] = field(default_factory=dict)
+    requires: dict[str, RequiresValue] = field(default_factory=dict)
     position: str = "after"  # "before" | "after"
     style: str = ""           # named style key; "" = default overlay config
 
@@ -38,7 +42,7 @@ class Inset:
     text: str
     position: str = "before"  # "before" | "after" relative to node text
     style: str = ""            # named style key; "" = dim italic default
-    requires: dict[str, bool] = field(default_factory=dict)
+    requires: dict[str, RequiresValue] = field(default_factory=dict)
 
 
 @dataclass
@@ -303,8 +307,8 @@ class StoryLoader:
                 Choice(
                     label=StoryLoader._required_string(choice_data, "label", file_name, location),
                     next=StoryLoader._required_string(choice_data, "next", file_name, location),
-                    requires=StoryLoader._parse_flags(choice_data.get("requires", {}), file_name, f"{location} field 'requires'"),
-                    sets=StoryLoader._parse_flags(choice_data.get("sets", {}), file_name, f"{location} field 'sets'"),
+                    requires=StoryLoader._parse_requires(choice_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                    sets=StoryLoader._parse_sets(choice_data.get("sets", {}), file_name, f"{location} field 'sets'"),
                     color=choice_color,
                     obfuscated=obfuscated_raw,
                 )
@@ -332,7 +336,7 @@ class StoryLoader:
             overlays.append(
                 Overlay(
                     text=StoryLoader._required_string(overlay_data, "text", file_name, location),
-                    requires=StoryLoader._parse_flags(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                    requires=StoryLoader._parse_requires(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     position=position,
                     style=overlay_data.get("style", ""),
                 )
@@ -362,18 +366,61 @@ class StoryLoader:
                     text=StoryLoader._required_string(inset_data, "text", file_name, location),
                     position=position,
                     style=inset_data.get("style", ""),
-                    requires=StoryLoader._parse_flags(inset_data.get("requires", {}), file_name, f"{location} field 'requires'"),
+                    requires=StoryLoader._parse_requires(inset_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                 )
             )
         return insets
 
     @staticmethod
-    def _parse_flags(value: object, file_name: str, location: str) -> dict[str, bool]:
+    def _parse_requires(value: object, file_name: str, location: str) -> dict[str, RequiresValue]:
         if not isinstance(value, dict):
             raise StoryValidationError(f"'{file_name}': {location} must be an object")
-        for flag, flag_value in value.items():
-            if not isinstance(flag, str) or not isinstance(flag_value, bool):
+        result: dict[str, RequiresValue] = {}
+        for k, v in value.items():
+            if not isinstance(k, str):
                 raise StoryValidationError(
-                    f"'{file_name}': {location} must map string flags to true/false values"
+                    f"'{file_name}': {location} keys must be strings"
                 )
-        return dict(value)
+            if isinstance(v, bool):
+                result[k] = v
+            elif isinstance(v, int):
+                result[k] = v
+            elif isinstance(v, str):
+                result[k] = v
+            elif isinstance(v, list):
+                if not v or not all(isinstance(item, str) for item in v):
+                    raise StoryValidationError(
+                        f"'{file_name}': {location} list values must be non-empty lists of strings"
+                    )
+                result[k] = list(v)
+            else:
+                raise StoryValidationError(
+                    f"'{file_name}': {location} values must be bool, int, str, or list of strings"
+                )
+        return result
+
+    @staticmethod
+    def _parse_sets(value: object, file_name: str, location: str) -> dict[str, StateValue]:
+        if not isinstance(value, dict):
+            raise StoryValidationError(f"'{file_name}': {location} must be an object")
+        result: dict[str, StateValue] = {}
+        for k, v in value.items():
+            if not isinstance(k, str):
+                raise StoryValidationError(
+                    f"'{file_name}': {location} keys must be strings"
+                )
+            if isinstance(v, bool):
+                result[k] = v
+            elif isinstance(v, int):
+                result[k] = v
+            elif isinstance(v, str):
+                if (v.startswith("+") or v.startswith("-")) and not _DELTA_RE.fullmatch(v):
+                    raise StoryValidationError(
+                        f"'{file_name}': {location} delta string '{v}' must be '+N' or '-N' (e.g. '+1', '-3')"
+                    )
+                result[k] = v
+            else:
+                raise StoryValidationError(
+                    f"'{file_name}': {location} values must be bool, int, or str"
+                )
+        return result
