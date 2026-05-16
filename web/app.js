@@ -80,6 +80,8 @@ var currentFolder = null;
 var activeMenuEntries = [];
 var warningEntry = null;
 var warningResume = false;
+var resumeEntry = null;
+var resumeSkipWarnings = false;
 var settingsDraft = null;
 var settingsEditRow = null;
 var twAnimation = null;
@@ -470,6 +472,22 @@ function findEntry(path) {
   return library.find((entry) => entry.path === path);
 }
 
+function renderResume(entry, skipWarnings) {
+  pendingInput = '';
+  currentScreen = 'resume';
+  resumeEntry = entry;
+  resumeSkipWarnings = skipWarnings;
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    '<div class="terminal-prose">A save was found for this story.</div>' +
+    '<div class="terminal-prompt-line">Continue saved game? ' +
+    '(<span style="color:var(--green)">C</span> to continue, ' +
+    '<span style="color:var(--dim)">N</span> for new): ' +
+    '<span class="terminal-cursor">█</span></div>' +
+    '</div>';
+}
+
 function renderWarnings(entry, resume) {
   pendingInput = '';
   currentScreen = 'warning';
@@ -489,18 +507,18 @@ function renderWarnings(entry, resume) {
     '</div>';
 }
 
-function startStory(entry, { resume = false, skipWarnings = false } = {}) {
-  if (!entry) {
-    return;
-  }
+function startStory(entry, { resume = false, skipWarnings = false, skipResume = false } = {}) {
+  if (!entry) { return; }
   if (!skipWarnings && entry.story.meta.warnings?.length) {
     renderWarnings(entry, resume);
     return;
   }
-  const saved = resume ? loadSave(entry.story.meta.id) : null;
-  if (!resume) {
-    deleteSave(entry.story.meta.id);
+  if (resume && !skipResume && loadSave(entry.story.meta.id)) {
+    renderResume(entry, skipWarnings);
+    return;
   }
+  const saved = resume ? loadSave(entry.story.meta.id) : null;
+  if (!resume) { deleteSave(entry.story.meta.id); }
   currentRun = createRun(entry, saved);
   lastSaved = resume ? "Restored saved progress." : "";
   renderGame();
@@ -724,6 +742,10 @@ document.addEventListener('keydown', function(e) {
     }
     var nfd = parseInt(e.key, 10);
     if (!isNaN(nfd)) { pendingInput += e.key; updatePrompt(); e.preventDefault(); return; }
+
+  } else if (currentScreen === 'resume') {
+    if (key === 'C' || key === 'ENTER') startStory(resumeEntry, { resume: true,  skipWarnings: resumeSkipWarnings, skipResume: true });
+    if (key === 'N')                    startStory(resumeEntry, { resume: false, skipWarnings: resumeSkipWarnings, skipResume: true });
 
   } else if (currentScreen === 'warning') {
     if (key === 'Y') startStory(warningEntry, { resume: warningResume, skipWarnings: true });
