@@ -52,7 +52,7 @@ Stories are JSON files with two top-level keys: `meta` and `nodes`.
 }
 ```
 
-`id` is used as the save file key. `start_node` must match a key in `nodes`. `est_time` is optional — if omitted, the engine auto-computes it from word count. If supplied, it's shown as-is in the story picker.
+`id` is used as the save file key. `start_node` must match a key in `nodes`. `est_time` is optional — if omitted, the engine auto-computes it from word count. If supplied, it's shown as-is in the story picker. `warnings` is optional — a list of strings shown in a yellow warning panel before launch; affected stories are marked `[!]` in the picker. `auto_visited_flags` defaults to `true` — see the Flags section below.
 
 ### Nodes
 
@@ -104,6 +104,42 @@ Choices support `requires` and `sets` to gate content on boolean flags the playe
 - `requires` — hides the choice entirely if the player doesn't have the matching flags
 
 Flags accumulate across the run and are persisted in the save file.
+
+**Auto-visited flags:** The engine automatically sets `visited_<node_id>: true` each time a node is entered. Use these in `requires` to create revisit-aware content with no `sets` boilerplate:
+
+```json
+{
+  "label": "You remember this room. Check the panel again.",
+  "next": "panel_check",
+  "requires": { "visited_generator_room": true }
+}
+```
+
+The `visited_` prefix is reserved — manually setting it via `sets` raises a validation error. Set `"auto_visited_flags": false` in `meta` to manage the namespace yourself.
+
+### Obfuscated Choices
+
+Choices with `"obfuscated": true` render as `[REDACTED ██████]` in the choice list. The player can still select the option — they just don't know what it is until after. Use it for irreversible decisions or choices the character makes without fully understanding what they're doing:
+
+```json
+{ "label": "Pull the lever", "next": "consequences", "obfuscated": true }
+```
+
+### Choice Number Color
+
+Two-level color system for choice number prefixes. Set `"choice_number_color"` on a node as a fallback for all its choices, then override per-choice with `"color"`:
+
+```json
+"platform_7": {
+  "choice_number_color": "bright_red",
+  "choices": [
+    { "label": "Run.", "next": "escape", "color": "green" },
+    { "label": "Stay.", "next": "caught" }
+  ]
+}
+```
+
+Use color to signal emotional register, not decoration. `"bright_red"` for danger, `"green"` for safety, `"yellow"` for uncertainty. Both accept any `rich` color name or hex (e.g. `"#ffaa00"`).
 
 ### Insets
 
@@ -217,6 +253,22 @@ Enable character-by-character text streaming in `settings.json`:
 
 Drop any `.json` file into `/stories/`. No code changes needed. Malformed stories show as `-ERROR` in the picker and can be selected to see the validation message.
 
+Stories can be organised into subfolders inside `/stories/`. The picker shows each subfolder as a named folder entry with a story count; selecting it drills into a sub-screen. Root stories always appear alongside folders.
+
+## Validating a Story
+
+```bash
+python validate_story.py stories/your_story.json
+```
+
+Checks schema (via the engine's own loader), reachability (BFS from `start_node`), and dead-ends (reachable nodes with empty `choices` and no `is_ending`). Accepts multiple files:
+
+```bash
+python validate_story.py stories/horror/*.json stories/sci-fi/*.json
+```
+
+Output: `WARN` for unreachable nodes, `ERROR` for dead-ends and schema failures. Exit codes: `0` = clean, `1` = errors found, `2` = no arguments.
+
 ## Project Structure
 
 ```
@@ -227,8 +279,9 @@ save.py              Persistent save state — read/write/delete per story
 gallery.py           Ending gallery — tracks found endings across runs
 display.py           All rich rendering — nothing else imports rich
 config.py            Loads settings.json, merges with defaults
+validate_story.py    Story validator — schema, reachability, dead-end detection
 
-/stories             Drop .json story files here — auto-discovered at startup
+/stories             Drop .json story files here — auto-discovered at startup (subfolders supported)
 /saves               Auto-generated — one .save.json + one .gallery.json per story
 settings.example.json  Committed template (typewriter, overlay, named styles)
 ```
