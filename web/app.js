@@ -434,6 +434,49 @@ function renderStyledLine(item, extraClass) {
   return '<span class="' + escapeHtml(cls) + '">' + escapeHtml(prefix + (item.text || '')) + '</span>';
 }
 
+function startTypewriter(element, text) {
+  var settings = loadTypewriterSettings();
+  var pauses = settings.pauses || {};
+  var delay = settings.delay_ms || 20;
+
+  element.textContent = '';
+  var toReveal = Array.prototype.slice.call(
+    document.querySelectorAll('.terminal-choice, .terminal-overlay, .terminal-prompt-line')
+  );
+  toReveal.forEach(function(el) { el.style.visibility = 'hidden'; });
+
+  var i = 0;
+  function step() {
+    if (i >= text.length) {
+      twAnimation = null;
+      revealChoices(toReveal);
+      return;
+    }
+    var ch = text[i++];
+    element.textContent += ch;
+    var extra = pauses[ch] || 0;
+    twAnimation = { id: setTimeout(step, delay + extra), text: text, element: element, toReveal: toReveal };
+  }
+  twAnimation = { id: setTimeout(step, 0), text: text, element: element, toReveal: toReveal };
+}
+
+function skipTypewriter() {
+  if (!twAnimation) return;
+  clearTimeout(twAnimation.id);
+  twAnimation.element.textContent = twAnimation.text;
+  var toReveal = twAnimation.toReveal;
+  twAnimation = null;
+  revealChoices(toReveal);
+}
+
+function revealChoices(elements) {
+  setTimeout(function() {
+    elements.forEach(function(el, i) {
+      setTimeout(function() { el.style.visibility = 'visible'; }, i * 60);
+    });
+  }, 250);
+}
+
 function renderGame() {
   if (!currentRun) { renderLibrary(); return; }
   var view = currentView(currentRun);

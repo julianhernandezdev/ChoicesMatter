@@ -74,3 +74,9 @@ def test_app_js_has_settings_store() -> None:
     assert "TYPEWRITER_DEFAULTS" in app
     assert "function loadTypewriterSettings(" in app
     assert "function saveTypewriterSettings(" in app
+
+
+def test_app_js_has_typewriter() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function startTypewriter(" in app
+    assert "function skipTypewriter(" in app
