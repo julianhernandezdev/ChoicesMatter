@@ -15,7 +15,8 @@ function makeRule(text, width) {
 
 function renderRule(text, colorClass, width) {
   var w = (width !== undefined) ? width : RULE_WIDTH;
-  return '<span class="terminal-rule ' + escapeHtml(colorClass || '') + '">' + escapeHtml(makeRule(text, w)) + '</span>';
+  var cls = colorClass ? 'terminal-rule ' + escapeHtml(colorClass) : 'terminal-rule';
+  return '<span class="' + cls + '">' + escapeHtml(makeRule(text, w)) + '</span>';
 }
 
 var COLOR_MAP = {
@@ -33,13 +34,6 @@ function resolveColor(name) {
   return COLOR_MAP[name] || 'var(--cyan)';
 }
 
-const STYLE_PREFIXES = {
-  whisper: "✦ ",
-  echo: "~ ",
-  warning: "⚠ ",
-  memory: "◈ ",
-  system: "",
-};
 
 let library = [];
 let currentRun = null;
