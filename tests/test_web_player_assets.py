@@ -67,3 +67,10 @@ def test_app_js_fixes_empty_style() -> None:
 def test_app_js_has_resolve_color() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     assert "function resolveColor(" in app
+
+
+def test_app_js_has_settings_store() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "TYPEWRITER_DEFAULTS" in app
+    assert "function loadTypewriterSettings(" in app
+    assert "function saveTypewriterSettings(" in app

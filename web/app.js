@@ -34,6 +34,55 @@ function resolveColor(name) {
   return COLOR_MAP[name] || 'var(--cyan)';
 }
 
+var SETTINGS_KEY = STORE_PREFIX + ':typewriter-settings';
+
+var TYPEWRITER_DEFAULTS = {
+  enabled: true,
+  delay_ms: 20,
+  pauses: { '.': 150, '!': 150, '?': 150, '…': 200, '—': 100 },
+};
+
+function loadTypewriterSettings() {
+  var stored = loadJson(SETTINGS_KEY, null);
+  if (!stored) return {
+    enabled: TYPEWRITER_DEFAULTS.enabled,
+    delay_ms: TYPEWRITER_DEFAULTS.delay_ms,
+    pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses),
+  };
+  return {
+    enabled: typeof stored.enabled === 'boolean' ? stored.enabled : TYPEWRITER_DEFAULTS.enabled,
+    delay_ms: typeof stored.delay_ms === 'number' ? stored.delay_ms : TYPEWRITER_DEFAULTS.delay_ms,
+    pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses, stored.pauses || {}),
+  };
+}
+
+function saveTypewriterSettings(settings) {
+  storeJson(SETTINGS_KEY, settings);
+}
+
+// Session-only toggle — null means "use stored setting"
+var sessionTwEnabled = null;
+
+function isTypewriterOn() {
+  var settings = loadTypewriterSettings();
+  return sessionTwEnabled !== null ? sessionTwEnabled : settings.enabled;
+}
+
+function toggleTypewriter() {
+  sessionTwEnabled = !isTypewriterOn();
+  if (currentScreen === 'library') renderPicker();
+  else if (currentScreen === 'folder') renderFolder(currentFolder);
+}
+
+// Screen-state variables (used by keyboard handler and all renderers)
+var currentScreen = 'library';
+var currentFolder = null;
+var activeMenuEntries = [];
+var warningEntry = null;
+var warningResume = false;
+var settingsDraft = null;
+var settingsEditRow = null;
+var twAnimation = null;
 
 let library = [];
 let currentRun = null;
