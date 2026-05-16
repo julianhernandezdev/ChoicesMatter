@@ -3,6 +3,7 @@ import { loadSave, writeSave, deleteSave, loadGallery, recordEnding, clearAllPro
 import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS } from "./typewriter.js";
 
 const app = document.getElementById("app");
+const mobileCapture = document.getElementById("mobile-capture");
 
 // --- Rendering constants ---
 
@@ -164,6 +165,7 @@ function updatePrompt() {
   var el = document.querySelector('.terminal-prompt-line');
   if (!el) return;
   el.innerHTML = promptPrefix() + escapeHtml(pendingInput) + '<span class="terminal-cursor">█</span>';
+  mobileCapture.value = pendingInput;
 }
 
 // --- Renderers ---
@@ -618,6 +620,8 @@ function handleSubmit(input) {
 }
 
 document.addEventListener('keydown', function(e) {
+  if (e.target === mobileCapture) return;
+
   var key = e.key;
   var keyUp = key.toUpperCase();
 
@@ -654,6 +658,33 @@ document.addEventListener('keydown', function(e) {
     pendingInput += key;
     updatePrompt();
     e.preventDefault();
+  }
+});
+
+// --- Mobile keyboard capture ---
+
+document.addEventListener('click', function() {
+  if (isTwAnimating()) { skipTypewriter(); return; }
+  if (currentScreen === 'settings' && settingsEditRow !== null) return;
+  mobileCapture.value = pendingInput;
+  mobileCapture.focus();
+});
+
+mobileCapture.addEventListener('input', function() {
+  if (currentScreen === 'settings' && settingsEditRow !== null) return;
+  pendingInput = mobileCapture.value;
+  updatePrompt();
+});
+
+mobileCapture.addEventListener('keydown', function(e) {
+  if (currentScreen === 'settings' && settingsEditRow !== null) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    var input = pendingInput.trim().toLowerCase();
+    pendingInput = '';
+    mobileCapture.value = '';
+    updatePrompt();
+    handleSubmit(input);
   }
 });
 
