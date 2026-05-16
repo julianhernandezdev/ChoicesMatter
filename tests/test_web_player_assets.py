@@ -52,3 +52,18 @@ def test_css_has_terminal_column() -> None:
     css = (ROOT / "web" / "style.css").read_text(encoding="utf-8")
     assert "76ch" in css
     assert "Consolas" in css
+
+
+def test_app_js_has_make_rule() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function makeRule(" in app
+
+
+def test_app_js_fixes_empty_style() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert 'style === ""' in app
+
+
+def test_app_js_has_resolve_color() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function resolveColor(" in app

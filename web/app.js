@@ -1,6 +1,38 @@
 const app = document.getElementById("app");
 
 const STORE_PREFIX = "choices-matter";
+var RULE_WIDTH = 74;
+var PANEL_RULE_WIDTH = 70;
+
+function makeRule(text, width) {
+  if (!text) return '─'.repeat(width);
+  var inner = ' ' + text + ' ';
+  if (inner.length >= width) return inner;
+  var dashes = width - inner.length;
+  var left = Math.floor(dashes / 2);
+  return '─'.repeat(left) + inner + '─'.repeat(dashes - left);
+}
+
+function renderRule(text, colorClass, width) {
+  var w = (width !== undefined) ? width : RULE_WIDTH;
+  return '<span class="terminal-rule ' + escapeHtml(colorClass || '') + '">' + escapeHtml(makeRule(text, w)) + '</span>';
+}
+
+var COLOR_MAP = {
+  cyan: 'var(--cyan)', green: 'var(--green)', red: 'var(--red)',
+  yellow: 'var(--yellow)', magenta: 'var(--magenta)', blue: 'var(--blue)',
+  white: 'var(--bright)', dim: 'var(--dim)',
+  bright_red: 'var(--red)', bright_green: 'var(--green)', bright_yellow: 'var(--yellow)',
+  bright_cyan: 'var(--cyan)', bright_magenta: 'var(--magenta)', bright_blue: 'var(--blue)',
+  bright_white: 'var(--bright)',
+};
+
+function resolveColor(name) {
+  if (!name) return 'var(--cyan)';
+  if (name.charAt(0) === '#') return name;
+  return COLOR_MAP[name] || 'var(--cyan)';
+}
+
 const STYLE_PREFIXES = {
   whisper: "✦ ",
   echo: "~ ",
@@ -292,10 +324,24 @@ function startStory(entry, { resume = false, skipWarnings = false } = {}) {
   renderGame();
 }
 
-function renderStyledLine(item, className) {
-  const styleName = item.style || "whisper";
-  const prefix = STYLE_PREFIXES[styleName] ?? STYLE_PREFIXES.whisper;
-  return `<p class="${className} ${escapeHtml(slugClass(styleName))}">${escapeHtml(prefix)}${escapeHtml(item.text)}</p>`;
+function renderStyledLine(item, extraClass) {
+  var style = item.style;
+  var cssClass, prefix;
+  if (style === "") {
+    cssClass = 'style-empty'; prefix = '';
+  } else if (style === 'system') {
+    cssClass = 'style-system'; prefix = '';
+  } else if (style === 'warning') {
+    cssClass = 'style-warning-tag'; prefix = '⚠ ';
+  } else if (style === 'memory') {
+    cssClass = 'style-memory'; prefix = '◈ ';
+  } else if (style === 'echo') {
+    cssClass = 'style-echo'; prefix = '~ ';
+  } else {
+    cssClass = 'style-whisper'; prefix = '✦ ';
+  }
+  var cls = [extraClass || '', cssClass].filter(Boolean).join(' ');
+  return '<span class="' + escapeHtml(cls) + '">' + escapeHtml(prefix + (item.text || '')) + '</span>';
 }
 
 function renderGame() {
