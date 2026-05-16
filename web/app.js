@@ -500,7 +500,7 @@ function renderEnding(view) {
     '<div class="terminal-screen">' +
     overlays +
     '<div class="terminal-panel ' + escapeHtml(type) + '">' +
-    '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
+    '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH) + '</span>' +
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line">Play again? (<span style="color:var(--green)">Y</span> to play again, <span style="color:var(--dim)">N</span> to return to library): <span class="terminal-cursor">█</span></div>' +
