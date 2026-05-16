@@ -4,9 +4,23 @@
 
 # Choices Matter
 
+<p align="center">
+  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><strong>▶ Play Now</strong></a>
+</p>
+
 **Every choice leaves a mark. Every ending remembers.**
 
-A Python CLI text adventure engine. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
+A Python CLI text adventure engine with a browser play mode. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
+
+## Play in Browser
+
+The hosted web player runs on GitHub Pages and saves progress in the player's browser.
+
+After GitHub Pages is enabled for this repository, the **Play Now** button opens:
+
+<https://julianhernandezdev.github.io/ChoicesMatter/>
+
+For repository maintainers: enable Pages from **Settings → Pages → Deploy from branch → main → /root**.
 
 ## Requirements
 
@@ -285,6 +299,10 @@ gallery.py           Ending gallery — tracks found endings across runs
 display.py           All rich rendering — nothing else imports rich
 config.py            Loads settings.json, merges with defaults
 validate_story.py    Story validator — schema, reachability, dead-end detection
+index.html           GitHub Pages entrypoint for browser play
+web/app.js           Browser play mode logic
+web/style.css        Browser play mode styling
+web/stories.json     Static manifest of bundled stories
 
 /stories             Drop .json story files here — auto-discovered at startup (subfolders supported)
 /saves               Auto-generated — one .save.json + one .gallery.json per story
