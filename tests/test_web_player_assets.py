@@ -40,3 +40,15 @@ def test_web_player_is_static_and_persists_progress_in_browser() -> None:
     assert "localStorage" in app
     assert "python" not in app.lower()
     assert "localhost" not in app.lower()
+
+
+def test_css_has_terminal_palette() -> None:
+    css = (ROOT / "web" / "style.css").read_text(encoding="utf-8")
+    for token in ("--bg", "--cyan", "--green", "--yellow", "--red", "--panel-border", "--dim"):
+        assert token in css, f"Missing CSS variable: {token}"
+
+
+def test_css_has_terminal_column() -> None:
+    css = (ROOT / "web" / "style.css").read_text(encoding="utf-8")
+    assert "76ch" in css
+    assert "Consolas" in css
