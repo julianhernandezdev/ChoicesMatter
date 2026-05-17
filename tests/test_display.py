@@ -380,3 +380,67 @@ def test_settings_edit_pause_invalid_then_valid(display):
     display.console.input.side_effect = ["abc", "200"]
     display._settings_edit_pause(pauses, ".", 550)
     assert pauses["."] == 200
+
+
+# ------------------------------------------------------------------
+# Debug mode: style labels
+# ------------------------------------------------------------------
+
+@pytest.fixture
+def debug_display():
+    d = Display(debug={"enabled": True, "all": False})
+    d.console = MagicMock()
+    return d
+
+
+@pytest.fixture
+def debug_all_display():
+    d = Display(debug={"enabled": True, "all": True})
+    d.console = MagicMock()
+    return d
+
+
+def test_inset_renderable_debug_named_style_appends_tag(debug_display):
+    inset = Inset(text="She whispers.", style="memory")
+    result = debug_display._inset_renderable(inset)
+    assert "[memory]" in result.plain
+
+
+def test_inset_renderable_debug_empty_style_appends_empty_tag(debug_display):
+    inset = Inset(text="Ambient.", style="")
+    result = debug_display._inset_renderable(inset)
+    assert "[empty]" in result.plain
+
+
+def test_inset_renderable_debug_absent_style_no_tag(debug_display):
+    inset = Inset(text="Plain.")  # style defaults to None
+    result = debug_display._inset_renderable(inset)
+    assert "[" not in result.plain
+
+
+def test_inset_renderable_no_debug_no_tag():
+    d = Display()
+    d.console = MagicMock()
+    inset = Inset(text="She whispers.", style="memory")
+    result = d._inset_renderable(inset)
+    assert "[memory]" not in result.plain
+
+
+def test_render_overlay_debug_appends_tag(debug_display):
+    debug_display._render_overlay(Overlay(text="Whisper.", style="whisper"))
+    printed = str(debug_display.console.print.call_args)
+    assert "[whisper]" in printed
+
+
+def test_render_overlay_debug_empty_style_appends_empty_tag(debug_display):
+    debug_display._render_overlay(Overlay(text="Plain.", style=""))
+    printed = str(debug_display.console.print.call_args)
+    assert "[empty]" in printed
+
+
+def test_render_overlay_no_debug_no_tag():
+    d = Display()
+    d.console = MagicMock()
+    d._render_overlay(Overlay(text="Whisper.", style="whisper"))
+    printed = str(d.console.print.call_args)
+    assert "[whisper]" not in printed

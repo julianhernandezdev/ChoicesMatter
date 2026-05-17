@@ -276,7 +276,13 @@ class Display:
         color = cfg.get("color", "cyan")
         style = f"{' '.join(parts)} {color}".strip()
         prefix = cfg.get("prefix", "✦ ")
-        self.console.print(f"  {prefix}{overlay.text}", style=style)
+        if self._debug["enabled"] and overlay.style is not None:
+            tag = overlay.style if overlay.style else "empty"
+            t = Text(f"  {prefix}{overlay.text}", style=style)
+            t.append(f"  [{tag}]", style="dim")
+            self.console.print(t)
+        else:
+            self.console.print(f"  {prefix}{overlay.text}", style=style)
 
     def _inset_renderable(self, inset: Inset) -> Text:
         if inset.style:
@@ -288,7 +294,11 @@ class Display:
         else:
             style = "dim italic"
             prefix = ""
-        return Text(f"{prefix}{inset.text}", style=style)
+        t = Text(f"{prefix}{inset.text}", style=style)
+        if self._debug["enabled"] and inset.style is not None:
+            tag = inset.style if inset.style else "empty"
+            t.append(f"  [{tag}]", style="dim")
+        return t
 
     # ------------------------------------------------------------------
     # Input prompts
