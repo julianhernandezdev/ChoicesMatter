@@ -29,7 +29,8 @@
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_press_key",
       "mcp__playwright__browser_resize",
-      "mcp__claude_ai_Miro__layout_get_dsl"
+      "mcp__claude_ai_Miro__layout_get_dsl",
+      "mcp__claude_ai_Miro__layout_create"
     ]
   },
   "enabledMcpjsonServers": [
@@ -37,6 +38,16 @@
   ],
   "hooks": {
     "PostToolUse": [
+      {
+        "matcher": "mcp__playwright__browser_take_screenshot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,os,shutil; d=json.load(sys.stdin); f=d.get('tool_input',{}).get('filename',''); os.path.dirname(f) in ('','.') and os.path.isfile(f) and [os.makedirs('_playwright_artifacts',exist_ok=True), shutil.move(f,'_playwright_artifacts/'+os.path.basename(f))]\"",
+            "shell": "bash"
+          }
+        ]
+      },
       {
         "matcher": "Edit|Write",
         "hooks": [
