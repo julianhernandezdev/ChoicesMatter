@@ -185,7 +185,7 @@ class Display:
             if choice.obfuscated:
                 label_markup = "[dim]████ ██████ ████ ████████[/dim]"
                 if self._debug["enabled"]:
-                    label_markup += "  [dim][redacted][/dim]"
+                    label_markup += r"  [dim]\[redacted][/dim]"
             else:
                 label_markup = choice.label
             self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {label_markup}")

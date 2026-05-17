@@ -526,8 +526,16 @@ def test_show_choices_obfuscated_debug_shows_redacted_tag(debug_display):
     debug_display._cfg["typewriter"]["enabled"] = False
     choices = [Choice(label="Secret passage", next="a", obfuscated=True)]
     debug_display.show_choices(choices, [], [], debug_state={})
-    all_prints = " ".join(str(c) for c in debug_display.console.print.call_args_list)
-    assert "[redacted]" in all_prints
+    found = False
+    for call in debug_display.console.print.call_args_list:
+        if call[0]:
+            arg = call[0][0]
+            cons = Console(file=StringIO(), width=80, legacy_windows=False)
+            cons.print(arg)
+            if "[redacted]" in cons.file.getvalue():
+                found = True
+                break
+    assert found, "[redacted] tag not visible in rendered output"
 
 
 def test_show_choices_no_debug_no_panel():
