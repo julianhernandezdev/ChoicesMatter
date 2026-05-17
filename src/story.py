@@ -34,14 +34,14 @@ class Overlay:
     text: str
     requires: dict[str, RequiresValue] = field(default_factory=dict)
     position: str = "after"  # "before" | "after"
-    style: str = ""           # named style key; "" = default overlay config
+    style: str | None = None           # named style key; "" = default overlay config; None = key absent
 
 
 @dataclass
 class Inset:
     text: str
     position: str = "before"  # "before" | "after" relative to node text
-    style: str = ""            # named style key; "" = dim italic default
+    style: str | None = None            # named style key; "" = dim italic default; None = key absent
     requires: dict[str, RequiresValue] = field(default_factory=dict)
 
 
@@ -338,7 +338,7 @@ class StoryLoader:
                     text=StoryLoader._required_string(overlay_data, "text", file_name, location),
                     requires=StoryLoader._parse_requires(overlay_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                     position=position,
-                    style=overlay_data.get("style", ""),
+                    style=overlay_data.get("style") if "style" in overlay_data else None,
                 )
             )
         return overlays
@@ -365,7 +365,7 @@ class StoryLoader:
                 Inset(
                     text=StoryLoader._required_string(inset_data, "text", file_name, location),
                     position=position,
-                    style=inset_data.get("style", ""),
+                    style=inset_data.get("style") if "style" in inset_data else None,
                     requires=StoryLoader._parse_requires(inset_data.get("requires", {}), file_name, f"{location} field 'requires'"),
                 )
             )

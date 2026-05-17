@@ -202,7 +202,7 @@ def test_overlay_style_defaults_to_empty(valid_story_path: Path, sample_story_di
     path = tmp_path / "no_style.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     story = StoryLoader.load(path)
-    assert story.nodes["start"].overlays[0].style == ""
+    assert story.nodes["start"].overlays[0].style is None
 
 
 def test_overlay_style_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
@@ -259,7 +259,7 @@ def test_inset_style_defaults_to_empty(tmp_path: Path, sample_story_dict: dict) 
     path = tmp_path / "inset_no_style.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     story = StoryLoader.load(path)
-    assert story.nodes["start"].insets[0].style == ""
+    assert story.nodes["start"].insets[0].style is None
 
 
 def test_inset_not_a_list_raises(tmp_path: Path, sample_story_dict: dict) -> None:

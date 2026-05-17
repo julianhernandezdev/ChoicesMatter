@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
+from io import StringIO
 
 import pytest
+from rich.console import Console
 from rich.panel import Panel
 
 from src.display import Display
@@ -380,3 +382,167 @@ def test_settings_edit_pause_invalid_then_valid(display):
     display.console.input.side_effect = ["abc", "200"]
     display._settings_edit_pause(pauses, ".", 550)
     assert pauses["."] == 200
+
+
+# ------------------------------------------------------------------
+# Debug mode: style labels
+# ------------------------------------------------------------------
+
+@pytest.fixture
+def debug_display():
+    d = Display(debug={"enabled": True, "all": False})
+    d.console = MagicMock()
+    return d
+
+
+@pytest.fixture
+def debug_all_display():
+    d = Display(debug={"enabled": True, "all": True})
+    d.console = MagicMock()
+    return d
+
+
+def test_inset_renderable_debug_named_style_appends_tag(debug_display):
+    inset = Inset(text="She whispers.", style="memory")
+    result = debug_display._inset_renderable(inset)
+    assert "[memory]" in result.plain
+
+
+def test_inset_renderable_debug_empty_style_appends_empty_tag(debug_display):
+    inset = Inset(text="Ambient.", style="")
+    result = debug_display._inset_renderable(inset)
+    assert "[empty]" in result.plain
+
+
+def test_inset_renderable_debug_absent_style_no_tag(debug_display):
+    inset = Inset(text="Plain.")  # style defaults to None
+    result = debug_display._inset_renderable(inset)
+    assert "[" not in result.plain
+
+
+def test_inset_renderable_no_debug_no_tag():
+    d = Display()
+    d.console = MagicMock()
+    inset = Inset(text="She whispers.", style="memory")
+    result = d._inset_renderable(inset)
+    assert "[memory]" not in result.plain
+
+
+def test_render_overlay_debug_appends_tag(debug_display):
+    debug_display._render_overlay(Overlay(text="Whisper.", style="whisper"))
+    printed = str(debug_display.console.print.call_args)
+    assert "[whisper]" in printed
+
+
+def test_render_overlay_debug_empty_style_appends_empty_tag(debug_display):
+    debug_display._render_overlay(Overlay(text="Plain.", style=""))
+    printed = str(debug_display.console.print.call_args)
+    assert "[empty]" in printed
+
+
+def test_render_overlay_no_debug_no_tag():
+    d = Display()
+    d.console = MagicMock()
+    d._render_overlay(Overlay(text="Whisper.", style="whisper"))
+    printed = str(d.console.print.call_args)
+    assert "[whisper]" not in printed
+
+
+# ------------------------------------------------------------------
+# Debug mode: flag panel + obfuscated tag
+# ------------------------------------------------------------------
+
+def test_show_choices_debug_panel_renders_with_state(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={"trust": True})
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "debug: flags" in panel_str
+    assert "trust" in panel_str
+
+
+def test_show_choices_debug_panel_hides_visited_in_author_mode(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": False})
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "trust" in panel_str
+    assert "visited_intro" not in panel_str
+
+
+def test_show_choices_debug_all_shows_visited(debug_all_display):
+    debug_all_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_all_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": True})
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_all_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "visited_intro" in panel_str
+
+
+def test_show_choices_debug_empty_state_shows_no_flags_set(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={})
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "no flags set" in panel_str
+
+
+def test_show_choices_obfuscated_debug_shows_redacted_tag(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Secret passage", next="a", obfuscated=True)]
+    debug_display.show_choices(choices, [], [], debug_state={})
+    found = False
+    for call in debug_display.console.print.call_args_list:
+        if call[0]:
+            arg = call[0][0]
+            cons = Console(file=StringIO(), width=80, legacy_windows=False)
+            cons.print(arg)
+            if "[redacted]" in cons.file.getvalue():
+                found = True
+                break
+    assert found, "[redacted] tag not visible in rendered output"
+
+
+def test_show_choices_no_debug_no_panel():
+    d = Display()
+    d.console = MagicMock()
+    d._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    d.show_choices(choices, [], [], debug_state={"trust": True})
+    all_prints = " ".join(str(c) for c in d.console.print.call_args_list)
+    assert "debug: flags" not in all_prints

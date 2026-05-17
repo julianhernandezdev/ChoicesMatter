@@ -276,3 +276,52 @@ body {
 
 /* === TYPEWRITER === */
 .tw-hidden { visibility: hidden; }
+
+/* === DEBUG MODE === */
+.debug-panel {
+  margin-top: 0.6rem;
+  padding: 0.4rem 1ch;
+  border-top: 1px solid var(--dim);
+}
+
+.debug-panel-title {
+  color: var(--dim);
+  font-style: italic;
+  margin-bottom: 0.25rem;
+}
+
+.debug-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 2ch;
+}
+
+.debug-flag {
+  white-space: nowrap;
+  color: var(--dim);
+}
+
+.debug-key { color: var(--dim); }
+
+.debug-val {
+  color: var(--dim);
+  font-weight: bold;
+}
+
+.debug-empty {
+  color: var(--dim);
+  font-style: italic;
+}
+
+.debug-hint {
+  color: var(--dim);
+  font-style: italic;
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
+.debug-tag {
+  margin-left: 1ch;
+  color: var(--dim);
+  font-size: 0.85em;
+}

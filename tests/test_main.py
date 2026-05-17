@@ -1,9 +1,11 @@
 import json
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
-from main import _build_entries, _load_story_info
+from main import _build_entries, _load_story_info, _parse_args
 from src.gallery import GalleryManager
 from src.save import SaveManager, SaveState
 
@@ -90,3 +92,23 @@ def test_build_entries_multiple_paths(valid_story_path: Path, saves_dir: Path,
     assert len(entries) == 2
     assert entries[0]["index"] == 1
     assert entries[1]["index"] == 2
+
+
+def test_parse_args_defaults():
+    with patch.object(sys, "argv", ["main.py"]):
+        assert _parse_args() == {"enabled": False, "all": False}
+
+
+def test_parse_args_debug_flag():
+    with patch.object(sys, "argv", ["main.py", "--debug"]):
+        assert _parse_args() == {"enabled": True, "all": False}
+
+
+def test_parse_args_debug_and_all():
+    with patch.object(sys, "argv", ["main.py", "--debug", "--all"]):
+        assert _parse_args() == {"enabled": True, "all": True}
+
+
+def test_parse_args_all_without_debug_is_ignored():
+    with patch.object(sys, "argv", ["main.py", "--all"]):
+        assert _parse_args() == {"enabled": False, "all": False}
