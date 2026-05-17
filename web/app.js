@@ -33,6 +33,7 @@ var settingsDraft = null;
 var settingsEditRow = null;
 var speedCustomEdit = false;
 var pendingInput = '';
+var debugMode = false; // false | "author" | "all"
 
 // --- App state ---
 
@@ -79,7 +80,7 @@ function resolveColor(name) {
 function renderStyledLine(item, extraClass) {
   var style = item.style;
   var cssClass, prefix;
-  if (style === "") {
+  if (style === undefined || style === null || style === "") {
     cssClass = 'style-empty'; prefix = '';
   } else if (style === 'system') {
     cssClass = 'style-system'; prefix = '';
@@ -94,6 +95,13 @@ function renderStyledLine(item, extraClass) {
   }
   var cls = [extraClass || '', cssClass].filter(Boolean).join(' ');
   return '<span class="' + escapeHtml(cls) + '">' + escapeHtml(prefix + (item.text || '')) + '</span>';
+}
+
+function debugTag(style) {
+  // style === undefined/null: key absent (no tag); style === "": [empty] tag
+  if (style === undefined || style === null) return '';
+  var label = style === '' ? 'empty' : style;
+  return '<span class="debug-tag">[' + escapeHtml(label) + ']</span>';
 }
 
 // --- Story metadata helpers ---
@@ -336,27 +344,57 @@ function renderGame() {
   var sep = '<span class="terminal-separator">' + '─'.repeat(PANEL_RULE_WIDTH) + '</span>';
 
   var beforeInsets = view.insets.before.map(function(i) {
-    return '<span class="terminal-inset">' + renderStyledLine(i, '') + '</span>';
+    var tag = debugMode ? debugTag(i.style) : '';
+    return '<span class="terminal-inset">' + renderStyledLine(i, '') + tag + '</span>';
   }).join('');
   var afterInsets = view.insets.after.map(function(i) {
-    return '<span class="terminal-inset">' + renderStyledLine(i, '') + '</span>';
+    var tag = debugMode ? debugTag(i.style) : '';
+    return '<span class="terminal-inset">' + renderStyledLine(i, '') + tag + '</span>';
   }).join('');
 
   var fallbackColor = node.choice_number_color || 'cyan';
   var choiceHtml = view.choices.map(function(choice, i) {
     var label = choice.obfuscated ? '[REDACTED ██████]' : choice.label;
     var colorVar = resolveColor(choice.color || fallbackColor);
+    var redactTag = (debugMode && choice.obfuscated) ? '<span class="debug-tag">[redacted]</span>' : '';
     return '<div class="terminal-choice" data-action="choice" data-index="' + i + '">' +
       '<span class="choice-num" style="color:' + colorVar + '">' + (i + 1) + '.</span>' +
-      '<span class="choice-label">' + escapeHtml(label) + '</span></div>';
+      '<span class="choice-label">' + escapeHtml(label) + redactTag + '</span></div>';
   }).join('');
 
   var beforeOverlays = view.overlays.before.map(function(o) {
-    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>';
+    var tag = debugMode ? debugTag(o.style) : '';
+    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + tag + '</span>';
   }).join('');
   var afterOverlays = view.overlays.after.map(function(o) {
-    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>';
+    var tag = debugMode ? debugTag(o.style) : '';
+    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + tag + '</span>';
   }).join('');
+
+  var debugPanel = '';
+  if (debugMode) {
+    var state = currentRun.state || {};
+    var flagPairs = Object.entries(state).filter(function(pair) {
+      return debugMode === 'all' || !pair[0].startsWith('visited_');
+    });
+    var hint = debugMode === 'all'
+      ? '(showing all flags)'
+      : '(visited_* hidden &mdash; press - to show all)';
+    var flagsInner;
+    if (flagPairs.length === 0) {
+      flagsInner = '<span class="debug-empty">(no flags set)</span>';
+    } else {
+      flagsInner = flagPairs.map(function(pair) {
+        return '<span class="debug-flag"><span class="debug-key">' + escapeHtml(pair[0]) + ':</span> ' +
+          '<span class="debug-val">' + escapeHtml(String(pair[1])) + '</span></span>';
+      }).join('');
+    }
+    debugPanel = '<div class="debug-panel">' +
+      '<div class="debug-panel-title">debug: flags</div>' +
+      '<div class="debug-flags">' + flagsInner + '</div>' +
+      '<div class="debug-hint">' + hint + '</div>' +
+      '</div>';
+  }
 
   app.innerHTML =
     '<div class="terminal-screen">' +
@@ -372,6 +410,7 @@ function renderGame() {
     beforeOverlays +
     '<div class="terminal-choices">' + choiceHtml + '</div>' +
     afterOverlays +
+    debugPanel +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
     '</div>';
@@ -711,6 +750,13 @@ document.addEventListener('keydown', function(e) {
       if (keyUp === 'D') { e.preventDefault(); changePage(+1);        return; }
       if (key === '0')   { e.preventDefault(); changePage(-Infinity); return; }
     }
+  }
+
+  if (key === '-' && currentScreen === 'game' && !isTwAnimating()) {
+    e.preventDefault();
+    debugMode = debugMode === false ? 'author' : debugMode === 'author' ? 'all' : false;
+    renderGame();
+    return;
   }
 
   if (keyUp === 'BACKSPACE') {
