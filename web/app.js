@@ -166,6 +166,10 @@ function setSettingValue(draft, key, value) {
 // --- Prompt ---
 
 function promptPrefix() {
+  if (currentScreen === 'settings' && settingsEditRow !== null) {
+    var row = SETTINGS_ROWS[settingsEditRow];
+    return 'Edit ' + (row ? row.label : 'value') + ': ';
+  }
   if (currentScreen === 'game')           return 'Your choice (or <span class="key-back">Q</span> to menu): ';
   if (currentScreen === 'resume')         return 'Continue? (<span class="key-fwd">C</span> continue &middot; <span class="key-back">N</span> new game): ';
   if (currentScreen === 'warning')        return 'Proceed? (<span class="key-fwd">Y</span> continue &middot; <span class="key-back">N</span> back): ';
@@ -489,26 +493,41 @@ function startSettingsEdit(rowIndex) {
   if (!rowEl) return;
   settingsEditRow = rowIndex;
   var valEl = rowEl.querySelector('.setting-value');
-  valEl.innerHTML = '<input class="setting-input" id="settings-edit-input" type="text" value="' + escapeHtml(String(val)) + '" autocomplete="off">';
-  var input = document.getElementById('settings-edit-input');
-  if (input) { input.focus(); input.select(); }
+
+  if (window.matchMedia('(pointer: coarse)').matches) {
+    valEl.innerHTML = '<span class="setting-editing">(editing&hellip;)</span>';
+    pendingInput = String(val);
+    mobileCapture.value = String(val);
+    var hintEl = document.querySelector('.footer-hint');
+    if (hintEl) hintEl.innerHTML = 'Enter to confirm &middot; <span class="key-back">Esc</span> to cancel.';
+    updatePrompt();
+    mobileCapture.focus();
+  } else {
+    valEl.innerHTML = '<input class="setting-input" id="settings-edit-input" type="text" value="' + escapeHtml(String(val)) + '" autocomplete="off">';
+    var input = document.getElementById('settings-edit-input');
+    if (input) { input.focus(); input.select(); }
+  }
 }
 
 function confirmSettingsEdit() {
-  var input = document.getElementById('settings-edit-input');
-  if (!input || settingsEditRow === null) return;
+  if (settingsEditRow === null) return;
   var row = SETTINGS_ROWS[settingsEditRow];
-  var num = parseInt(input.value, 10);
+  if (!row) return;
+  var inlineInput = document.getElementById('settings-edit-input');
+  var valueStr = inlineInput ? inlineInput.value : pendingInput.trim();
+  var num = parseInt(valueStr, 10);
   if (!isNaN(num)) {
     if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
     if (num >= 0) setSettingValue(settingsDraft, row.key, num);
   }
   settingsEditRow = null;
+  pendingInput = '';
   renderSettings();
 }
 
 function cancelSettingsEdit() {
   settingsEditRow = null;
+  pendingInput = '';
   renderSettings();
 }
 
@@ -725,7 +744,12 @@ document.addEventListener('click', function() {
 mobileCapture.addEventListener('input', function() {
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     var inline = document.getElementById('settings-edit-input');
-    if (inline) inline.value = mobileCapture.value;
+    if (inline) {
+      inline.value = mobileCapture.value;
+    } else {
+      pendingInput = mobileCapture.value;
+      updatePrompt();
+    }
     return;
   }
   pendingInput = mobileCapture.value;
@@ -738,6 +762,11 @@ mobileCapture.addEventListener('keydown', function(e) {
       e.preventDefault();
       mobileCapture.value = '';
       confirmSettingsEdit();
+      setTimeout(function() { mobileCapture.focus(); }, 0);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      mobileCapture.value = '';
+      cancelSettingsEdit();
       setTimeout(function() { mobileCapture.focus(); }, 0);
     }
     return;

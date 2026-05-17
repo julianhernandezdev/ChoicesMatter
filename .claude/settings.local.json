@@ -1,5 +1,4 @@
 {
-  "enabledMcpjsonServers": ["playwright"],
   "permissions": {
     "allow": [
       "Bash(git checkout *)",
@@ -20,7 +19,56 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(python3 validate_story.py stories/examples/01_minimal_story.json stories/examples/02_branching_endings.json stories/examples/03_scene_carry_forward.json stories/examples/04_boolean_flags.json stories/examples/05_integer_flags.json stories/examples/06_string_flags.json stories/examples/07_auto_visited_flags.json stories/examples/08_insets.json stories/examples/09_overlays.json stories/examples/10_named_styles.json stories/examples/11_choice_colors.json stories/examples/12_obfuscated_choices.json stories/examples/13_hub_structure.json stories/examples/14_parallel_knowledge_routes.json stories/examples/15_soft_failure.json stories/examples/16_stateful_endings.json stories/examples/17_delayed_consequences.json stories/examples/18_multi_condition_gating.json stories/showcase/19_horror_showcase.json stories/showcase/20_scifi_showcase.json stories/showcase/21_mystery_showcase.json stories/showcase/22_full_reference_story.json)",
-      "PowerShell(git *)"
+      "PowerShell(git *)",
+      "Bash(echo \"Exit: $? \\(empty = valid story, no output expected\\)\")"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,subprocess; data=json.load(sys.stdin); f=data.get('tool_input',{}).get('file_path',''); fp=f.replace(chr(92),'/'); x=('/stories/' in fp and fp.endswith('.json')) and subprocess.run(['python','scripts/validate_story.py',f],capture_output=True,text=True); x and x.returncode!=0 and print(json.dumps({'systemMessage':(x.stdout+x.stderr).strip()}))\"",
+            "shell": "bash",
+            "statusMessage": "Validating story..."
+          },
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,subprocess; data=json.load(sys.stdin); f=data.get('tool_input',{}).get('file_path',''); fp=f.replace(chr(92),'/'); ('/src/' in fp or '/tests/' in fp) and fp.endswith('.py') and [r:=subprocess.run(['pytest','tests/','-q','--tb=short','--ignore=tests/test_web.py'],capture_output=True,text=True), r.returncode!=0 and print(json.dumps({'systemMessage':(r.stdout+r.stderr).strip()}))]\"",
+            "shell": "bash",
+            "statusMessage": "Running tests..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "b=$(git branch --show-current 2>/dev/null); if [ \"$b\" = \"main\" ]; then echo \"{\\\"systemMessage\\\":\\\"On main - create a feature branch before writing code: git checkout -b feature/your-feature-name\\\"}\"; fi",
+            "shell": "bash",
+            "statusMessage": "Checking branch..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,subprocess; data=json.load(sys.stdin); cmd=data.get('tool_input',{}).get('command',''); cmd.strip().startswith('git commit') and [r:=subprocess.run(['git','diff','--cached','--name-only'],capture_output=True,text=True), sfs:=[f for f in r.stdout.splitlines() if '/stories/' in f.replace(chr(92),'/') and f.endswith('.json')], errs:=[subprocess.run(['python','scripts/validate_story.py',f],capture_output=True,text=True) for f in sfs], bad:=[e for e in errs if e.returncode!=0], bad and print(json.dumps({'decision':'block','reason':chr(10).join((e.stdout+e.stderr).strip() for e in bad)}))]\"",
+            "shell": "bash",
+            "statusMessage": "Checking staged stories..."
+          }
+        ]
+      }
     ]
   }
 }

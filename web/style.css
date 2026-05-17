@@ -241,6 +241,8 @@ body {
   outline: 1px solid var(--cyan);
 }
 
+.setting-editing { color: var(--dim); font-style: italic; }
+
 /* === SCREEN WRAPPER === */
 .terminal-screen { display: block; }
 

@@ -9,13 +9,13 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 | Status | Count |
 |---|---|
-| Under Consideration | 9 |
+| Under Consideration | 10 |
 | In-Flight | 2 |
-| Shipped | 10 |
+| Shipped | 11 |
 
 ---
 
-## Under Consideration (9)
+## Under Consideration (10)
 
 ### Variable Text Substitution
 
@@ -107,6 +107,16 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
+### Arrow Key Navigation
+
+**What:** Up/Down arrow keys move selection and Enter confirms — applies to the story library, folder navigation, game choices, and settings rows.
+
+**Why:** Completes keyboard parity with a real terminal; mouse click already works, arrow selection is the natural complement.
+
+**Suggested by:** maintainer
+
+---
+
 ## In-Flight (2)
 
 ### Dev / Author Mode
@@ -129,7 +139,17 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-## Shipped (10)
+## Shipped (11)
+
+### Terminal-Style Web Player
+
+**What:** The web player UI was rewritten to match the rich CLI terminal exactly — monospace font, 76-character column, terminal colour palette, panels with title rules, numbered inputs, typewriter streaming, keyboard navigation, and a settings screen.
+
+**Why:** The browser experience was aesthetically inconsistent with the CLI; aligning them means every story feels the same regardless of how you play it.
+
+**Suggested by:** maintainer
+
+---
 
 ### Web Player (GitHub Pages)
 
