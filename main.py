@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import math
 from pathlib import Path
 
@@ -13,11 +14,20 @@ STORIES_DIR = Path("stories")
 SAVES_DIR = Path("saves")
 
 
+def _parse_args() -> dict:
+    parser = argparse.ArgumentParser(description="Choices Matter text adventure engine")
+    parser.add_argument("--debug", action="store_true", help="Show debug overlay")
+    parser.add_argument("--all", action="store_true", help="Include visited_* flags in debug panel")
+    args = parser.parse_args()
+    return {"enabled": args.debug, "all": args.debug and args.all}
+
+
 def main() -> None:
     STORIES_DIR.mkdir(exist_ok=True)
     SAVES_DIR.mkdir(exist_ok=True)
 
-    display = Display()
+    debug = _parse_args()
+    display = Display(debug=debug)
     display.clear_screen()
     display.show_title_screen()
 

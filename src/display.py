@@ -53,9 +53,10 @@ _TW_SPEED_PRESETS = [
 
 
 class Display:
-    def __init__(self) -> None:
+    def __init__(self, debug: dict | None = None) -> None:
         self.console = Console()
         self._cfg = load_settings()
+        self._debug: dict = debug or {"enabled": False, "all": False}
 
     # ------------------------------------------------------------------
     # Title / chrome
