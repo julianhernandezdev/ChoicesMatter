@@ -271,7 +271,7 @@ class Display:
         return self._cfg["overlay"]
 
     def _render_overlay(self, overlay: Overlay) -> None:
-        cfg = self._style_cfg(overlay.style)
+        cfg = self._style_cfg(overlay.style or "")
         parts = [m for m in _MODIFIERS if cfg.get(m)]
         color = cfg.get("color", "cyan")
         style = f"{' '.join(parts)} {color}".strip()
