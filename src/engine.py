@@ -61,7 +61,7 @@ class Engine:
                 return
 
             self.display.show_node(self.story.title, node.text, before_insets, after_insets, self._current_scene)
-            self.display.show_choices(visible, before, after, node.choice_number_color)
+            self.display.show_choices(visible, before, after, node.choice_number_color, debug_state=self._state)
             idx = self.display.prompt_choice(visible)
             if idx is None:
                 return

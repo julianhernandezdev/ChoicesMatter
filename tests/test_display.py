@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
+from io import StringIO
 
 import pytest
+from rich.console import Console
 from rich.panel import Panel
 
 from src.display import Display
@@ -12,6 +14,18 @@ def display():
     d = Display()
     d.console = MagicMock()
     return d
+
+
+def _extract_panel_text(display):
+    """Extract rendered text from any Panel in console.print calls."""
+    for call_obj in display.console.print.call_args_list:
+        if call_obj[0] and isinstance(call_obj[0][0], Panel):
+            panel = call_obj[0][0]
+            # Render to string
+            string_console = Console(file=StringIO(), width=80, legacy_windows=False)
+            string_console.print(panel)
+            return string_console.file.getvalue()
+    return ""
 
 
 # ------------------------------------------------------------------
@@ -444,3 +458,59 @@ def test_render_overlay_no_debug_no_tag():
     d._render_overlay(Overlay(text="Whisper.", style="whisper"))
     printed = str(d.console.print.call_args)
     assert "[whisper]" not in printed
+
+
+# ------------------------------------------------------------------
+# Debug mode: flag panel + obfuscated tag
+# ------------------------------------------------------------------
+
+def test_show_choices_debug_panel_renders_with_state(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={"trust": True})
+    panel_text = _extract_panel_text(debug_display)
+    assert "debug: flags" in panel_text
+    assert "trust" in panel_text
+
+
+def test_show_choices_debug_panel_hides_visited_in_author_mode(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": False})
+    panel_text = _extract_panel_text(debug_display)
+    assert "trust" in panel_text
+    assert "visited_intro" not in panel_text
+
+
+def test_show_choices_debug_all_shows_visited(debug_all_display):
+    debug_all_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_all_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": True})
+    panel_text = _extract_panel_text(debug_all_display)
+    assert "visited_intro" in panel_text
+
+
+def test_show_choices_debug_empty_state_shows_no_flags_set(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    debug_display.show_choices(choices, [], [], debug_state={})
+    panel_text = _extract_panel_text(debug_display)
+    assert "no flags set" in panel_text
+
+
+def test_show_choices_obfuscated_debug_shows_redacted_tag(debug_display):
+    debug_display._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Secret passage", next="a", obfuscated=True)]
+    debug_display.show_choices(choices, [], [], debug_state={})
+    all_prints = " ".join(str(c) for c in debug_display.console.print.call_args_list)
+    assert "[redacted]" in all_prints
+
+
+def test_show_choices_no_debug_no_panel():
+    d = Display()
+    d.console = MagicMock()
+    d._cfg["typewriter"]["enabled"] = False
+    choices = [Choice(label="Go", next="a")]
+    d.show_choices(choices, [], [], debug_state={"trust": True})
+    all_prints = " ".join(str(c) for c in d.console.print.call_args_list)
+    assert "debug: flags" not in all_prints

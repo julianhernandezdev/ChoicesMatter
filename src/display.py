@@ -7,6 +7,7 @@ import time
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 from rich.rule import Rule
 from rich import box
@@ -169,6 +170,7 @@ class Display:
         before_overlays: list[Overlay] | None = None,
         after_overlays: list[Overlay] | None = None,
         choice_number_color: str | None = None,
+        debug_state: dict | None = None,
     ) -> None:
         self.console.print()
         stagger = 0.06 if self._typewriter_delay() else 0.0
@@ -180,14 +182,21 @@ class Display:
                 time.sleep(stagger)
         for i, choice in enumerate(choices, start=1):
             num_color = choice.color or choice_number_color or "cyan"
-            label = "[dim]████ ██████ ████ ████████[/dim]" if choice.obfuscated else choice.label
-            self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {label}")
+            if choice.obfuscated:
+                label_markup = "[dim]████ ██████ ████ ████████[/dim]"
+                if self._debug["enabled"]:
+                    label_markup += "  [dim][redacted][/dim]"
+            else:
+                label_markup = choice.label
+            self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {label_markup}")
             if stagger:
                 time.sleep(stagger)
         for overlay in (after_overlays or []):
             self._render_overlay(overlay)
             if stagger:
                 time.sleep(stagger)
+        if self._debug["enabled"] and debug_state is not None:
+            self._render_debug_panel(debug_state)
         self.console.print()
 
     def show_ending(
@@ -283,6 +292,33 @@ class Display:
             self.console.print(t)
         else:
             self.console.print(f"  {prefix}{overlay.text}", style=style)
+
+    def _render_debug_panel(self, state: dict) -> None:
+        show_all = self._debug["all"]
+        pairs = [(k, v) for k, v in state.items() if show_all or not k.startswith("visited_")]
+        hint_text = "(showing all flags)" if show_all else "(visited_* hidden — pass --all to show)"
+        if not pairs:
+            content: object = Group(
+                Text("(no flags set)", style="dim italic"),
+                Text(hint_text, style="dim italic"),
+            )
+        else:
+            table = Table.grid(padding=(0, 2))
+            table.add_column()
+            table.add_column()
+            row: list[Text] = []
+            for k, v in pairs:
+                row.append(Text(f"{k}: {v}", style="dim"))
+                if len(row) == 2:
+                    table.add_row(*row)
+                    row = []
+            if row:
+                row.append(Text(""))
+                table.add_row(*row)
+            content = Group(table, Text(hint_text, style="dim italic"))
+        self.console.print(
+            Panel(content, title="debug: flags", border_style="dim", style="dim", padding=(0, 2))
+        )
 
     def _inset_renderable(self, inset: Inset) -> Text:
         if inset.style:
