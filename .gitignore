@@ -33,6 +33,10 @@ settings.json
 # Stories excluded from gen release (local backup only)
 storybackup/
 
+# Playwright screenshots / test artifacts (local only)
+_playwright_artifacts/
+.playwright-mcp/
+
 # Example and showcase stubs (work in progress, not yet published)
 stories/examples/
 stories/showcase/

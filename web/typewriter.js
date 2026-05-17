@@ -56,7 +56,7 @@ export function startTypewriter(element, text) {
   var toReveal = Array.from(
     document.querySelectorAll('.terminal-choice, .terminal-overlay, .terminal-prompt-line')
   );
-  toReveal.forEach(function(el) { el.style.visibility = 'hidden'; });
+  toReveal.forEach(function(el) { el.classList.add('tw-hidden'); });
 
   var chars = Array.from(text);
   var i = 0;
@@ -86,7 +86,7 @@ export function skipTypewriter() {
 function revealChoices(elements) {
   setTimeout(function() {
     elements.forEach(function(el, i) {
-      setTimeout(function() { el.style.visibility = 'visible'; }, i * 60);
+      setTimeout(function() { el.classList.remove('tw-hidden'); }, i * 60);
     });
   }, 250);
 }
