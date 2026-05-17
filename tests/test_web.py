@@ -300,16 +300,26 @@ class TestDebugMode:
     """
 
     def _navigate_to_game(self, page: Page) -> None:
-        """Get to a game node: pick story 1, skip warnings/resume if needed."""
-        page.keyboard.type("1")
+        """Get to a game node: open first folder, pick first story, skip warnings/resume."""
+        # Step 1: open the first folder
+        page.locator("[data-action='open-folder']").first.click()
+        page.wait_for_selector("[data-action='pick-story']", timeout=5000)
+        # Step 2: select the first story in the folder
+        page.keyboard.press("1")
         page.keyboard.press("Enter")
-        for _ in range(3):
-            if page.locator(".terminal-choice").count() > 0:
-                return
-            # Accept warning or resume prompt
-            page.keyboard.type("y")
+        # Step 3: handle content warning if present
+        page.wait_for_timeout(800)
+        if page.locator(".warning-panel").count():
+            page.keyboard.press("y")
             page.keyboard.press("Enter")
-            page.wait_for_timeout(600)
+            page.wait_for_timeout(500)
+        # Step 4: handle resume prompt if present (start fresh for predictable state)
+        if "A save was found" in (page.locator(".terminal-prose").first.inner_text() if page.locator(".terminal-prose").count() else ""):
+            page.keyboard.press("n")
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(500)
+        # Step 5: wait for choices to confirm we're at a game node
+        page.wait_for_selector(".terminal-choice", timeout=8000)
 
     def test_debug_panel_hidden_by_default(self, page_fresh: Page):
         self._navigate_to_game(page_fresh)
