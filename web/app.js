@@ -752,7 +752,7 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  if (key === '-' && currentScreen === 'game' && !isTwAnimating()) {
+  if (key === '-' && currentScreen === 'game') {
     e.preventDefault();
     debugMode = debugMode === false ? 'author' : debugMode === 'author' ? 'all' : false;
     renderGame();
