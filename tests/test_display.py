@@ -456,66 +456,70 @@ def test_show_choices_debug_panel_renders_with_state(debug_display):
     debug_display._cfg["typewriter"]["enabled"] = False
     choices = [Choice(label="Go", next="a")]
     debug_display.show_choices(choices, [], [], debug_state={"trust": True})
-    all_prints = " ".join(
-        "" if not c[0] else (
-            str(c[0][0]) if not isinstance(c[0][0], Panel) else
-            (lambda cons: (cons.print(c[0][0]), cons.file.getvalue())[1])(
-                Console(file=StringIO(), width=80, legacy_windows=False)
-            )
-        )
-        for c in debug_display.console.print.call_args_list
-    )
-    assert "debug: flags" in all_prints
-    assert "trust" in all_prints
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "debug: flags" in panel_str
+    assert "trust" in panel_str
 
 
 def test_show_choices_debug_panel_hides_visited_in_author_mode(debug_display):
     debug_display._cfg["typewriter"]["enabled"] = False
     choices = [Choice(label="Go", next="a")]
     debug_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": False})
-    all_prints = " ".join(
-        "" if not c[0] else (
-            str(c[0][0]) if not isinstance(c[0][0], Panel) else
-            (lambda cons: (cons.print(c[0][0]), cons.file.getvalue())[1])(
-                Console(file=StringIO(), width=80, legacy_windows=False)
-            )
-        )
-        for c in debug_display.console.print.call_args_list
-    )
-    assert "trust" in all_prints
-    assert "visited_intro" not in all_prints
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "trust" in panel_str
+    assert "visited_intro" not in panel_str
 
 
 def test_show_choices_debug_all_shows_visited(debug_all_display):
     debug_all_display._cfg["typewriter"]["enabled"] = False
     choices = [Choice(label="Go", next="a")]
     debug_all_display.show_choices(choices, [], [], debug_state={"visited_intro": True, "trust": True})
-    all_prints = " ".join(
-        "" if not c[0] else (
-            str(c[0][0]) if not isinstance(c[0][0], Panel) else
-            (lambda cons: (cons.print(c[0][0]), cons.file.getvalue())[1])(
-                Console(file=StringIO(), width=80, legacy_windows=False)
-            )
-        )
-        for c in debug_all_display.console.print.call_args_list
-    )
-    assert "visited_intro" in all_prints
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_all_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "visited_intro" in panel_str
 
 
 def test_show_choices_debug_empty_state_shows_no_flags_set(debug_display):
     debug_display._cfg["typewriter"]["enabled"] = False
     choices = [Choice(label="Go", next="a")]
     debug_display.show_choices(choices, [], [], debug_state={})
-    all_prints = " ".join(
-        "" if not c[0] else (
-            str(c[0][0]) if not isinstance(c[0][0], Panel) else
-            (lambda cons: (cons.print(c[0][0]), cons.file.getvalue())[1])(
-                Console(file=StringIO(), width=80, legacy_windows=False)
-            )
-        )
-        for c in debug_display.console.print.call_args_list
-    )
-    assert "no flags set" in all_prints
+    # Find the Panel in the call_args_list and render it to check its content
+    panel = None
+    for call in debug_display.console.print.call_args_list:
+        if call[0] and isinstance(call[0][0], Panel):
+            panel = call[0][0]
+            break
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    panel_str = cons.file.getvalue()
+    assert "no flags set" in panel_str
 
 
 def test_show_choices_obfuscated_debug_shows_redacted_tag(debug_display):
