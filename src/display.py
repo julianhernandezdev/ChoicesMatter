@@ -132,7 +132,7 @@ class Display:
         if total_pages > 1:
             self.console.print(
                 f"  [cyan]Page {page + 1} of {total_pages}[/cyan]  "
-                f"[dim]·  W prev · D next · 0 first page[/dim]"
+                f"[dim]·  A prev · D next · 0 first page[/dim]"
             )
             self.console.print()
 
@@ -354,12 +354,12 @@ class Display:
             if has_back:
                 hint = "Enter a number, B to go back, or Q to quit"
                 if total_pages > 1:
-                    hint += "  ·  W prev · D next · 0 first page"
+                    hint += "  ·  A prev · D next · 0 first page"
                 self.console.print(f"  [bold]{hint}:[/bold]")
             else:
                 hint = "Enter a number, Q to quit, C to clear saves, or S for settings"
                 if total_pages > 1:
-                    hint += "  ·  W prev · D next · 0 first page"
+                    hint += "  ·  A prev · D next · 0 first page"
                 self.console.print(f"  [bold]{hint}:[/bold]")
                 self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
             raw = self.console.input("  › ").strip().lower()
@@ -375,7 +375,7 @@ class Display:
                 if raw == "s":
                     return "settings"
             if total_pages > 1:
-                if raw == "w":
+                if raw == "a":
                     return "prev_page"
                 if raw == "d":
                     return "next_page"
