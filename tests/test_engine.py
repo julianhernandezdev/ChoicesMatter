@@ -717,3 +717,53 @@ def test_counter_gates_choice_integration(saves_dir: Path) -> None:
     engine.run()
     assert engine._state.get("trust") == 4
     assert display.show_ending.call_args.args[0] == "They tell you."
+
+
+# ------------------------------------------------------------------
+# Conditional inline text: _resolve_inline unit tests
+# ------------------------------------------------------------------
+
+def test_resolve_inline_true_branch() -> None:
+    assert Engine._resolve_inline("{flag?yes|no}", {"flag": True}) == "yes"
+
+
+def test_resolve_inline_false_branch() -> None:
+    assert Engine._resolve_inline("{flag?yes|no}", {"flag": False}) == "no"
+
+
+def test_resolve_inline_missing_flag_returns_false_branch() -> None:
+    assert Engine._resolve_inline("{flag?yes|no}", {}) == "no"
+
+
+def test_resolve_inline_no_false_branch_when_true() -> None:
+    assert Engine._resolve_inline("{flag?shown}", {"flag": True}) == "shown"
+
+
+def test_resolve_inline_no_false_branch_collapses_when_false() -> None:
+    assert Engine._resolve_inline("{flag?shown}", {"flag": False}) == ""
+
+
+def test_resolve_inline_no_false_branch_collapses_when_missing() -> None:
+    assert Engine._resolve_inline("{flag?shown}", {}) == ""
+
+
+def test_resolve_inline_multiple_spans() -> None:
+    text = "{a?hello|goodbye}, {b?world|earth}."
+    assert Engine._resolve_inline(text, {"a": True, "b": False}) == "hello, earth."
+
+
+def test_resolve_inline_unmatched_braces_left_intact() -> None:
+    # {player_name} has no ? — must not be consumed (reserved for variable substitution)
+    assert Engine._resolve_inline("{player_name} arrives.", {"player_name": "Mira"}) == "{player_name} arrives."
+
+
+def test_resolve_inline_int_truthy() -> None:
+    assert Engine._resolve_inline("{score?pass|fail}", {"score": 5}) == "pass"
+
+
+def test_resolve_inline_int_zero_falsy() -> None:
+    assert Engine._resolve_inline("{score?pass|fail}", {"score": 0}) == "fail"
+
+
+def test_resolve_inline_no_patterns_unchanged() -> None:
+    assert Engine._resolve_inline("Plain text.", {"flag": True}) == "Plain text."
