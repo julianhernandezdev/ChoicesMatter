@@ -102,6 +102,7 @@ Flag names in inline spans must match `\w+` (letters, digits, underscores). Flag
 | Integer ≥ 1 | true branch |
 | Integer 0 | false branch |
 | Non-empty string | true branch |
+| Empty string `""` | false branch |
 
 `{key}` patterns without `?` are left intact (reserved for Variable Text Substitution).
 

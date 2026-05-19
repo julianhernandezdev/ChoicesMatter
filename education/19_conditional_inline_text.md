@@ -30,6 +30,7 @@ If `is_staff` is false or missing, nothing renders in its place.
 | integer ≥ 1 | true branch |
 | integer 0 | false branch |
 | non-empty string | true branch |
+| empty string `""` | false branch |
 | flag missing from state | false branch |
 
 Flag names must match `\w+` (letters, digits, underscores). Flags with hyphens or dots in their names cannot be referenced in inline syntax.
