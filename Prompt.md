@@ -169,7 +169,42 @@ The engine maintains a `state` dictionary of `string → bool | int | str` value
 
 ---
 
-## 10. Scene carry-forward
+## 10. Conditional inline text
+
+Embed flag-conditional spans directly inside `text` fields — node text, inset text, and overlay text — resolved at runtime without branching to a separate node.
+
+**Syntax:**
+
+```
+{flag?shown when true|shown when false}
+```
+
+The `|false branch` is optional. When omitted and the condition is false, the span collapses to an empty string:
+
+```
+You address the guard{knows_name? by name|}.
+The system {has_override?ACCEPTS|REJECTS} the credentials.
+```
+
+**Truthiness:**
+
+| State value | Resolves to |
+|---|---|
+| `true` | true branch |
+| `false` | false branch |
+| integer ≥ 1 | true branch |
+| integer 0 | false branch |
+| non-empty string | true branch |
+| empty string `""` | false branch |
+| flag missing from state | false branch |
+
+**Scope:** Resolved in node `text`, inset `text`, and overlay `text` — after `requires` filtering, before rendering. Original node/inset/overlay objects are never mutated.
+
+**Constraints:** Flag names must match `\w+` (letters, digits, underscores). Flags with hyphens or dots cannot be referenced in inline syntax. Branches may not contain `{` or `}`. `{key}` patterns without `?` are left intact.
+
+---
+
+## 11. Scene carry-forward
 
 `scene` is a string label displayed as a dim rule header above the story panel. Set it once when a location is established; it carries forward silently to all subsequent nodes until a new `scene` key overrides it. Only set `scene` when the location changes.
 
@@ -182,7 +217,7 @@ The engine maintains a `state` dictionary of `string → bool | int | str` value
 
 ---
 
-## 11. Validation rules
+## 12. Validation rules
 
 The engine validates at load time and raises a hard error on any violation:
 
@@ -205,7 +240,7 @@ The engine validates at load time and raises a hard error on any violation:
 
 ---
 
-## 12. Authoring guidance
+## 13. Authoring guidance
 
 **Insets vs overlays.** Insets belong inside the scene: data the character is directly perceiving — a clock on the wall, a line from a document they're reading, a system log. Overlays belong outside the scene: the feeling in the gap between knowing and deciding. They haunt the space around the choices. Use insets to anchor the player in physical reality; use overlays to create the emotional register in which a choice is made.
 
@@ -219,7 +254,7 @@ The engine validates at load time and raises a hard error on any violation:
 
 ---
 
-## 13. Complete working example
+## 14. Complete working example
 
 ```json
 {
@@ -313,7 +348,7 @@ The engine validates at load time and raises a hard error on any violation:
 
 ---
 
-## 14. Quick reference card
+## 15. Quick reference card
 
 | Field | Lives on | Notes |
 |---|---|---|
@@ -323,6 +358,7 @@ The engine validates at load time and raises a hard error on any violation:
 | `overlays` | node | Styled lines around the choice list |
 | `is_ending` | node | Triggers ending screen; empty `choices` does the same |
 | `ending_type` | node | `"good"` / `"bad"` / `"neutral"` — ending panel color |
+| `{flag?a\|b}` | node/inset/overlay `text` | Conditional inline span — `b` (false branch) is optional; collapses to `""` when omitted and flag is false |
 | `requires` | choice / inset / overlay | Show only when all conditions match: bool=exact, int=threshold(≥), str=exact, list[str]=membership |
 | `sets` | choice | Apply state when taken: bool/int/str=direct, `"+N"`/`"-N"`=delta |
 | `color` | choice | Per-choice number prefix color override |

@@ -200,6 +200,28 @@ Nodes can have `overlays` — flavour lines that appear conditionally before or 
 
 Multiple overlays can stack; `before` and `after` accumulate independently. On ending nodes, all overlays appear before the ending panel.
 
+### Conditional Inline Text
+
+Write conditional spans directly inside any `text` field — node text, inset text, or overlay text — without branching to a separate node:
+
+```
+{flag?shown when true|shown when false}
+```
+
+The false branch is optional; omitting it collapses to nothing when the flag is unset:
+
+```json
+"lobby": {
+  "text": "The receptionist {is_staff?gives you a professional nod.|watches you carefully.}",
+  "insets": [
+    { "text": "{is_staff?STAFF ACCESS GRANTED}", "position": "before", "style": "system" }
+  ],
+  "choices": [...]
+}
+```
+
+Truthiness mirrors the flag system: `true`, integer ≥ 1, and non-empty strings resolve to the true branch; `false`, `0`, `""`, and missing flags resolve to the false branch. Flag names must match `\w+` (letters, digits, underscores).
+
 ## Named Styles
 
 Both overlays and insets accept a `style` field. The built-in named styles are:

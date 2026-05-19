@@ -40,3 +40,10 @@ _playwright_artifacts/
 # Example and showcase stubs (work in progress, not yet published)
 stories/examples/
 stories/showcase/
+
+# Obsidian vault metadata
+.obsidian/
+
+# Notion export artifacts
+notion_export/
+*.notion/
