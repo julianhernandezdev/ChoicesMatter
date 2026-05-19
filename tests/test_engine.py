@@ -775,3 +775,75 @@ def test_resolve_inline_string_truthy() -> None:
 
 def test_resolve_inline_empty_string_falsy() -> None:
     assert Engine._resolve_inline("{msg?loaded|waiting}", {"msg": ""}) == "waiting"
+
+
+# ------------------------------------------------------------------
+# Conditional inline text: integration tests through Engine.run()
+# ------------------------------------------------------------------
+
+def test_inline_resolved_in_node_text(saves_dir: Path) -> None:
+    """node.text spans are resolved against state before show_node is called."""
+    story = _make_story({
+        "start": Node(
+            text="You enter.",
+            choices=[Choice(label="Go", next="hall", sets={"met_guard": True})],
+        ),
+        "hall": Node(
+            text="{met_guard?A familiar face.|A stranger.}",
+            choices=[Choice(label="Leave", next="end")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    hall_call = display.show_node.call_args_list[1]
+    assert hall_call.args[1] == "A familiar face."
+
+
+def test_inline_resolved_in_inset_text(saves_dir: Path) -> None:
+    """Visible inset text spans are resolved before show_node is called."""
+    from src.story import Inset
+    story = _make_story({
+        "start": Node(
+            text="You enter.",
+            choices=[Choice(label="Go", next="hall", sets={"is_staff": True})],
+        ),
+        "hall": Node(
+            text="The lobby.",
+            choices=[Choice(label="Leave", next="end")],
+            insets=[Inset(text="{is_staff?STAFF ACCESS GRANTED}", style="system", position="before")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    hall_call = display.show_node.call_args_list[1]
+    before_insets = hall_call.args[2]
+    assert len(before_insets) == 1
+    assert before_insets[0].text == "STAFF ACCESS GRANTED"
+
+
+def test_inline_resolved_in_overlay_text(saves_dir: Path) -> None:
+    """Visible overlay text spans are resolved before show_choices is called."""
+    from src.story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="You enter.",
+            choices=[Choice(label="Go", next="hall", sets={"alarm": True})],
+        ),
+        "hall": Node(
+            text="The corridor.",
+            choices=[Choice(label="Leave", next="end")],
+            overlays=[Overlay(text="{alarm?ALARM SOUNDS.|Silence.}", position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True),
+    })
+    display = _make_display(play_again=False)
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    hall_choices_call = display.show_choices.call_args_list[1]
+    after_overlays = hall_choices_call.args[2]
+    assert len(after_overlays) == 1
+    assert after_overlays[0].text == "ALARM SOUNDS."

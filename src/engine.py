@@ -52,8 +52,14 @@ class Engine:
             before_insets = [i for i in visible_insets if i.position == "before"]
             after_insets  = [i for i in visible_insets if i.position == "after"]
 
+            node_text     = self._resolve_inline(node.text, self._state)
+            before_insets = [dataclasses.replace(i, text=self._resolve_inline(i.text, self._state)) for i in before_insets]
+            after_insets  = [dataclasses.replace(i, text=self._resolve_inline(i.text, self._state)) for i in after_insets]
+            before        = [dataclasses.replace(o, text=self._resolve_inline(o.text, self._state)) for o in before]
+            after         = [dataclasses.replace(o, text=self._resolve_inline(o.text, self._state)) for o in after]
+
             if node.is_ending or not visible:
-                self.display.show_ending(node.text, node.ending_type, overlays=before + after)
+                self.display.show_ending(node_text, node.ending_type, overlays=before + after)
                 if self.gallery_manager:
                     self.gallery_manager.record_ending(self.story.id, self._current_node)
                 self.save_manager.delete(self.story.id)
@@ -62,7 +68,7 @@ class Engine:
                     continue
                 return
 
-            self.display.show_node(self.story.title, node.text, before_insets, after_insets, self._current_scene)
+            self.display.show_node(self.story.title, node_text, before_insets, after_insets, self._current_scene)
             self.display.show_choices(visible, before, after, node.choice_number_color, debug_state=self._state)
             idx = self.display.prompt_choice(visible)
             if idx is None:
