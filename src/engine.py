@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import re
 
 from .display import Display
@@ -8,6 +9,7 @@ from .save import SaveManager, SaveState
 from .story import Choice, Story
 
 _DELTA_RE = re.compile(r"^[+-]\d+$")
+_INLINE_RE = re.compile(r"\{(\w+)\?([^|{}]*?)(?:\|([^{}]*?))?\}")
 
 
 class Engine:
@@ -133,3 +135,11 @@ class Engine:
         self._state = {}
         self._current_scene = None
         self.save_manager.delete(self.story.id)
+
+    @staticmethod
+    def _resolve_inline(text: str, state: dict) -> str:
+        def _replace(m: re.Match) -> str:
+            true_b = m.group(2)
+            false_b = m.group(3) or ""
+            return true_b if state.get(m.group(1)) else false_b
+        return _INLINE_RE.sub(_replace, text)
