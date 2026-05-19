@@ -82,6 +82,34 @@ Stories have two top-level keys: `meta` and `nodes`.
 
 An empty `choices` array is treated as an ending even without `is_ending: true`.
 
+**Conditional Inline Text**
+
+Any `text` field (node text, inset text, overlay text) may embed conditional spans:
+
+```
+{flag?shown when true|shown when false}
+```
+
+The `|false branch` is optional — omitting it collapses the span to an empty string when the condition is false. Spans are resolved at runtime against the current flag state.
+
+Flag names in inline spans must match `\w+` (letters, digits, underscores). Flags with hyphens or dots in their names cannot be referenced by inline syntax.
+
+| Condition | Resolves to |
+|---|---|
+| Flag is `true` | true branch |
+| Flag is `false` | false branch |
+| Flag missing from state | false branch |
+| Integer ≥ 1 | true branch |
+| Integer 0 | false branch |
+| Non-empty string | true branch |
+| Empty string `""` | false branch |
+
+`{key}` patterns without `?` are left intact (reserved for Variable Text Substitution).
+
+Example: `"text": "You address {knows_name?the guard by name|the stranger}."`
+
+Inset with no false branch (collapses when unset): `{ "text": "{is_staff?STAFF ACCESS GRANTED}", "style": "system" }`
+
 **Choice object:**
 
 | Field | Required | Notes |
