@@ -767,3 +767,11 @@ def test_resolve_inline_int_zero_falsy() -> None:
 
 def test_resolve_inline_no_patterns_unchanged() -> None:
     assert Engine._resolve_inline("Plain text.", {"flag": True}) == "Plain text."
+
+
+def test_resolve_inline_string_truthy() -> None:
+    assert Engine._resolve_inline("{msg?loaded|waiting}", {"msg": "ready"}) == "loaded"
+
+
+def test_resolve_inline_empty_string_falsy() -> None:
+    assert Engine._resolve_inline("{msg?loaded|waiting}", {"msg": ""}) == "waiting"
