@@ -1,6 +1,6 @@
 # Choices Matter — Story Authoring Reference
 
-**Version: v0.7**
+**Version: v0.8**
 
 Use this document as a complete reference for writing story JSON files for the Choices Matter engine. No other project knowledge is required.
 
@@ -284,7 +284,7 @@ The engine validates at load time and raises a hard error on any violation:
       "insets": [
         { "text": "SIGNAL ORIGIN: UNRESOLVED  —  STRUCTURE: NON-RANDOM  —  REPEATING: YES", "position": "after", "style": "system" }
       ],
-      "text": "The signal is structured. Not noise. Not a satellite echo. Something arranged these pulses with intent.",
+      "text": "The signal is structured. Not noise. Not a satellite echo. Something arranged these pulses with intent. {anomaly_logged?You were right to log it first.|Nothing about this is in the record yet.}",
       "overlays": [
         { "text": "Non-random. Repeating. Structured.", "position": "after", "style": "echo" },
         {
@@ -341,7 +341,7 @@ The engine validates at load time and raises a hard error on any violation:
 
 - `watch_station` establishes the `scene` (carries into `analyze`), uses `choice_number_color: "yellow"` for the uncertain register, and places a `"system"` before-inset as a status timestamp.
 - "Log the anomaly" uses `sets` to record `anomaly_logged: true`.
-- `analyze` has an `"echo"` after-overlay for atmosphere and a `"memory"` before-overlay gated on `anomaly_logged` — only players who logged the signal see the callback.
+- `analyze` has an `"echo"` after-overlay for atmosphere and a `"memory"` before-overlay gated on `anomaly_logged` — only players who logged the signal see the callback. Its `text` uses a conditional inline span (`{anomaly_logged?...|...}`) to vary a single sentence based on the same flag without branching to a separate node.
 - `decode` uses two insets (before `"system"`, after `"warning"`), a `"whisper"` after-overlay, and an `obfuscated` choice — the player sees `[REDACTED ██████]` for "Answer it."
 - `responded` is a bad ending; `reported` is a good ending with a `scene` override showing time has passed.
 - `est_time` is omitted — the engine auto-computes it from word count.

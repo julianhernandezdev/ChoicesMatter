@@ -41,6 +41,9 @@ _playwright_artifacts/
 stories/examples/
 stories/showcase/
 
+# Social media drafts (local only)
+sm_post.md
+
 # Obsidian vault metadata
 .obsidian/
 

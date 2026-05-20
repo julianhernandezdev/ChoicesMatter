@@ -30,11 +30,17 @@
       "mcp__playwright__browser_press_key",
       "mcp__playwright__browser_resize",
       "mcp__claude_ai_Miro__layout_get_dsl",
-      "mcp__claude_ai_Miro__layout_create"
+      "mcp__claude_ai_Miro__layout_create",
+      "Skill(superpowers:brainstorming)",
+      "mcp__claude_ai_Miro__layout_read",
+      "mcp__claude_ai_Miro__layout_update",
+      "mcp__semble__search",
+      "mcp__semble__find_related"
     ]
   },
   "enabledMcpjsonServers": [
-    "playwright"
+    "playwright",
+    "semble"
   ],
   "hooks": {
     "PostToolUse": [
