@@ -33,6 +33,36 @@
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
 </p>
 
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <strong>Getting started</strong><br><br>
+      <a href="#requirements">Requirements</a><br>
+      <a href="#running">Running</a><br>
+      <a href="#adding-a-story">Adding a Story</a><br>
+      <a href="#validating-a-story">Validating a Story</a><br>
+      <a href="#project-structure">Project Structure</a><br>
+      <a href="#contributing">Contributing</a>
+    </td>
+    <td valign="top" width="50%">
+      <strong>Writing stories</strong><br><br>
+      <a href="#named-styles">Named Styles</a><br>
+      <a href="#typewriter-mode">Typewriter Mode</a><br>
+      <details>
+        <summary><a href="#writing-a-story">Writing a Story</a></summary>
+        &nbsp;&nbsp;&nbsp;<a href="#meta">meta</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#nodes">Nodes</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-choices-flags">Flags</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#obfuscated-choices">Obfuscated choices</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#choice-number-color">Choice colors</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#insets">Insets</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-overlays">Overlays</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-inline-text">Conditional inline text</a>
+      </details>
+    </td>
+  </tr>
+</table>
+
 ## Requirements
 
 - Python 3.12+
