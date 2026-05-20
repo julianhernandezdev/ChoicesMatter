@@ -6,11 +6,31 @@
 
 **Every choice leaves a mark. Every ending remembers.**
 
-A Python CLI text adventure engine with a browser play mode. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
-
-## Play in Browser
 <p align="center">
-  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><strong>Play Now</strong></a>
+  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><img src="https://img.shields.io/badge/▶%20Play%20in%20Browser-238636?style=for-the-badge" alt="Play in Browser"></a>
+  &nbsp;&nbsp;
+  <a href="#writing-a-story"><img src="https://img.shields.io/badge/📖%20Write%20a%20Story-30363d?style=for-the-badge" alt="Write a Story"></a>
+</p>
+
+<p align="center">
+  A Python CLI text adventure engine with browser play mode.<br>
+  Fully data-driven — stories are <code>.json</code> files, no code required.
+</p>
+
+<table align="center">
+  <tr>
+    <td>🌐 <strong>Browser play mode</strong><br>GitHub Pages, no install needed</td>
+    <td>🎭 <strong>Rich flag system</strong><br>Booleans, ints, strings, deltas</td>
+  </tr>
+  <tr>
+    <td>✍️ <strong>Conditional inline text</strong><br>Branch inside prose, no new node</td>
+    <td>🤖 <strong>GPT authoring tool</strong><br>ChoicesMatterGPT writes the JSON</td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
 </p>
 
 ## Requirements
