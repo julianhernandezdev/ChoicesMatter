@@ -6,12 +6,62 @@
 
 **Every choice leaves a mark. Every ending remembers.**
 
-A Python CLI text adventure engine with a browser play mode. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. Drop a file in, launch the engine, play.
-
-## Play in Browser
 <p align="center">
-  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><strong>Play Now</strong></a>
+  <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><img src="https://img.shields.io/badge/▶%20Play%20in%20Browser-238636?style=for-the-badge" alt="Play in Browser"></a>
+  &nbsp;&nbsp;
+  <a href="#writing-a-story"><img src="https://img.shields.io/badge/📖%20Write%20a%20Story-30363d?style=for-the-badge" alt="Write a Story"></a>
 </p>
+
+<p align="center">
+  A Python CLI text adventure engine with browser play mode.<br>
+  Fully data-driven — stories are <code>.json</code> files, no code required.
+</p>
+
+<table align="center">
+  <tr>
+    <td>🌐 <strong>Browser play mode</strong><br>GitHub Pages, no install needed</td>
+    <td>🎭 <strong>Rich flag system</strong><br>Booleans, ints, strings, deltas</td>
+  </tr>
+  <tr>
+    <td>✍️ <strong>Conditional inline text</strong><br>Branch inside prose, no new node</td>
+    <td>🤖 <strong>GPT authoring tool</strong><br>ChoicesMatterGPT writes the JSON</td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
+</p>
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <strong>Getting started</strong><br><br>
+      <a href="#requirements">Requirements</a><br>
+      <a href="#running">Running</a><br>
+      <a href="#adding-a-story">Adding a Story</a><br>
+      <a href="#validating-a-story">Validating a Story</a><br>
+      <a href="#project-structure">Project Structure</a><br>
+      <a href="#contributing">Contributing</a>
+    </td>
+    <td valign="top" width="50%">
+      <strong>Writing stories</strong><br><br>
+      <a href="#named-styles">Named Styles</a><br>
+      <a href="#typewriter-mode">Typewriter Mode</a><br>
+      <details>
+        <summary><a href="#writing-a-story">Writing a Story</a></summary>
+        &nbsp;&nbsp;&nbsp;<a href="#meta">meta</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#nodes">Nodes</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-choices-flags">Flags</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#obfuscated-choices">Obfuscated choices</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#choice-number-color">Choice colors</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#insets">Insets</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-overlays">Overlays</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-inline-text">Conditional inline text</a>
+      </details>
+    </td>
+  </tr>
+</table>
 
 ## Requirements
 
@@ -40,7 +90,8 @@ At the picker prompt:
 
 ## Writing a Story
 
-> **Need help?** [ChoicesMatterGPT](https://chatgpt.com/g/g-6a07ba3fe91881918378538ca6cbfe8f-choicesmattergpt) is a custom GPT trained on this format — describe your story and it generates valid JSON.
+> [!TIP]
+> [ChoicesMatterGPT](https://chatgpt.com/g/g-6a07ba3fe91881918378538ca6cbfe8f-choicesmattergpt) is a custom GPT trained on this format — describe your story and it generates valid JSON.
 
 Stories are JSON files with two top-level keys: `meta` and `nodes`.
 
@@ -125,7 +176,8 @@ State accumulates across the run and is persisted in the save file.
 }
 ```
 
-The `visited_` prefix is reserved — manually setting it via `sets` raises a validation error. Set `"auto_visited_flags": false` in `meta` to manage the namespace yourself.
+> [!WARNING]
+> The `visited_` prefix is reserved — setting it via `choice.sets` raises a validation error. Set `"auto_visited_flags": false` in `meta` to opt out of automatic tracking.
 
 ### Obfuscated Choices
 
@@ -255,6 +307,9 @@ Copy `settings.example.json` to `settings.json` (gitignored, per-user). Override
 
 `overlay` sets the default style for overlays with no `style` key. Missing or malformed `settings.json` silently falls back to built-in defaults.
 
+> [!NOTE]
+> `settings.json` is gitignored — it's per-user and never committed. Copy `settings.example.json` to get started.
+
 ## Typewriter Mode
 
 Enable character-by-character text streaming in `settings.json`:
@@ -283,7 +338,10 @@ Enable character-by-character text streaming in `settings.json`:
 
 ## Adding a Story
 
-Drop any `.json` file into `/stories/`. No code changes needed. Malformed stories show as `-ERROR` in the picker and can be selected to see the validation message.
+Drop any `.json` file into `/stories/`. No code changes needed.
+
+> [!NOTE]
+> Malformed stories show as `-ERROR` in the picker and can be selected to display the validation message — the engine never crashes at startup.
 
 Stories can be organised into subfolders inside `/stories/`. The picker shows each subfolder as a named folder entry with a story count; selecting it drills into a sub-screen. Root stories always appear alongside folders.
 
