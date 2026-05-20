@@ -33,7 +33,7 @@
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
 </p>
 
-<table>
+<table align="center">
   <tr>
     <td valign="top" width="50%">
       <strong>Getting started</strong><br><br>
