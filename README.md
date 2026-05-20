@@ -26,16 +26,8 @@
     <td>✍️ <strong>Conditional inline text</strong><br>Branch inside prose, no new node</td>
     <td>🤖 <strong>GPT authoring tool</strong><br>ChoicesMatterGPT writes the JSON</td>
   </tr>
-</table>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
-  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
-</p>
-
-<table align="center">
   <tr>
-    <td valign="top" width="50%">
+    <td valign="top">
       <strong>Getting started</strong><br><br>
       <a href="#requirements">Requirements</a><br>
       <a href="#running">Running</a><br>
@@ -44,7 +36,7 @@
       <a href="#project-structure">Project Structure</a><br>
       <a href="#contributing">Contributing</a>
     </td>
-    <td valign="top" width="50%">
+    <td valign="top">
       <strong>Writing stories</strong><br><br>
       <a href="#named-styles">Named Styles</a><br>
       <a href="#typewriter-mode">Typewriter Mode</a><br>
@@ -62,6 +54,11 @@
     </td>
   </tr>
 </table>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
+</p>
 
 ## Requirements
 
