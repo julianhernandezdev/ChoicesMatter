@@ -307,6 +307,9 @@ Copy `settings.example.json` to `settings.json` (gitignored, per-user). Override
 
 `overlay` sets the default style for overlays with no `style` key. Missing or malformed `settings.json` silently falls back to built-in defaults.
 
+> [!NOTE]
+> `settings.json` is gitignored — it's per-user and never committed. Copy `settings.example.json` to get started.
+
 ## Typewriter Mode
 
 Enable character-by-character text streaming in `settings.json`:
@@ -335,7 +338,10 @@ Enable character-by-character text streaming in `settings.json`:
 
 ## Adding a Story
 
-Drop any `.json` file into `/stories/`. No code changes needed. Malformed stories show as `-ERROR` in the picker and can be selected to see the validation message.
+Drop any `.json` file into `/stories/`. No code changes needed.
+
+> [!NOTE]
+> Malformed stories show as `-ERROR` in the picker and can be selected to display the validation message — the engine never crashes at startup.
 
 Stories can be organised into subfolders inside `/stories/`. The picker shows each subfolder as a named folder entry with a story count; selecting it drills into a sub-screen. Root stories always appear alongside folders.
 
