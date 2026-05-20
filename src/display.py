@@ -244,18 +244,29 @@ class Display:
     def _typewrite(self, make_panel, text: str, delay_s: float) -> None:
         raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
         pauses = {k: v / 1000 for k, v in raw_pauses.items()}
+        pause_s = self._cfg.get("typewriter", {}).get("pause_ms", 500) / 1000
+        clean_text = _strip_pause_tokens(text)
+        segments = text.split("{pause}")
         with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
             displayed = ""
-            for char in text:
-                if _key_pending():
-                    _consume_key()
-                    live.update(make_panel(text))
+            for seg_idx, segment in enumerate(segments):
+                for char in segment:
+                    if _key_pending():
+                        _consume_key()
+                        live.update(make_panel(clean_text))
+                        live.refresh()
+                        return
+                    displayed += char
+                    live.update(make_panel(displayed))
                     live.refresh()
-                    return
-                displayed += char
-                live.update(make_panel(displayed))
-                live.refresh()
-                time.sleep(delay_s + pauses.get(char, 0.0))
+                    time.sleep(delay_s + pauses.get(char, 0.0))
+                if seg_idx < len(segments) - 1:
+                    if _key_pending():
+                        _consume_key()
+                        live.update(make_panel(clean_text))
+                        live.refresh()
+                        return
+                    time.sleep(pause_s)
 
     def _node_panel(
         self,

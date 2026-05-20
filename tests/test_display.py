@@ -122,6 +122,76 @@ def test_show_ending_strips_pause_token_when_typewriter_off(display):
 
 
 # ------------------------------------------------------------------
+# _typewrite: {pause} token
+# ------------------------------------------------------------------
+
+def test_typewrite_pause_token_sleeps_pause_ms():
+    """Between {pause} segments, time.sleep is called with pause_ms / 1000."""
+    d = Display()
+    d.console = MagicMock()
+    d._cfg["typewriter"]["pause_ms"] = 400
+    d._cfg["typewriter"]["punctuation_pauses"] = {}
+
+    sleep_calls = []
+    mock_live = MagicMock()
+    mock_live.__enter__ = MagicMock(return_value=mock_live)
+    mock_live.__exit__ = MagicMock(return_value=False)
+
+    with patch("src.display.time.sleep", side_effect=lambda s: sleep_calls.append(s)), \
+         patch("src.display._key_pending", return_value=False), \
+         patch("src.display.Live", return_value=mock_live):
+        d._typewrite(lambda t: t, "A{pause}B", 0.0)
+
+    assert pytest.approx(0.4) in sleep_calls
+
+
+def test_typewrite_no_pause_token_no_extra_sleep():
+    """Without {pause}, the inter-segment sleep is never called."""
+    d = Display()
+    d.console = MagicMock()
+    d._cfg["typewriter"]["pause_ms"] = 400
+    d._cfg["typewriter"]["punctuation_pauses"] = {}
+
+    sleep_calls = []
+    mock_live = MagicMock()
+    mock_live.__enter__ = MagicMock(return_value=mock_live)
+    mock_live.__exit__ = MagicMock(return_value=False)
+
+    with patch("src.display.time.sleep", side_effect=lambda s: sleep_calls.append(s)), \
+         patch("src.display._key_pending", return_value=False), \
+         patch("src.display.Live", return_value=mock_live):
+        d._typewrite(lambda t: t, "Hello", 0.0)
+
+    assert pytest.approx(0.4) not in sleep_calls
+
+
+def test_typewrite_skip_during_pause_shows_clean_text():
+    """If a key is pressed during a {pause} wait, the full text shown has {pause} stripped."""
+    d = Display()
+    d.console = MagicMock()
+    d._cfg["typewriter"]["pause_ms"] = 500
+    d._cfg["typewriter"]["punctuation_pauses"] = {}
+
+    shown = []
+    mock_live = MagicMock()
+    mock_live.__enter__ = MagicMock(return_value=mock_live)
+    mock_live.__exit__ = MagicMock(return_value=False)
+    mock_live.update = lambda p: shown.append(p)
+    mock_live.refresh = MagicMock()
+
+    with patch("src.display._key_pending", return_value=True), \
+         patch("src.display._consume_key"), \
+         patch("src.display.time.sleep"), \
+         patch("src.display.Live", return_value=mock_live):
+        d._typewrite(lambda t: t, "A{pause}B", 0.0)
+
+    assert all("{pause}" not in str(p) for p in shown), \
+        f"'{'{pause}'}' appeared in shown text: {shown}"
+    assert any("AB" in str(p) for p in shown), \
+        f"Expected 'AB' in shown text but got: {shown}"
+
+
+# ------------------------------------------------------------------
 # Chrome / indicators
 # ------------------------------------------------------------------
 
