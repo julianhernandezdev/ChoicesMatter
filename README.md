@@ -90,7 +90,8 @@ At the picker prompt:
 
 ## Writing a Story
 
-> **Need help?** [ChoicesMatterGPT](https://chatgpt.com/g/g-6a07ba3fe91881918378538ca6cbfe8f-choicesmattergpt) is a custom GPT trained on this format — describe your story and it generates valid JSON.
+> [!TIP]
+> [ChoicesMatterGPT](https://chatgpt.com/g/g-6a07ba3fe91881918378538ca6cbfe8f-choicesmattergpt) is a custom GPT trained on this format — describe your story and it generates valid JSON.
 
 Stories are JSON files with two top-level keys: `meta` and `nodes`.
 
