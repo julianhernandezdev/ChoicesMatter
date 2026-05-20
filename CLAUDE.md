@@ -247,6 +247,7 @@ Per-character extra pauses are configurable in `settings.json`:
   "typewriter": {
     "enabled": false,
     "delay_ms": 20,
+    "pause_ms": 500,
     "punctuation_pauses": {
       ".": 150,
       "!": 150,
@@ -257,6 +258,16 @@ Per-character extra pauses are configurable in `settings.json`:
   }
 }
 ```
+
+**Inline Pause Token**
+
+Authors may embed `{pause}` anywhere in node or ending `text` to inject an intentional delay mid-stream during typewriter playback:
+
+```
+"text": "You reach for the handle.{pause}The door swings open."
+```
+
+The pause duration is `typewriter.pause_ms` (default 500 ms). In non-typewriter mode the token is stripped silently. `{pause}` has no effect in inset or overlay text.
 
 `T` at the story picker toggles the effect for the current session. `settings.json` controls the permanent default.
 
