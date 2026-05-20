@@ -5,6 +5,7 @@
   "typewriter": {
     "enabled": true,
     "delay_ms": 35,
+    "pause_ms": 500,
     "punctuation_pauses": {
       ".": 550,
       "!": 250,

@@ -12,6 +12,7 @@ _DEFAULTS: dict = {
     "typewriter": {
         "enabled": True,
         "delay_ms": 35,
+        "pause_ms": 500,
         "punctuation_pauses": {
             ".": 550,
             "!": 250,

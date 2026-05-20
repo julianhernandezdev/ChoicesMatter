@@ -142,3 +142,8 @@ def test_typewriter_partial_override_preserves_defaults(tmp_path: Path) -> None:
     cfg = load_settings(path)
     assert cfg["typewriter"]["enabled"] is True
     assert cfg["typewriter"]["delay_ms"] == 35  # default preserved
+
+
+def test_typewriter_pause_ms_default_present(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    assert cfg["typewriter"]["pause_ms"] == 500
