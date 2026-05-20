@@ -9,29 +9,19 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 | Status | Count |
 |---|---|
-| Under Consideration | 10 |
-| In-Flight | 2 |
-| Shipped | 11 |
+| Under Consideration | 9 |
+| In-Flight | 1 |
+| Shipped | 13 |
 
 ---
 
-## Under Consideration (10)
+## Under Consideration (9)
 
 ### Variable Text Substitution
 
 **What:** Authors write `{player_name}` or `{item}` inside node `text` and the engine substitutes the matching value from the player's current flag state.
 
 **Why:** Enables personalisation and callbacks to earlier choices without full node branching — one node can address the player by a name they chose three scenes ago.
-
-**Suggested by:** maintainer
-
----
-
-### Conditional Inline Text
-
-**What:** Authors write `{flag?shown if set|shown if unset}` spans directly inside node `text` — the fallback is optional and collapses to nothing when omitted.
-
-**Why:** Small conditional variations (a name, a detail, a tone shift) without branching to a whole new node — keeps the story graph lean.
 
 **Suggested by:** maintainer
 
@@ -97,33 +87,11 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-### Corrupted Text Rendering
-
-**What:** A `"corrupted"` named style on insets and overlays renders text with glitch substitutions — random `█`, `▓`, `░` swaps and stutter repeats. Intensity is configurable.
-
-**Why:** A pure display effect for institutional horror or degraded-signal aesthetics — the underlying text is unchanged, so it degrades gracefully.
-
-**Suggested by:** maintainer
-
----
-
 ### Arrow Key Navigation
 
 **What:** Up/Down arrow keys move selection and Enter confirms — applies to the story library, folder navigation, game choices, and settings rows.
 
 **Why:** Completes keyboard parity with a real terminal; mouse click already works, arrow selection is the natural complement.
-
-**Suggested by:** maintainer
-
----
-
-## In-Flight (2)
-
-### Dev / Author Mode
-
-**What:** `python main.py --debug` renders the current flag state in a dim panel below each node — display-only, zero engine changes.
-
-**Why:** Invaluable for playtesting: authors can see exactly which flags are set without adding temporary `sets`/`requires` entries to probe state.
 
 **Suggested by:** maintainer
 
@@ -139,7 +107,39 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-## Shipped (11)
+## In-Flight (1)
+
+### Corrupted Text Rendering
+
+**What:** A `"corrupted"` named style on insets and overlays renders text with glitch substitutions — random `█`, `▓`, `░` swaps and stutter repeats. Intensity is configurable.
+
+**Why:** A pure display effect for institutional horror or degraded-signal aesthetics — the underlying text is unchanged, so it degrades gracefully.
+
+**Suggested by:** maintainer
+
+---
+
+## Shipped (13)
+
+### Dev / Author Mode
+
+**What:** `python main.py --debug` renders the current flag state in a dim panel below each node — display-only, zero engine changes.
+
+**Why:** Invaluable for playtesting: authors can see exactly which flags are set without adding temporary `sets`/`requires` entries to probe state.
+
+**Suggested by:** maintainer
+
+---
+
+### Conditional Inline Text
+
+**What:** Authors write `{flag?shown if set|shown if unset}` spans directly inside node `text` — the fallback is optional and collapses to nothing when omitted.
+
+**Why:** Small conditional variations (a name, a detail, a tone shift) without branching to a whole new node — keeps the story graph lean.
+
+**Suggested by:** maintainer
+
+---
 
 ### Terminal-Style Web Player
 
