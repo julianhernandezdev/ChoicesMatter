@@ -1,3 +1,11 @@
+const _INLINE_RE = /\{(\w+)\?([^|{}]*?)(?:\|([^{}]*?))?\}/g;
+
+export function resolveInline(text, state = {}) {
+  return text.replace(_INLINE_RE, (_, key, trueBranch, falseBranch) => {
+    return state[key] ? trueBranch : (falseBranch ?? "");
+  });
+}
+
 export function checkRequires(requires = {}, state = {}) {
   return Object.entries(requires).every(([key, condition]) => {
     const current = state[key];
@@ -63,11 +71,18 @@ export function currentView(run) {
   const choices = visibleItems(node.choices || [], run.state);
   const overlays = partitionByPosition(visibleItems(node.overlays || [], run.state), "after");
   const insets = partitionByPosition(visibleItems(node.insets || [], run.state), "before");
+  const ri = (text) => resolveInline(text, run.state);
   return {
-    node,
+    node: { ...node, text: ri(node.text) },
     choices,
-    overlays,
-    insets,
+    overlays: {
+      before: overlays.before.map((o) => ({ ...o, text: ri(o.text) })),
+      after: overlays.after.map((o) => ({ ...o, text: ri(o.text) })),
+    },
+    insets: {
+      before: insets.before.map((i) => ({ ...i, text: ri(i.text) })),
+      after: insets.after.map((i) => ({ ...i, text: ri(i.text) })),
+    },
     isEnding: Boolean(node.is_ending || choices.length === 0),
   };
 }
