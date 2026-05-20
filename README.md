@@ -176,7 +176,8 @@ State accumulates across the run and is persisted in the save file.
 }
 ```
 
-The `visited_` prefix is reserved — manually setting it via `sets` raises a validation error. Set `"auto_visited_flags": false` in `meta` to manage the namespace yourself.
+> [!WARNING]
+> The `visited_` prefix is reserved — setting it via `choice.sets` raises a validation error. Set `"auto_visited_flags": false` in `meta` to opt out of automatic tracking.
 
 ### Obfuscated Choices
 
