@@ -2,8 +2,6 @@
   <img src="assets/banner.png" alt="Choices Matter" width="100%">
 </p>
 
-# Choices Matter
-
 <p align="center"><strong>Every choice leaves a mark. Every ending remembers.</strong></p>
 
 <p align="center">
@@ -59,6 +57,10 @@
   <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License">
 </p>
+
+---
+
+# Choices Matter
 
 ## Requirements
 
