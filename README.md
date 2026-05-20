@@ -28,7 +28,7 @@
   </tr>
   <tr>
     <td valign="top">
-      <strong>Getting started</strong><br><br>
+      <strong>Getting started</strong><br>
       <a href="#requirements">Requirements</a><br>
       <a href="#running">Running</a><br>
       <a href="#adding-a-story">Adding a Story</a><br>
@@ -37,7 +37,7 @@
       <a href="#contributing">Contributing</a>
     </td>
     <td valign="top">
-      <strong>Writing stories</strong><br><br>
+      <strong>Writing stories</strong><br>
       <a href="#named-styles">Named Styles</a><br>
       <a href="#typewriter-mode">Typewriter Mode</a><br>
       <details>
