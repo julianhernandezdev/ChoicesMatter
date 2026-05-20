@@ -43,6 +43,10 @@ _ENDING_COLORS = {
 
 _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
+def _strip_pause_tokens(text: str) -> str:
+    return text.replace("{pause}", "")
+
+
 _TW_SPEED_PRESETS = [
     ("Slowest", 60),
     ("Slow",    40),
@@ -162,7 +166,7 @@ class Display:
         if delay_s:
             self._typewrite(make, node_text, delay_s)
         else:
-            self.console.print(make(node_text))
+            self.console.print(make(_strip_pause_tokens(node_text)))
 
     def show_choices(
         self,
@@ -221,7 +225,7 @@ class Display:
         if delay_s:
             self._typewrite(make, node_text, delay_s)
         else:
-            self.console.print(make(node_text))
+            self.console.print(make(_strip_pause_tokens(node_text)))
         self.console.print()
 
     def show_save_indicator(self) -> None:

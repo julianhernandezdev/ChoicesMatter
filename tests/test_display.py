@@ -5,7 +5,7 @@ import pytest
 from rich.console import Console
 from rich.panel import Panel
 
-from src.display import Display
+from src.display import Display, _strip_pause_tokens
 from src.story import Choice, Inset, Overlay
 
 
@@ -72,6 +72,53 @@ def test_node_panel_with_insets_returns_panel(display):
     before = [Inset(text="Before.", position="before")]
     after = [Inset(text="After.", position="after")]
     assert isinstance(display._node_panel("Title", "Body.", before, after), Panel)
+
+
+# ------------------------------------------------------------------
+# _strip_pause_tokens
+# ------------------------------------------------------------------
+
+def test_strip_pause_tokens_removes_single_token():
+    assert _strip_pause_tokens("Hello{pause}World") == "HelloWorld"
+
+def test_strip_pause_tokens_removes_multiple_tokens():
+    assert _strip_pause_tokens("{pause}A{pause}B{pause}") == "AB"
+
+def test_strip_pause_tokens_no_token_unchanged():
+    assert _strip_pause_tokens("Hello World") == "Hello World"
+
+def test_strip_pause_tokens_empty_string():
+    assert _strip_pause_tokens("") == ""
+
+
+def test_show_node_strips_pause_token_when_typewriter_off(display):
+    display._cfg["typewriter"]["enabled"] = False
+    display.show_node("Title", "Hello{pause}World", [], [])
+    panel = next(
+        (c[0][0] for c in display.console.print.call_args_list if c[0] and isinstance(c[0][0], Panel)),
+        None,
+    )
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    rendered = cons.file.getvalue()
+    assert "{pause}" not in rendered
+    assert "HelloWorld" in rendered
+
+
+def test_show_ending_strips_pause_token_when_typewriter_off(display):
+    display._cfg["typewriter"]["enabled"] = False
+    display.show_ending("The end{pause}.", "good", [])
+    panel = next(
+        (c[0][0] for c in display.console.print.call_args_list if c[0] and isinstance(c[0][0], Panel)),
+        None,
+    )
+    assert panel is not None, "No Panel found in print calls"
+    cons = Console(file=StringIO(), width=80, legacy_windows=False)
+    cons.print(panel)
+    rendered = cons.file.getvalue()
+    assert "{pause}" not in rendered
+    assert "The end." in rendered
 
 
 # ------------------------------------------------------------------
