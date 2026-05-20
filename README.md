@@ -4,7 +4,7 @@
 
 # Choices Matter
 
-**Every choice leaves a mark. Every ending remembers.**
+<p align="center"><strong>Every choice leaves a mark. Every ending remembers.</strong></p>
 
 <p align="center">
   <a href="https://julianhernandezdev.github.io/ChoicesMatter/"><img src="https://img.shields.io/badge/▶%20Play%20in%20Browser-238636?style=for-the-badge" alt="Play in Browser"></a>
