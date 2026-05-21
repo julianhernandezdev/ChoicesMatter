@@ -11,7 +11,7 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 |---|---|
 | Under Consideration | 9 |
 | In-Flight | 1 |
-| Shipped | 13 |
+| Shipped | 14 |
 
 ---
 
@@ -246,6 +246,16 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 **What:** The story picker supports subfolders inside `/stories/`. Top-level shows root stories alongside named folder entries; selecting a folder drills into it with a back option.
 
 **Why:** As a story library grows, a flat list becomes unwieldy — authors can organise by genre, series, or status without any engine changes.
+
+**Suggested by:** maintainer
+
+---
+
+### Inline Pause Token
+
+**What:** Authors embed `{pause}` anywhere in node or ending `text` to inject a mid-stream delay during typewriter playback. Configurable via `typewriter.pause_ms` in `settings.json` (default 500 ms). Stripped silently in non-typewriter mode; no effect in insets or overlays.
+
+**Why:** Lets authors control dramatic timing from the story JSON — a beat of silence after a revelation, a hesitation before a threat — without touching engine code.
 
 **Suggested by:** maintainer
 

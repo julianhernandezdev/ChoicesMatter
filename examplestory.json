@@ -6,6 +6,7 @@
     "author": "Choices Matter",
     "start_node": "intro",
     "auto_visited_flags": false,
+    "est_time": "5–10 min",
     "warnings": ["Psychological horror"]
   },
   "nodes": {
@@ -60,7 +61,8 @@
     },
     "call_mira": {
       "insets": [
-        { "text": "OUTGOING CALL  —  MIRA  —  00:04", "position": "before", "style": "system" }
+        { "text": "OUTGOING CALL  —  MIRA  —  00:04", "position": "before", "style": "system" },
+        { "text": "CALL DURATION  —  00:00:21  —  DISCONNECTED", "position": "after", "style": "system" }
       ],
       "text": "She picks up on the first ring. Her voice is tight.\n\n'You found it. Listen to me carefully — do not go to Platform 7. Leave the station right now and drop the bag in the first bin you find. Don't look back.'\n\nShe hangs up before you can speak.",
       "choices": [
@@ -70,7 +72,7 @@
     },
     "study_map": {
       "choice_number_color": "yellow",
-      "text": "The map is a hand-drawn layout of this station — but it includes a section that isn't on any public plan. Past the maintenance corridor on Level B, there's a door marked with a small red 7.\n\nSomewhere below you, there is a Platform 7.",
+      "text": "The map is a hand-drawn layout of this station — but it includes a section that isn't on any public plan. Past the maintenance corridor on Level B, there's a door marked with a small red 7.{saw_message? The same handwriting as the unsent message.}\n\nSomewhere below you, there is a Platform 7.",
       "insets": [
         { "text": "Level B  —  Maintenance Corridor  —  ⬤  P7", "position": "after", "style": "system" }
       ],
@@ -112,7 +114,7 @@
           "style": "system"
         }
       ],
-      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\nYou hear footsteps on the other side.",
+      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel and a blinking red light.\n\n{pause}You hear footsteps on the other side.",
       "overlays": [
         {
           "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
@@ -145,7 +147,7 @@
       ]
     },
     "caught": {
-      "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.\n\nThe light goes red again.",
+      "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak.{pause} One takes the bag. Another takes your phone.\n\nThe light goes red again.",
       "overlays": [
         {
           "text": "First ring. She knew you'd find it. She knew you'd come anyway.",
@@ -182,7 +184,7 @@
         },
         { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
       ],
-      "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
+      "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight.{pause} Then you keep walking.{contact? You don't call Mira back.}",
       "choices": [],
       "is_ending": true,
       "ending_type": "good"
