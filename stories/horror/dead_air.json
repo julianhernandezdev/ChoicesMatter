@@ -2,15 +2,20 @@
   "meta": {
     "id": "dead_air",
     "title": "Dead Air",
-    "version": "1.1",
+    "version": "1.2",
     "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "5–8 min",
-    "warnings": []
+    "warnings": [
+      "Death of a family member (grief, bereavement)",
+      "Psychological horror and distress",
+      "References to a deceased sibling"
+    ]
   },
   "nodes": {
     "intro": {
       "scene": "WKTR 91.4 — Studio B",
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "WKTR 91.4  —  DEAD AIR  —  02:03", "position": "before", "style": "system" }
       ],
@@ -21,17 +26,18 @@
     },
 
     "open_phones": {
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "LINE 1  —  02:11  —  CALLER: disconnected after 8s", "position": "before", "style": "system" },
         { "text": "LINE 2  —  02:14  —  CALLER: wrong number, sorry", "position": "after", "style": "system" }
       ],
-      "text": "You announce the lines and let the silence do the work. The first two calls are nothing — a hang-up and a wrong number. You're halfway through your cold coffee when Line 3 lights up.\n\nYou answer. The voice on the other end is calm. Unhurried.\n\n'Good evening. I was hoping to reach—' a pause, '—you.' Not your on-air name. Your name. Your full name.",
+      "text": "You announce the lines and let the silence do the work. The first two calls are nothing — a hang-up and a wrong number. You're halfway through your cold coffee when Line 3 lights up.\n\nYou answer. The voice on the other end is calm. Unhurried.\n\n'Good evening. I was hoping to reach—'{pause}a pause, '—you.' Not your on-air name. Your name. Your full name.",
       "overlays": [
         { "text": "Nobody calls between two and three.", "position": "after", "style": "echo" }
       ],
       "choices": [
         { "label": "Stay on the line. Keep them talking.", "next": "engage", "sets": { "engaged": true }, "color": "yellow" },
-        { "label": "Cut the call.", "next": "cut_call" }
+        { "label": "Cut the call.", "next": "cut_call", "color": "bright_red" }
       ]
     },
 
@@ -40,7 +46,7 @@
       "insets": [
         { "text": "LINE 3  —  02:17  —  DURATION: 00:02:41", "position": "before", "style": "system" }
       ],
-      "text": "The voice continues as if it expected you to stay.\n\n'Same way Nora did,' they say. 'She called this line every Tuesday for a year before you even started working here.'\n\nNora. Your sister. Dead three years. Nobody calls her Nora anymore — that was the family name, the private one. Her friends called her something else entirely.\n\n'Who is this?' Your hand is on the disconnect button.",
+      "text": "The voice continues as if it expected you to stay.\n\n'Same way Nora did,' they say.{pause}'She called this line every Tuesday for a year before you even started working here.'\n\nNora. Your sister. Dead three years. Nobody calls her Nora anymore — that was the family name, the private one. Her friends called her something else entirely.\n\n'Who is this?' Your hand is on the disconnect button.",
       "overlays": [
         { "text": "They knew your name.", "position": "after", "style": "echo" }
       ],
@@ -52,7 +58,7 @@
 
     "cut_call": {
       "choice_number_color": "bright_red",
-      "text": "You cut the line. The light on the desk goes dark.\n\nFor eleven seconds, nothing.\n\nThen Line 5 lights up. The line you never give out.",
+      "text": "You cut the line. The light on the desk goes dark.\n\nFor eleven seconds, nothing.{pause}\n\nThen Line 5 lights up. The line you never give out.",
       "insets": [
         { "text": "LINE 5  —  02:19  —  NUMBER: UNLISTED", "position": "after", "style": "system" }
       ],
@@ -71,7 +77,7 @@
         { "text": "TRACE INITIATED  —  LINE 3  —  02:21", "position": "before", "style": "system" },
         { "text": "RESULT: DISCONNECTED  —  REGISTERED: N. [REDACTED]  —  DEACTIVATED: 3 YRS AGO", "position": "after", "style": "system" }
       ],
-      "text": "The trace takes twenty seconds. The number belongs to a deactivated account. You know the name before the screen finishes rendering it.\n\nYour sister's account. Disconnected the month after the funeral.\n\nThey're still on the line. You can hear them breathing.",
+      "text": "The trace takes twenty seconds. The number belongs to a deactivated account.{pause}You know the name before the screen finishes rendering it.\n\nYour sister's account. Disconnected the month after the funeral.\n\nThey're still on the line. You can hear them breathing.",
       "overlays": [
         { "text": "She called this line every Tuesday for a year.", "position": "after", "style": "echo" }
       ],
@@ -111,21 +117,19 @@
 
     "ending_follow": {
       "scene": "Eastfield — The Childhood Home",
-      "insets": [
+      "text": "You tell the overnight desk you're ending early. Technical difficulties.\n\nThe street is a twelve-minute drive. You know it — you grew up there. The house with the blue door is your childhood home. Your parents haven't lived there in eight years.\n\nThe light in the front room is on.{pause}",
+      "overlays": [
         { "text": "WKTR 91.4  —  TRANSMISSION ENDED  —  02:31", "position": "before", "style": "system" }
       ],
-      "text": "You tell the overnight desk you're ending early. Technical difficulties.\n\nThe street is a twelve-minute drive. You know it — you grew up there. The house with the blue door is your childhood home. Your parents haven't lived there in eight years.\n\nThe light in the front room is on.",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
     },
 
     "ending_broadcast": {
-      "insets": [
-        { "text": "WKTR 91.4  —  LIVE  —  02:28  —  LISTENERS: 340", "position": "before", "style": "system" }
-      ],
-      "text": "You flip the switch. They're on air — broadcast to everyone still awake at 2am.\n\n'Go ahead,' you say evenly. 'You were saying something about an address.'\n\nSilence. Then the line goes dead.\n\nYou file a report in the morning. The number is traced to a deactivated account, origin unknown. The case is closed the same week.\n\nYou still do the Tuesday shift. Nobody calls between two and three.",
+      "text": "You flip the switch. They're on air — broadcast to everyone still awake at 2am.\n\n'Go ahead,' you say evenly. 'You were saying something about an address.'\n\nSilence.{pause}Then the line goes dead.\n\nYou file a report in the morning. The number is traced to a deactivated account, origin unknown. The case is closed the same week.\n\nYou still do the Tuesday shift. Nobody calls between two and three.",
       "overlays": [
+        { "text": "WKTR 91.4  —  LIVE  —  02:28  —  LISTENERS: 340", "position": "before", "style": "system" },
         { "text": "She called this line every Tuesday.", "position": "after", "style": "echo" }
       ],
       "choices": [],
@@ -136,10 +140,8 @@
     "ending_walk_away": {
       "scene": "The Drive Home",
       "text": "You log the call — time, duration, content — and leave the sheet on the overnight manager's desk on your way out.\n\nThe drive home is quiet. You sit in the car outside your flat for a while before going in.\n\nYou don't call anyone. There's no one to call.",
-      "insets": [
-        { "text": "INCIDENT LOG FILED  —  03:01", "position": "after", "style": "system" }
-      ],
       "overlays": [
+        { "text": "INCIDENT LOG FILED  —  03:01", "position": "before", "style": "system" },
         { "text": "Same way Nora did.", "position": "after", "style": "echo" }
       ],
       "choices": [],

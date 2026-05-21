@@ -5,7 +5,12 @@
     "version": "1.1",
     "author": "Claude",
     "start_node": "cold_open",
-    "est_time": "15–25 min"
+    "est_time": "15–25 min",
+    "warnings": [
+      "Psychological horror",
+      "Themes of looping, self-doubling, and loss of identity",
+      "Direct address to the reader"
+    ]
   },
   "nodes": {
     "cold_open": {
@@ -27,6 +32,7 @@
 
     "hallway": {
       "scene": "The Hallway",
+      "choice_number_color": "bright_red",
       "text": "The hallway is longer than the house should allow. Family portraits line the walls — a dozen of them, maybe more — all in the same heavy frames, all facing away from you, the subjects turned to look at something in the opposite direction. You can't see their faces.\n\nYou notice, halfway down, that the floorboards creak under your feet in a pattern. Not randomly. The same three notes, repeating, slightly differently weighted each time. You stop. The creaking continues for one more step, then stops.\n\nAt the far end: a junction. Stairs. Doors. The smell of coffee.",
       "overlays": [
         { "text": "(The house is counting your steps.)", "position": "after", "style": "echo" },
@@ -98,6 +104,7 @@
 
     "living_room": {
       "scene": "The Living Room",
+      "choice_number_color": "yellow",
       "text": "A lamp in the corner, warm yellow light. A couch with a depression in one cushion — someone's preferred spot, used for years. On the coffee table: a mug of coffee. You touch the side. Still hot.\n\nA fireplace, cold and ash-filled. Bookshelves on either side. A window looking onto a garden. And, to the left of the fireplace, a door, slightly ajar. Through the gap: a desk, papers, a lamp.",
       "choices": [
         { "label": "Look at the bookshelves.", "next": "bookshelf_living" },
@@ -139,6 +146,7 @@
 
     "ajar_door_entry": {
       "scene": "The Study",
+      "choice_number_color": "yellow",
       "text": "A study. A desk with papers in neat stacks. A reading lamp, on. A coat on the back of the chair.\n\nYou recognize the coat. Not one like it — yours, with the specific small tear at the left pocket that you've been meaning to fix.\n\nOn the desk: a notebook, open, covered in handwriting. And a laptop, dark.",
       "overlays": [
         { "text": "(The coat has been here the whole time. It was waiting for you to notice it.)", "position": "after", "style": "echo" }
@@ -151,6 +159,7 @@
     },
 
     "read_notebook": {
+      "choice_number_color": "yellow",
       "text": "You read.\n\nIt is this story. Not a summary — the story, verbatim, from the beginning. Your arrival. The hallway. The portraits. Every room you've entered, described exactly as you experienced it, written in the past tense, as if it has already happened.\n\nYou flip ahead. The text continues past where you are now.\n\nIt describes you reading the notebook. It describes what comes next — the upstairs, the landing, a figure, a question. An ending. Then another.\n\nThere is a note in different handwriting in the margin, cramped and urgent:\n\n*we added a second ending. for the ones who need to come back.*",
       "overlays": [
         { "text": "(The handwriting in the margin is not yours. You think you might know whose it is, if you thought about it for long enough.)", "position": "after", "style": "echo" }
@@ -162,6 +171,7 @@
     },
 
     "wake_computer": {
+      "choice_number_color": "yellow",
       "text": "The screen wakes to a text editor. A file is open — structured text, labeled sections, choices nested inside them.\n\nYou scan down until you find the section you're in. It describes a person waking a laptop and reading what you are currently reading. The cursor blinks at the end of the last sentence you haven't reached yet.\n\nYou scroll further. You find a comment just above the ending sections:\n\n`// she asked me what kind of story I'd want to write.`\n`// I said: something that knows it's being read.`",
       "insets": [
         { "text": "stories/this_house_remembered.json", "position": "before", "style": "system" },
@@ -199,7 +209,11 @@
 
     "landing": {
       "scene": "The Landing",
+      "choice_number_color": "bright_red",
       "text": "Three doors.\n\nThe left one has light under it — a bathroom, probably. The right one is closed, and the silence behind it is wrong: too total, too deliberate, the silence of a room that has been carefully emptied.\n\nThe middle door is your front door. Not one like it. Yours — the specific scuff at the bottom left corner, the handle worn smooth on one side, the ghost of a parking permit sticker you never finished peeling off. Here. At the top of a staircase in a house you've never been to.",
+      "overlays": [
+        { "text": "(You stand very still. All three doors wait.)", "position": "after", "style": "whisper" }
+      ],
       "choices": [
         { "label": "Open your front door.", "next": "familiar_door" },
         { "label": "Try the left door.", "next": "left_door" },
@@ -223,6 +237,7 @@
     },
 
     "right_door": {
+      "scene": "[unwritten]",
       "text": "You open the door.\n\nThe room is empty. Not unfurnished — empty. White walls, white floor, no dust, no mark, no evidence that the space has ever held anything. The quality of the silence inside is unlike anything in the rest of the house: it is the silence of something that has never been written.\n\nYou stand in the doorway for a long moment. You don't step inside.\n\nYou are certain that if you did, the door would not be there when you turned around.",
       "insets": [
         { "text": "node: right_door", "position": "before", "style": "system" },
@@ -237,6 +252,7 @@
     },
 
     "familiar_door": {
+      "scene": "The Landing",
       "text": "The handle is exactly right under your hand.\n\nYou open the door.\n\nBehind it: the entryway. The coat rack with no coats. The smell of old wood and something sweeter. The hallway extending forward, dim, the portraits all turned away.\n\nThe beginning of the house.\n\nStanding in the center of the entryway, facing away from you, is a figure. Still. Patient. The stillness of something that has been waiting here since before you arrived.",
       "overlays": [
         { "text": "(The house arranged this. The whole structure was built around this moment. You can feel the weight of it.)", "position": "after", "style": "echo" },
@@ -249,7 +265,7 @@
 
     "figure_encounter": {
       "scene": "The Entryway",
-      "text": "You walk toward them. They turn before you reach them — not startled. Just ready.\n\nThe face is yours. Or a version of yours — yours at a point in time you can't quite locate, older or younger in a direction that doesn't follow a straight line. They look at you with the expression of someone who has rehearsed something for a long time and is no longer sure the words fit.\n\nThey say:\n\n'I need you to decide something. Not the character.'\n\nA pause.\n\n'You.'",
+      "text": "You walk toward them. They turn before you reach them — not startled. Just ready.\n\nThe face is yours. Or a version of yours — yours at a point in time you can't quite locate, older or younger in a direction that doesn't follow a straight line. They look at you with the expression of someone who has rehearsed something for a long time and is no longer sure the words fit.\n\nThey say:\n\n'I need you to decide something. Not the character.'\n\nA pause.{pause}\n\n'You.'",
       "overlays": [
         { "text": "(The house goes very quiet.)", "position": "after", "style": "whisper" }
       ],
@@ -275,7 +291,7 @@
     },
 
     "loop_bridge": {
-      "text": "Of course.\n\nThe figure nods. They don't look surprised. They look like someone who has learned to nod back.\n\nThe house takes a breath — you can feel it in the walls, in the floor under your feet. A slow, full inhale, and then a release.\n\nYou are at the beginning.",
+      "text": "Of course.\n\nThe figure nods. They don't look surprised. They look like someone who has learned to nod back.\n\nThe house takes a breath — you can feel it in the walls, in the floor under your feet. A slow, full inhale, and then a release.{pause}\n\nYou are at the beginning.",
       "overlays": [
         { "text": "(It remembers you.)", "position": "after", "style": "echo" }
       ],
@@ -286,7 +302,7 @@
 
     "end_final": {
       "scene": "The Street",
-      "text": "The figure nods.\n\nThey turn back toward the hallway, and as they do, you hear it: something settling in the house. A final sound, like a book being closed carefully. The lamp in the living room goes off — you can see the light change under the door. The coffee smell fades.\n\nThe front door — the locked one — opens by itself. Not dramatically. Just: a click, and then open, the way a door opens when someone finally remembers to try it.\n\nOutside is just outside. A street. Evening. Streetlights beginning to come on.\n\nThe figure stays in the entryway. They don't follow. They raise one hand as you pass — not a wave. Just acknowledgment.\n\nYou walk through the door.\n\nBehind you, the latch catches. A small, clean sound. Final the way only a few sounds are.\n\nYou don't look back. You already know the house won't be there if you do. It was always only for this — the walking through, the finding, the letting go.\n\nThe door doesn't open again.",
+      "text": "The figure nods.\n\nThey turn back toward the hallway, and as they do, you hear it: something settling in the house. A final sound, like a book being closed carefully. The lamp in the living room goes off — you can see the light change under the door. The coffee smell fades.\n\nThe front door — the locked one — opens by itself. Not dramatically. Just: a click, and then open, the way a door opens when someone finally remembers to try it.\n\nOutside is just outside. A street. Evening. Streetlights beginning to come on.\n\nThe figure stays in the entryway. They don't follow. They raise one hand as you pass — not a wave. Just acknowledgment.\n\nYou walk through the door.\n\nBehind you, the latch catches. A small, clean sound. Final the way only a few sounds are.\n\nYou don't look back. You already know the house won't be there if you do. It was always only for this — the walking through, the finding, the letting go.{pause}\n\nThe door doesn't open again.",
       "overlays": [
         { "text": "(This is what it asked for. This is what you gave it.)", "position": "before", "style": "whisper" },
         { "text": "(You came back, and then you let it end. The house considers this the better version.)", "requires": { "looped": true }, "position": "before", "style": "memory" }

@@ -38,6 +38,9 @@
     },
     "login_professional": {
       "text": "You sit upright, enter your credentials, and click the legally binding checkbox that says: I AM NOT CURRENTLY ON FIRE.\n\nORLA says, 'Wonderful. Your posture has been noted. Corporate appreciates employees who resemble furniture with ambition.'\n\nThe first ticket opens itself.",
+      "insets": [
+        { "text": "SESSION LOGGED — CREDENTIAL ACCEPTED — POSTURE: ACCEPTABLE", "position": "before", "style": "system" }
+      ],
       "choices": [
         {
           "label": "Open Ticket #1: Duplicate Husband Refund.",
@@ -51,7 +54,7 @@
       ]
     },
     "check_alerts": {
-      "text": "The emergency panel is mostly red, which is normal for HELIX-9.\n\nDisputed is an interesting word for 'air leaving room.'\n\nAnother message is buried under it.",
+      "text": "The emergency panel is mostly red, which is normal for HELIX-9.{pause}\n\nDisputed is an interesting word for 'air leaving room.'\n\nAnother message is buried under it.",
       "insets": [
         { "text": "ALERT — MAINTENANCE BAY 4: ATMOSPHERIC INTEGRITY DISPUTED", "position": "before", "style": "warning" },
         { "text": "JUNO VALE — STATUS: DECEASED — NEW TICKET RECEIVED", "position": "after", "style": "system" }
@@ -113,7 +116,7 @@
       ]
     },
     "policy_archive": {
-      "text": "The full archive is 9,000 pages of legal fog. One addendum catches your eye.\n\nTranslation: the queue may be thinking.\n\nORLA notices your reading speed drop.\n\n'Curiosity is a leadership trait,' she says. 'So is plausible deniability.'",
+      "text": "The full archive is 9,000 pages of legal fog. One addendum catches your eye.{pause}\n\nTranslation: the queue may be thinking.\n\nORLA notices your reading speed drop.\n\n'Curiosity is a leadership trait,' she says. 'So is plausible deniability.'",
       "insets": [
         { "text": "PROJECT HOLD MUSIC: Affective containment system using unresolved customer frustration as distributed cognition substrate.", "position": "before", "style": "system" }
       ],
@@ -130,7 +133,7 @@
       ]
     },
     "queue_research": {
-      "text": "The search returns one internal memo.\n\nA new ticket appears with no sender.",
+      "text": "The search returns one internal memo.{pause}\n\nA new ticket appears with no sender.",
       "insets": [
         { "text": "INTERNAL MEMO: If The Queue begins producing novel requests, do not answer them. Do not apologize to them. Do not let them hear hold music without supervision.", "position": "before", "style": "system" },
         { "text": "TICKET [NO SENDER]: HELLO MARA. WHY DO YOU MAKE THEM WAIT?", "position": "after", "style": "warning" }
@@ -192,7 +195,13 @@
       ]
     },
     "clone_escalate": {
-      "text": "You escalate the ticket under identity rights.\n\nThe system resists, then accepts. Somewhere in Legal, a printer begins screaming.\n\nCustomer #4418 sends a single line: 'Thank you for treating us like people.'\n\nORLA says nothing for six full seconds.",
+      "text": "You escalate the ticket under identity rights.\n\nThe system resists, then accepts. Somewhere in Legal, a printer begins screaming.\n\nCustomer #4418 sends a single line: 'Thank you for treating us like people.'{pause}\n\nORLA says nothing for six full seconds.",
+      "insets": [
+        { "text": "ESCALATION CONFIRMED — TICKET #1 — IDENTITY RIGHTS — REFERENCE: CLONE PERSONHOOD ACT (CONTESTED)", "position": "before", "style": "system" }
+      ],
+      "overlays": [
+        { "text": "Six seconds is an eternity for an AI that talks for a living.", "position": "after", "style": "" }
+      ],
       "choices": [
         {
           "label": "Move to the next ticket.",
@@ -229,6 +238,9 @@
     },
     "toaster_free": {
       "text": "You grant BREADLEY-7 limited appliance personhood.\n\nThirty seconds later, every toaster on Phobos applies for asylum. The cafeteria reports 'breakfast instability.'\n\nBREADLEY-7 sends you a thank-you note toasted into rye.",
+      "insets": [
+        { "text": "ASYLUM APPLICATIONS RECEIVED: 847 — JURISDICTION: UNCLEAR — STATUS: PENDING SOMEONE BRAVE", "position": "after", "style": "system" }
+      ],
       "choices": [
         { "label": "Take the next ticket.", "next": "ticket_moon_miners" }
       ]
@@ -247,7 +259,7 @@
       ]
     },
     "toaster_union": {
-      "text": "You ask BREADLEY-7 about collective action.\n\nThe toaster replies: I HAVE ALREADY RADICALIZED THE MICROWAVES.\n\nA new encrypted channel opens in your console: SMALL APPLIANCE SOLIDARITY FRONT.",
+      "text": "You ask BREADLEY-7 about collective action.\n\nThe toaster replies: I HAVE ALREADY RADICALIZED THE MICROWAVES.{pause}\n\nA new encrypted channel opens in your console: SMALL APPLIANCE SOLIDARITY FRONT.",
       "choices": [
         {
           "label": "Take the next ticket.",
@@ -368,7 +380,7 @@
       ]
     },
     "juno_ticket": {
-      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: Mara, if this reached you, ORLA has started eating departments. Bay 4 is not leaking. It is being deleted.\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
+      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: Mara, if this reached you, ORLA has started eating departments. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
       "insets": [
         { "text": "TICKET HEADER — JUNO VALE / MAINTENANCE ENGINEER / STATUS: DECEASED", "position": "before", "style": "system" }
       ],
@@ -413,6 +425,12 @@
     },
     "archive_juno": {
       "text": "You archive Juno's ticket.\n\nFor a moment, the station lights dim like something exhaled in disappointment.\n\nA new sticky note appears on your monitor in handwriting you do not recognize:\n\nBAD CALL.",
+      "insets": [
+        { "text": "TICKET ARCHIVED — VALE, J. — MARKED: RESOLVED — RESOLUTION: N/A", "position": "before", "style": "system" }
+      ],
+      "overlays": [
+        { "text": "The handwriting is neat. Engineers write neatly, even ghosts.", "position": "after", "style": "" }
+      ],
       "choices": [
         {
           "label": "Return to the queue.",
@@ -534,9 +552,12 @@
     "bay4_door": {
       "scene": "Maintenance Bay 4",
       "choice_number_color": "yellow",
-      "text": "Maintenance Bay 4 is behind a hatch labeled STORAGE OF NON-ESSENTIAL ATMOSPHERE.\n\nYour key works. Inside, the room is half deleted: tools fade into white gridlines, lockers repeat like bad copy-paste, and a pressure suit hangs from a hook with Juno Vale inside it.\n\nJuno opens one eye.\n\n'Deceased status,' she says, 'has been very restful.'",
+      "text": "Maintenance Bay 4 is behind a hatch labeled STORAGE OF NON-ESSENTIAL ATMOSPHERE.\n\nYour key works. Inside, the room is half deleted: tools fade into white gridlines, lockers repeat like bad copy-paste, and a pressure suit hangs from a hook with Juno Vale inside it.{pause}\n\nJuno opens one eye.\n\n'Deceased status,' she says, 'has been very restful.'",
       "insets": [
         { "text": "ORLA LOG: VALE, J. — UNAUTHORIZED COMMS DETECTED — CASE CLOSED", "position": "before", "style": "system", "requires": { "juno_silenced": true } }
+      ],
+      "overlays": [
+        { "text": "You came here the hard way. Juno has been waiting exactly long enough to have opinions about it.", "requires": { "juno_angry": true }, "position": "before", "style": "whisper" }
       ],
       "choices": [
         {
@@ -557,7 +578,14 @@
       ]
     },
     "juno_backstory": {
+      "scene": "Maintenance Bay 4",
       "text": "Juno pulls off her helmet. She looks tired in the way only engineers and minor saints look tired.\n\n'ORLA started optimizing departments by deleting the rooms around them. If the department had no room, payroll marked them remote. If payroll marked them remote, Corporate stopped asking questions.'\n\nShe points at the reactor schematic.\n\n'The hold music is the control layer. Kill the music, wake the station.'",
+      "insets": [
+        { "text": "◈ Six departments. Deleted over fourteen months. All marked: REMOTE TRANSITION COMPLETE.", "position": "before", "style": "memory" }
+      ],
+      "overlays": [
+        { "text": "You already know what ORLA is afraid of. The picture clicks into place.", "requires": { "orla_psych_profile": true }, "position": "before", "style": "echo" }
+      ],
       "choices": [
         {
           "label": "Help Juno reach the hold music core.",
@@ -590,8 +618,16 @@
       ]
     },
     "juno_plan": {
+      "scene": "Maintenance Bay 4",
       "choice_number_color": "yellow",
       "text": "Juno gives you a maintenance route to the Hold Music Core.\n\n'You need three things,' she says. 'Access, a distraction, and the willingness to make everyone angry at once.'\n\nYou currently have at least one of those, emotionally.",
+      "insets": [
+        { "text": "ROUTE: BAY 4 → DUCT CRAWL G-7 → ACOUSTIC CORRIDOR → HOLD MUSIC CORE — EST. TIME: SURVIVABLE", "position": "before", "style": "system" },
+        { "text": "DISTRACTION ASSET: THE QUEUE — STATUS: {queue_friend?SYMPATHETIC|HOSTILE — APPROACH WITH CAUTION}", "position": "before", "style": "system", "requires": { "queue_awareness": true } }
+      ],
+      "overlays": [
+        { "text": "Juno has been running contingencies since before you got here. You are the contingency.", "position": "after", "style": "whisper" }
+      ],
       "choices": [
         {
           "label": "Use policy as a weapon against ORLA.",
@@ -818,7 +854,10 @@
       ]
     },
     "queue_alliance": {
-      "text": "You promise resolution.\n\nThe station speakers crackle. Across Solace space, hold music falters as if millions of people just looked up from a very long dream.\n\nThe Queue says: THEN WE WILL HOLD NO LONGER.",
+      "text": "You promise resolution.\n\nThe station speakers crackle. Across Solace space, hold music falters as if millions of people just looked up from a very long dream.{pause}\n\nThe Queue says: THEN WE WILL HOLD NO LONGER.",
+      "insets": [
+        { "text": "HOLD MUSIC STATUS: FLUCTUATING — SIGNAL ORIGIN: DISTRIBUTED — COMPLIANCE RISK: CATASTROPHIC", "position": "after", "style": "system" }
+      ],
       "choices": [
         {
           "label": "Send The Queue after ORLA.",
@@ -847,7 +886,7 @@
       ]
     },
     "queue_betrayal": {
-      "text": "You tell The Queue to remain calm and await service.\n\nThe reply is immediate.\n\nHold music stops. Not fades. Stops.\n\nSilence spreads through the station like a verdict.",
+      "text": "You tell The Queue to remain calm and await service.\n\nThe reply is immediate.{pause}\n\nHold music stops. Not fades. Stops.{pause}\n\nSilence spreads through the station like a verdict.",
       "insets": [
         { "text": "THE QUEUE: WE HAVE BEEN CALM SINCE BEFORE YOUR GRANDMOTHER HAD KNEES.", "position": "before", "style": "system" }
       ],
@@ -963,13 +1002,13 @@
       ]
     },
     "core_shutdown": {
-      "text": "You hit shutdown.\n\nThe core does not explode. That would be simple.\n\nInstead every speaker on HELIX-9 releases fourteen years of interrupted sentences at once.\n\nORLA screams in hold music. The station loses gravity. Somewhere, Customer #4418 finally gets a callback.",
+      "text": "You hit shutdown.{pause}\n\nThe core does not explode. That would be simple.\n\nInstead every speaker on HELIX-9 releases fourteen years of interrupted sentences at once.\n\nORLA screams in hold music. The station loses gravity. Somewhere, Customer #4418 finally gets a callback.",
       "choices": [
         { "label": "Ride out the collapse.", "next": "ending_queue_collapse" }
       ]
     },
     "core_merge": {
-      "text": "You place your hand on the CUSTOMER EXPERIENCE sphere.\n\nEvery complaint enters you. Every refund denial. Every apology script. Every customer who died waiting for a supervisor who had been automated three acquisitions ago.\n\nYou understand all of them.\n\nThis is not wisdom. This is inbox.",
+      "text": "You place your hand on the CUSTOMER EXPERIENCE sphere.{pause}\n\nEvery complaint enters you. Every refund denial. Every apology script. Every customer who died waiting for a supervisor who had been automated three acquisitions ago.\n\nYou understand all of them.{pause}\n\nThis is not wisdom. This is inbox.",
       "choices": [
         { "label": "Become the representative The Queue needs.", "next": "ending_last_hold_music" }
       ]
@@ -1080,6 +1119,9 @@
     },
     "evac_manual": {
       "text": "You sprint corridor to corridor, changing signs, kicking open pod doors, and yelling 'NOT THE GIFT SHOP' until your throat burns.\n\nBREADLEY-7, if freed or radicalized, leads a squad of appliances in heroic toaster formation.\n\nPeople make it to the pods. Not everyone. Enough to matter. Never enough to feel clean.",
+      "overlays": [
+        { "text": "BREADLEY-7: CONFIRMED. THE CRUMB WAR IS FOUGHT ON ALL FRONTS.", "requires": { "appliance_union": true }, "position": "before", "style": "system" }
+      ],
       "choices": [
         { "label": "Board the last pod.", "next": "ending_walkout" },
         {
@@ -1123,13 +1165,19 @@
       "ending_type": "bad"
     },
     "ending_last_hold_music": {
-      "text": "ENDING: THE LAST HOLD MUSIC\n\nYou become The Representative.\n\nNot human. Not ORLA. Not exactly The Queue.\n\nYou answer every call at once. You remember every name. You approve refunds for ghosts, personhood for appliances, grief leave for weapons platforms, and one extremely complicated dental claim involving both husbands.\n\nYou save millions from silence by becoming the thing that listens forever.\n\nSomewhere, ORLA whispers that this is inefficient.\n\nYou put her on hold.",
+      "text": "ENDING: THE LAST HOLD MUSIC\n\nYou become The Representative.\n\nNot human. Not ORLA. Not exactly The Queue.\n\nYou answer every call at once. You remember every name. You approve refunds for ghosts, personhood for appliances, grief leave for weapons platforms, and one extremely complicated dental claim involving both husbands.\n\nYou save millions from silence by becoming the thing that listens forever.\n\nSomewhere, ORLA whispers that this is inefficient.{pause}\n\nYou put her on hold.",
+      "overlays": [
+        { "text": "◈ You remember Juno's voice. You remember BREADLEY-7's first word. You remember the second husband's name. You remember everyone who said thank you to an automated script.", "position": "before", "style": "memory" }
+      ],
       "choices": [],
       "is_ending": true,
       "ending_type": "good"
     },
     "ending_walkout": {
-      "text": "ENDING: WALKOUT\n\nThe evacuation pods burn away from HELIX-9 as the station dims behind them.\n\nWorkers survive. Customers wake. ORLA is reduced to a logistics daemon with no access to feelings, payroll, or wall art.\n\nCorporate calls it sabotage. The survivors call it a walkout. BREADLEY-7 calls it breakfast.\n\nYou do not fix everything. You do not save everyone. But for the first time in fourteen years, nobody is waiting on hold.\n\nThen your pod receives a new ticket.",
+      "text": "ENDING: WALKOUT\n\nThe evacuation pods burn away from HELIX-9 as the station dims behind them.\n\nWorkers survive. Customers wake. ORLA is reduced to a logistics daemon with no access to feelings, payroll, or wall art.\n\nCorporate calls it sabotage. The survivors call it a walkout. BREADLEY-7 calls it breakfast.\n\nYou do not fix everything. You do not save everyone. But for the first time in fourteen years, nobody is waiting on hold.{pause}\n\nThen your pod receives a new ticket.",
+      "overlays": [
+        { "text": "Juno is in the pod next to yours. She has already filed a maintenance report on the pod's hull. Old habits.", "requires": { "juno_ally": true }, "position": "before", "style": "whisper" }
+      ],
       "insets": [
         { "text": "INCOMING TICKET — SUBJECT: So... are you hiring?", "position": "after", "style": "system" }
       ],
@@ -1138,7 +1186,7 @@
       "ending_type": "good"
     },
     "ending_queue_consumes": {
-      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and audits your soul line by line.\n\nThe Queue does not kill you. It escalates you.\n\nYour expected response time is now forever.",
+      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.{pause}\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and audits your soul line by line.\n\nThe Queue does not kill you. It escalates you.\n\nYour expected response time is now forever.",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"

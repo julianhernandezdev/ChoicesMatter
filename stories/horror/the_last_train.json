@@ -40,7 +40,7 @@
 
     "phone_on": {
       "choice_number_color": "yellow",
-      "text": "The screen flickers on. One contact pinned to the top: MIRA. Below it, an unsent message — 'I'm sorry. I had no choice. Don't let them get the—'\n\nThe message cuts off.",
+      "text": "The screen flickers on. One contact pinned to the top: MIRA. Below it, an unsent message — 'I'm sorry. I had no choice. Don't let them get the—'{pause}\n\nThe message cuts off.",
       "insets": [
         { "text": "UNSENT  —  MIRA  —  00:03", "position": "before", "style": "system" }
       ],
@@ -59,6 +59,7 @@
     },
 
     "call_mira": {
+      "choice_number_color": "yellow",
       "insets": [
         { "text": "OUTGOING CALL  —  MIRA  —  00:04", "position": "before", "style": "system" }
       ],
@@ -113,7 +114,7 @@
       "insets": [
         { "text": "Level B  —  00:12", "position": "before", "style": "system" }
       ],
-      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel, a blinking red light, and something stencilled beside it in letters worn past reading.\n\nYou hear footsteps on the other side.",
+      "text": "Level B. The maintenance corridor smells of rust and old diesel. At the end, exactly where the map showed, there's a steel door with no handle — just a flat panel, a blinking red light, and something stencilled beside it in letters worn past reading.\n\nYou hear footsteps on the other side.{pause}",
       "overlays": [
         {
           "text": "Mira's voice in your head: 'Do not go to Platform 7. Leave now.'",
@@ -147,7 +148,7 @@
     },
 
     "caught": {
-      "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.\n\nThe light goes red again.",
+      "text": "The door opens before your knuckle lands a second time.\n\nThree of them. They don't speak. One takes the bag. Another takes your phone.{pause}\n\nThe light goes red again.",
       "insets": [
         { "text": "DEVICE SEIZED  —  LEVEL B  —  00:12", "requires": { "has_phone": true }, "position": "after", "style": "system" }
       ],
@@ -182,7 +183,7 @@
       "scene": "Station Exit",
       "text": "You come up the stairs two at a time and push through the station doors into the cold night air.\n\nBehind you, the lights inside flicker once and go dark.\n\nYou walk until the station is out of sight. Then you keep walking.",
       "insets": [
-        { "text": "You saw it. A platform that shouldn't exist. A train with no destination. You chose not to find out what stepped off.", "requires": { "visited_panel_touched": true }, "position": "before", "style": "echo" },
+        { "text": "You saw it. A platform that shouldn't exist. A train with no destination. You chose not to find out what stepped off.", "requires": { "visited_panel_touched": true }, "position": "before", "style": "memory" },
         { "text": "You never learned what was on that platform.", "position": "after", "style": "echo" }
       ],
       "choices": [],
@@ -196,7 +197,7 @@
       "insets": [
         { "text": "00:14  —  UNAUTHORISED ACCESS  —  LEVEL B", "position": "before", "style": "system" }
       ],
-      "text": "The panel is warm under your palm. The red light blinks once — twice — and turns green.\n\nThe door clicks open a centimetre. Cold air pushes through the gap. Beyond it: a platform that shouldn't exist, a track on no map, and a train — unlit, idling, pointing somewhere with no name.\n\nThey haven't heard you. Not yet.",
+      "text": "The panel is warm under your palm. The red light blinks once — twice —{pause} and turns green.\n\nThe door clicks open a centimetre. Cold air pushes through the gap. Beyond it: a platform that shouldn't exist, a track on no map, and a train — unlit, idling, pointing somewhere with no name.\n\nThey haven't heard you. Not yet.",
       "overlays": [
         {
           "text": "The circled 7 on the map. You found it. And now it's open.",
@@ -212,7 +213,7 @@
 
     "beyond_platform_7": {
       "scene": "Platform 7",
-      "text": "The door seals behind you with a sound like a lock engaging from the inside.\n\nThe platform stretches longer than the building should allow. The train is unmarked — no number, no operator, no destination board. The doors are open.\n\nSomething steps off.",
+      "text": "The door seals behind you with a sound like a lock engaging from the inside.\n\nThe platform stretches longer than the building should allow. The train is unmarked — no number, no operator, no destination board. The doors are open.{pause}\n\nSomething steps off.",
       "overlays": [
         { "text": "The doors were open. They were waiting.", "position": "before", "style": "echo" }
       ],

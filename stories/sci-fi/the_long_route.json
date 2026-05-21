@@ -312,7 +312,7 @@
       ]
     },
     "g1_probe_launch": {
-      "text": "The probe is no larger than a coffin and much more expensive.\n\nIt launches from the Iris Bell with a polite mechanical shudder, vanishes into the candidate current, and returns twelve seconds before the model predicts it should.\n\nTwelve seconds early.\n\nThe bridge goes very quiet.",
+      "text": "The probe is no larger than a coffin and much more expensive.\n\nIt launches from the Iris Bell with a polite mechanical shudder, vanishes into the candidate current,{pause} and returns twelve seconds before the model predicts it should.\n\nTwelve seconds early.\n\nThe bridge goes very quiet.",
       "choices": [
         {
           "label": "Treat the time gain as a breakthrough.",
@@ -499,6 +499,11 @@
         }
       ],
       "overlays": [
+        {
+          "text": "The handprints beneath the floor glass belong to people who also had to stand.",
+          "position": "before",
+          "style": "echo"
+        },
         {
           "text": "Your voice sounds younger in public.",
           "position": "after",
@@ -793,7 +798,7 @@
       ]
     },
     "g2_accountability_vote": {
-      "text": "You force the vote.\n\nIt feels good for approximately six minutes.\n\nA logistics administrator loses her post. The chamber exhales. The convoy receives a clean story: one failure, one responsible name, one corrective action.\n\nThe beacon remains broken.",
+      "text": "You force the vote.\n\nIt feels good for approximately six minutes.{pause}\n\nA logistics administrator loses her post. The chamber exhales. The convoy receives a clean story: one failure, one responsible name, one corrective action.\n\nThe beacon remains broken.",
       "choices": [
         {
           "label": "Push past the scapegoat and still fund repairs.",
@@ -1080,7 +1085,7 @@
       ]
     },
     "g2_after_repair": {
-      "text": "When the beacon comes back online, the convoy's route display blooms with light.\n\nFor three seconds, every ship sees the same thing: the old route, corrected by a living hand.\n\nThen the system compresses the update into a neat public notice.\n\nMAINTENANCE COMPLETE.\n\nIt feels insulting.\n\nIt is also true.",
+      "text": "When the beacon comes back online, the convoy's route display blooms with light.{pause}\n\nFor three seconds, every ship sees the same thing: the old route, corrected by a living hand.\n\nThen the system compresses the update into a neat public notice.\n\nMAINTENANCE COMPLETE.\n\nIt feels insulting.\n\nIt is also true.",
       "choices": [
         {
           "label": "Add a personal note to the Long Map.",
@@ -1205,7 +1210,7 @@
       ]
     },
     "g3_tovin_class": {
-      "text": "Tovin Vale is old enough to know when a lesson has been sanded smooth.\n\nThe civic year students sit in the observation tier while the instructor projects the Esho Current in ceremonial blue. Elian's first annotation appears as a heroic quote. Mara's repair appears as a moral example. The convoy appears, as it always does in school modules, wiser than any one person and less frightened than everyone actually was.\n\nA child raises her hand.\n\n\"Did they know it would work?\"\n\nThe instructor smiles.\n\nTovin looks at the archive access key warm in their palm.",
+      "text": "Tovin Vale is old enough to know when a lesson has been sanded smooth.\n\nThe civic year students sit in the observation tier while the instructor projects the Esho Current in ceremonial blue. Elian's first annotation appears as a heroic quote. Mara's repair appears as a moral example.{responsibility_phrase_recorded? The instructor reads Mara's phrase aloud — \"The route is not the inheritance. The responsibility is\" — and the children write it down without knowing it almost went unrecorded.} The convoy appears, as it always does in school modules, wiser than any one person and less frightened than everyone actually was.\n\nA child raises her hand.\n\n\"Did they know it would work?\"\n\nThe instructor smiles.\n\nTovin looks at the archive access key warm in their palm.",
       "choices": [
         {
           "label": "Let the simplified lesson stand.",
@@ -1351,7 +1356,7 @@
       ]
     },
     "g3_archive_entry": {
-      "text": "The restricted stack smells faintly of coolant and old cloth.\n\nEvery generation thinks archives will feel clean because records are supposed to settle things. They never do. The oldest storage shelves are patched with three fabrication standards. The touchscreen nearest the Esho chain has a handwritten label: PRESS GENTLY OR IT LIES.\n\nYou open the original sequence.\n\nElian's voice fills the room, young and uncertain.\n\nThen Mara's, older and tired.\n\nThen a file you have never seen before.",
+      "text": "The restricted stack smells faintly of coolant and old cloth.\n\nEvery generation thinks archives will feel clean because records are supposed to settle things. They never do. The oldest storage shelves are patched with three fabrication standards. The touchscreen nearest the Esho chain has a handwritten label: PRESS GENTLY OR IT LIES.\n\nYou open the original sequence.\n\nElian's voice fills the room, young and uncertain.\n\nThen Mara's, older and tired.{mara_personal_note? Her final entry is a sentence that does not belong in a calibration field, which is precisely why it survived.}{technical_record_clean? Her final entry is clinically exact — drift values and calibration packets, nothing more. You have always wondered whether that cost her something.}\n\nThen a file you have never seen before.",
       "choices": [
         {
           "label": "Play Elian's unedited survey record.",
@@ -1372,7 +1377,8 @@
           "next": "g3_unknown_file",
           "sets": {
             "unknown_file_seen": true
-          }
+          },
+          "obfuscated": true
         }
       ],
       "choice_number_color": "#d8b4fe",
@@ -1499,6 +1505,13 @@
     },
     "g3_breathe_archive": {
       "text": "You stop the file.\n\nIn the silence, the archive hum feels almost kind. Beyond the wall, the convoy continues its ordinary evening: dinner rotations, shift changes, students complaining about assignments, old couples walking the inner ring for circulation.\n\nAll of them live inside stories they did not personally verify.\n\nSo do you.",
+      "insets": [
+        {
+          "text": "You are not sure whether stopping the file was wisdom or a small surrender.",
+          "position": "after",
+          "style": ""
+        }
+      ],
       "choices": [
         {
           "label": "Resume the sealed file.",
@@ -1812,7 +1825,8 @@
             "ending_choice_lantern": true
           },
           "requires": {
-            "layered_solution": true
+            "layered_solution": true,
+            "hidden_path_found": true
           },
           "color": "#86efac"
         },
@@ -1835,6 +1849,11 @@
         }
       ],
       "overlays": [
+        {
+          "text": "Three generations of Vale handwriting live in the Long Map. This session will add a fourth kind of mark.",
+          "position": "before",
+          "style": "echo"
+        },
         {
           "text": "Elian discovered a route. Mara kept it honest enough to survive. You are deciding whether honesty can be inherited.",
           "position": "after",

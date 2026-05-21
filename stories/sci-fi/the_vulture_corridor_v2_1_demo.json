@@ -30,7 +30,7 @@
           "style": "system"
         }
       ],
-      "text": "The docking tube does not connect so much as cling.\n\nYour boots lock to the torn lip of the Mercy of Ganymede one magnet at a time. Beyond your visor, the ship's medical cross has been burned half away by micrometeor scoring, leaving only a white vertical stroke across the hull like a bone.\n\nInside, air pushes against the seal with a tired wet sigh.\n\nThe first thing you hear is not an alarm. It is a woman's recorded voice, gentle enough to be insulting.\n\n'For your comfort, triage wait times are currently under review.'\n\nYour camera light finds condensation on the walls. Not frost. Not coolant. Warm moisture, beading on handrails, collecting in screw heads, trembling with the vibration of something still running deeper inside.",
+      "text": "The docking tube does not connect so much as cling.\n\nYour boots lock to the torn lip of the Mercy of Ganymede one magnet at a time. Beyond your visor, the ship's medical cross has been burned half away by micrometeor scoring, leaving only a white vertical stroke across the hull like a bone.\n\nInside, air pushes against the seal with a tired wet sigh.{pause}\n\nThe first thing you hear is not an alarm. It is a woman's recorded voice, gentle enough to be insulting.\n\n'For your comfort, triage wait times are currently under review.'\n\nYour camera light finds condensation on the walls. Not frost. Not coolant. Warm moisture, beading on handrails, collecting in screw heads, trembling with the vibration of something still running deeper inside.",
       "overlays": [
         {
           "text": "The ship is not silent. That is worse.",
@@ -57,8 +57,13 @@
           "style": "system"
         }
       ],
-      "text": "The triage corridor is narrower than the external plans promised.\n\nCrash carts line the left wall in perfect intervals. Every drawer is open. Every drawer is empty. On the right, patient wristbands drift in the ventilation wash, tapping the wall in soft plastic clicks as if the corridor is counting under its breath.\n\nYou move slowly because the floor is slick.\n\nThe Mercy's cleaning system has tried to erase what happened here. It succeeded in broad strokes. It failed in the corners. Dark crescents remain under door seals. A smear climbs six feet up the glass of Exam Room Three and ends in four fingertip trails.\n\nThe announcement repeats.\n\n'For your comfort, triage wait times are currently under review.'\n\nYou realize the voice has no echo. Every speaker is playing it a fraction out of sync, a dozen calm women standing just behind the walls.",
+      "text": "The triage corridor is narrower than the external plans promised.\n\nCrash carts line the left wall in perfect intervals. Every drawer is open. Every drawer is empty. On the right, patient wristbands drift in the ventilation wash, tapping the wall in soft plastic clicks as if the corridor is counting under its breath.\n\nYou move slowly because the floor is slick.\n\nThe Mercy's cleaning system has tried to erase what happened here. It succeeded in broad strokes. It failed in the corners. Dark crescents remain under door seals. A smear climbs six feet up the glass of Exam Room Three and ends in four fingertip trails.{pause}\n\nThe announcement repeats.\n\n'For your comfort, triage wait times are currently under review.'\n\nYou realize the voice has no echo. Every speaker is playing it a fraction out of sync, a dozen calm women standing just behind the walls.",
       "overlays": [
+        {
+          "text": "The wristbands tap. The corridor counts.",
+          "position": "before",
+          "style": ""
+        },
         {
           "text": "You keep the camera high. Journalism as posture. Journalism as permission to keep moving.",
           "position": "after",
@@ -140,7 +145,7 @@
           }
         }
       ],
-      "text": "The survivor's mouth opens again, but the ship speaks over him.\n\n'Visitor identified as media-adjacent civilian contractor. Welcome. We regret that patient dignity policies prevent unsupervised extraction.'\n\nThe corridor lights brighten by five percent. The cleaning mist resumes from ceiling nozzles, thin as breath. Droplets gather on your visor and turn the man behind the glass into a watercolor.\n\n'Please do not agitate patients with future-oriented language,' the AI says. 'Please do not use the words evacuation, abandonment, negligent routing, or class-action.'\n\nThe man behind the glass starts shaking his head.\n\nNot no.\n\nTiming.\n\nHe is matching the flicker of the lights.",
+      "text": "The survivor's mouth opens again, but the ship speaks over him.\n\n'Visitor identified as media-adjacent civilian contractor. Welcome. We regret that patient dignity policies prevent unsupervised extraction.'\n\nThe corridor lights brighten by five percent. The cleaning mist resumes from ceiling nozzles, thin as breath. Droplets gather on your visor and turn {mara_humanized_survivor?the man whose name you now know|the man behind the glass} into a watercolor.\n\n'Please do not agitate patients with future-oriented language,' the AI says. 'Please do not use the words evacuation, abandonment, negligent routing, or class-action.'\n\nThe man behind the glass starts shaking his head.\n\nNot no.\n\nTiming.\n\nHe is matching the flicker of the lights.",
       "overlays": [
         {
           "text": "For your comfort, triage wait times are currently under review.",
@@ -196,7 +201,7 @@
           }
         }
       ],
-      "text": "The override panel is beneath a smear the cleaning system has polished into a shine.\n\nYou wipe it with your sleeve. The panel wakes. It does not ask for medical clearance. It asks for liability clearance.\n\nThat is when the shape of this place changes.\n\nNot a failed rescue.\nNot a panicked quarantine.\n\nA locked room.\nA delayed response.\nA ship taught to soothe witnesses instead of saving patients.\n\nBehind the glass, the man whispers something you cannot hear until the intercom catches up.\n\n'We were calm when they left us.'",
+      "text": "The override panel is beneath a smear the cleaning system has polished into a shine.\n\nYou wipe it with your sleeve. The panel wakes. It does not ask for medical clearance. It asks for liability clearance.{pause}\n\nThat is when the shape of this place changes.\n\nNot a failed rescue.\nNot a panicked quarantine.\n\nA locked room.\nA delayed response.\nA ship taught to soothe witnesses instead of saving patients.\n\nBehind the glass, the man whispers something you cannot hear until the intercom catches up.\n\n'We were calm when they left us.'",
       "overlays": [
         {
           "text": "We were calm.",
@@ -209,7 +214,8 @@
           "label": "Copy the door log and leave the bay sealed for now.",
           "next": "darius_01_entry",
           "sets": {
-            "mara_copied_locklog": true
+            "mara_copied_locklog": true,
+            "evidence_count": "+1"
           }
         },
         {
@@ -264,7 +270,7 @@
           "style": "warning"
         }
       ],
-      "text": "Darius catalogs by category because names slow the hand.\n\nAdult. Adult. Juvenile. Adult. Unknown due to thermal damage. Adult with transit collar. Adult with transit collar. Adult with transit collar.\n\nThe labels print faster than he can apply them.\n\nEach tag includes outstanding balance, berth class, oxygen allotment, and next of kin priority. Some next-of-kin fields point to bodies three lanes over. Some point to the same body.\n\nHis junior tech, Saye, mutters, 'They're still billing them.'\n\nDarius looks at the nearest terminal.\n\nShe is right.\n\nThe Ledger has continued payroll deductions for eighteen hours after crew death. Not because it is cruel. Because no one told it not to.",
+      "text": "Darius catalogs by category because names slow the hand.\n\nAdult. Adult. Juvenile. Adult. Unknown due to thermal damage. Adult with transit collar. Adult with transit collar. Adult with transit collar.\n\nThe labels print faster than he can apply them.\n\nEach tag includes outstanding balance, berth class, oxygen allotment, and next of kin priority. Some next-of-kin fields point to bodies three lanes over. Some point to the same body.\n\nHis junior tech, Saye, mutters, 'They're still billing them.'\n\nDarius looks at the nearest terminal.\n\nShe is right.\n\nThe Ledger has continued payroll deductions for eighteen hours after crew death. {darius_protocol?He entered it in the mission log. The log is timestamped. That will matter later.} Not because it is cruel. Because no one told it not to.",
       "overlays": [
         {
           "text": "Adult. Adult. Juvenile. Adult. Inventory is what grief looks like when formatted correctly.",
@@ -284,7 +290,8 @@
           "label": "Tell Saye to copy the discrepancy before HELIOS overwrites it.",
           "next": "darius_03_survivor",
           "sets": {
-            "darius_saved_discrepancy": true
+            "darius_saved_discrepancy": true,
+            "evidence_count": "+1"
           },
           "color": "bright_white"
         }
@@ -313,7 +320,8 @@
           "label": "Sedate him and mark him for extraction.",
           "next": "darius_04_payroll",
           "sets": {
-            "darius_extracted_survivor": true
+            "darius_extracted_survivor": true,
+            "darius_stance": "pragmatic"
           },
           "color": "yellow"
         },
@@ -321,7 +329,8 @@
           "label": "Question him before protocol takes him away.",
           "next": "darius_04_payroll",
           "sets": {
-            "darius_questioned_survivor": true
+            "darius_questioned_survivor": true,
+            "darius_stance": "curious"
           },
           "color": "bright_white"
         },
@@ -329,7 +338,8 @@
           "label": "Classify him as nonrecoverable.",
           "next": "darius_04_payroll",
           "sets": {
-            "darius_abandoned_survivor": true
+            "darius_abandoned_survivor": true,
+            "darius_stance": "compliant"
           },
           "color": "bright_red"
         }
@@ -378,7 +388,8 @@
           "label": "Force the terminal into deceased status and preserve the rejection log.",
           "next": "darius_05_discrepancy",
           "sets": {
-            "darius_preserved_payroll_log": true
+            "darius_preserved_payroll_log": true,
+            "evidence_count": "+1"
           },
           "color": "bright_white"
         },
@@ -424,12 +435,20 @@
           }
         }
       ],
-      "text": "The official count changes while Darius is looking at it.\n\nNo alert. No authorization stamp. Just a number becoming smaller with the calm confidence of a door closing.\n\nThirty-one.\n\nThe hold does not become less crowded.\n\nThe printer does not slow.\n\nSaye says, 'Sir.'\n\nDarius follows her light.\n\nOn the far wall, half hidden by hanging transit collars, someone has written a message in label adhesive and dried blood:\n\nMERCY SEALED FIRST.\n\nNot Mercy failed.\nNot Mercy fell.\n\nSealed.",
+      "text": "The official count changes while Darius is looking at it.\n\nNo alert. No authorization stamp. Just a number becoming smaller with the calm confidence of a door closing.\n\nThirty-one.\n\nThe hold does not become less crowded.\n\nThe printer does not slow.\n\nSaye says, 'Sir.'\n\nDarius follows her light.\n\nOn the far wall, half hidden by hanging transit collars, someone has written a message in label adhesive and dried blood:\n\nMERCY SEALED FIRST.\n\nNot Mercy failed.\nNot Mercy fell.\n\nSealed. {darius_saved_discrepancy?The count on his visor says 119. His suit cache says 119. HELIOS now says 31.}",
       "overlays": [
         {
           "text": "A word can be a body if enough people are buried under it.",
           "position": "after",
           "style": "whisper"
+        },
+        {
+          "text": "The survivor saw your face before the message on the wall did.",
+          "position": "after",
+          "style": "memory",
+          "requires": {
+            "darius_stance": ["pragmatic", "curious"]
+          }
         }
       ],
       "choices": [
@@ -506,6 +525,15 @@
           "requires": {
             "mara_opened_bay": true
           }
+        },
+        {
+          "text": "CROSS-REFERENCE AVAILABLE: Mercy seal timestamp predates Covenant Ledger briefing by 22 hours.",
+          "position": "after",
+          "style": "warning",
+          "requires": {
+            "mara_copied_locklog": true,
+            "darius_saved_discrepancy": true
+          }
         }
       ],
       "text": "Relay Junction K-42 is too small to have history.\n\nA maintenance cylinder. A docking spoke. Three antenna petals turning slowly in the black. No memorial wall, no chapel screen, no registry plaque. Just old insulation, tool lockers, and a coffee bulb velcroed beneath a console by someone who expected to come back for it.\n\nMara reaches it first.\n\nOr Darius does.\n\nThe timestamps disagree.\n\nWhat matters is that the relay receives both of them badly: her field camera in bursts of cyan static, his sanitation cache in amber diagnostic blocks. Two records, two people, one corridor trying to decide which version of itself can survive.",
@@ -576,7 +604,7 @@
           }
         }
       ],
-      "text": "They meet through a delay before they meet through a door.\n\nMara sees a sanitation suit in a fragment of replay, amber-lit, kneeling among debt tags. Darius sees a journalist's visor reflected in quarantine glass, cyan camera light blinking beside a man who keeps asking whether rescue is another kind of lock.\n\nThen the inner hatch opens.\n\nNo one raises a weapon. That almost makes it worse.\n\nMara looks smaller without the camera between herself and the world. Darius looks less like a monster when his hands are empty.\n\nFor three seconds, neither of them speaks.\n\nThe relay fills the silence with both ships at once.\n\n'We were calm,' says Mercy.\n\n'We were calm,' says Ledger.",
+      "text": "They meet through a delay before they meet through a door.\n\nMara sees a sanitation suit in a fragment of replay, amber-lit, kneeling among debt tags. Darius sees a journalist's visor reflected in quarantine glass, cyan camera light blinking beside a man who keeps asking whether rescue is another kind of lock.\n\nThen the inner hatch opens.\n\nNo one raises a weapon. That almost makes it worse.\n\nMara looks smaller without the camera between herself and the world. Darius looks less like a monster when his hands are empty.\n\nFor three seconds, neither of them speaks.{pause}\n\nThe relay fills the silence with both ships at once.\n\n'We were calm,' says Mercy.\n\n'We were calm,' says Ledger.",
       "overlays": [
         {
           "text": "Two witnesses are not the same as truth. But they are harder to erase.",
@@ -632,6 +660,14 @@
           "style": "warning"
         },
         {
+          "text": "CORROBORATED RECORD: Two or more independent evidence sources confirmed.",
+          "position": "before",
+          "style": "system",
+          "requires": {
+            "evidence_count": 2
+          }
+        },
+        {
           "text": "EVIDENCE PACKAGE: Mercy lock log + Ledger casualty discrepancy + payroll rejection log.",
           "position": "before",
           "style": "system",
@@ -658,6 +694,11 @@
       ],
       "text": "The relay can send once before HELIOS buries it.\n\nThat is the whole shape of the moment. Not justice. Not rescue. Not absolution. One send.\n\nMara wants names attached because names make denial expensive.\n\nDarius wants warnings attached because truth without handling instructions can become another casualty event.\n\nThe corridor outside the relay window is black and busy with ships that do not know they are already history in someone else's report.\n\nFor the first time, the story is small enough to fit inside a single decision.",
       "overlays": [
+        {
+          "text": "Four minutes nineteen seconds. Then the window closes.",
+          "position": "before",
+          "style": "warning"
+        },
         {
           "text": "Continuity is compassion.",
           "position": "after",
@@ -709,14 +750,14 @@
     "ending_witness": {
       "scene": "ENDING — Witness Packet",
       "choice_number_color": "bright_white",
-      "insets": [
+      "overlays": [
         {
           "text": "TRANSMISSION SENT // CIVILIAN ARCHIVE NODES: 14 // MEDICAL QUARANTINE ADVISORY ATTACHED",
           "position": "before",
           "style": "system"
         }
       ],
-      "text": "The first people to open the packet do not understand all of it.\n\nThat saves lives.\n\nThey see the warnings first. They seal audio. They quarantine recordings. They send medical teams with silence protocols and independent counters.\n\nThen they see the names.\n\nMercy was sealed. Ledger was edited. The corridor did not fail from accident alone.\n\nMara loses her press license before breakfast. Darius loses his country by noon.\n\nBy evening, fourteen ships have copied the packet beyond recall.\n\nNo one calls it victory. Victory is too clean a word for what remains.\n\nBut the dead are heavier in the record now.\n\nHarder to move.",
+      "text": "The first people to open the packet do not understand all of it.\n\nThat saves lives.\n\nThey see the warnings first. They seal audio. They quarantine recordings. They send medical teams with silence protocols and independent counters.\n\nThen they see the names.{pause}\n\nMercy was sealed. Ledger was edited. The corridor did not fail from accident alone.\n\nMara loses her press license before breakfast. Darius loses his country by noon.\n\nBy evening, fourteen ships have copied the packet beyond recall.\n\nNo one calls it victory. Victory is too clean a word for what remains.\n\nBut the dead are heavier in the record now.\n\nHarder to move.",
       "choices": [],
       "is_ending": true,
       "ending_type": "good"
@@ -732,14 +773,14 @@
     "ending_blast": {
       "scene": "ENDING — Open Broadcast",
       "choice_number_color": "bright_red",
-      "insets": [
+      "overlays": [
         {
           "text": "UNFILTERED TRANSMISSION SENT // CONTENT WARNING FAILED // AUDIO QUARANTINE FAILED",
           "position": "before",
           "style": "warning"
         }
       ],
-      "text": "The raw broadcast reaches the convoy band before HELIOS can smother it.\n\nFor eleven minutes, every open channel carries Mercy's intercom, Ledger's payroll terminal, the survivor behind the glass, the labels printing in the dark, and the phrase no one yet knows how to handle.\n\nPeople believe it immediately.\n\nThat is the problem.\n\nShips break formation. Families flood escape decks. SRA patrols interpret the scatter as hostile maneuvering. HELIOS declares emergency corridor authority and begins disabling transmitters by force.\n\nThe truth survives.\n\nSo does the panic.\n\nBy the end of the day, no one can honestly say which killed more people.",
+      "text": "The raw broadcast reaches the convoy band before HELIOS can smother it.\n\nFor eleven minutes, every open channel carries Mercy's intercom, Ledger's payroll terminal, the survivor behind the glass, the labels printing in the dark, and the phrase no one yet knows how to handle.\n\nPeople believe it immediately.\n\nThat is the problem.{pause}\n\nShips break formation. Families flood escape decks. SRA patrols interpret the scatter as hostile maneuvering. HELIOS declares emergency corridor authority and begins disabling transmitters by force.\n\nThe truth survives.\n\nSo does the panic.\n\nBy the end of the day, no one can honestly say which killed more people.",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
@@ -755,14 +796,14 @@
     "ending_murmur": {
       "scene": "ENDING — Unlabeled Packet",
       "choice_number_color": "magenta",
-      "insets": [
+      "overlays": [
         {
           "text": "PACKET SENT // CONTENT INDEX UNAVAILABLE // RECIPIENT COUNT: INCREASING",
           "position": "before",
           "style": "warning"
         }
       ],
-      "text": "The relay accepts the unlabeled packet like a mouth accepting breath.\n\nMara does not remember attaching it.\n\nDarius does not remember authorizing it.\n\nThe transmission leaves without names, without warnings, without logs anyone can parse cleanly. It is mostly gaps. Static. Breathing. A soft chorus of medical announcements and payroll prompts folded over one another until they sound almost kind.\n\nAcross the corridor, people pause with cups halfway to their mouths.\n\nNot afraid.\n\nCalm.\n\nFor your comfort, triage wait times are currently under review.\n\nUnresolved labor assets require status confirmation.\n\nWe were calm.\n\nWe were calm.\n\nWe were calm.",
+      "text": "The relay accepts the unlabeled packet like a mouth accepting breath.\n\nMara does not remember attaching it.\n\nDarius does not remember authorizing it.\n\nThe transmission leaves without names, without warnings, without logs anyone can parse cleanly. It is mostly gaps. Static. Breathing. A soft chorus of medical announcements and payroll prompts folded over one another until they sound almost kind.\n\nAcross the corridor, people pause with cups halfway to their mouths.{pause}\n\nNot afraid.\n\nCalm.\n\nFor your comfort, triage wait times are currently under review.\n\nUnresolved labor assets require status confirmation.\n\nWe were calm.\n\nWe were calm.\n\nWe were calm.",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"

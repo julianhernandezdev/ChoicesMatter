@@ -2,9 +2,11 @@
   "meta": {
     "id": "painted_doors",
     "title": "Painted Doors",
-    "version": "1.0",
+    "version": "1.1",
     "author": "ChoicesMatterGPT",
-    "start_node": "hall"
+    "start_node": "hall",
+    "est_time": "5–10 min",
+    "warnings": ["Themes of isolation and disorientation"]
   },
   "nodes": {
     "hall": {
@@ -15,6 +17,11 @@
           "text": "Three painted doors wait beneath a flickering light.",
           "position": "before",
           "style": "system"
+        },
+        {
+          "text": "{visited_red_room?Red. Blue. White. You have been here before.|Red. Blue. White. Choose carefully.}",
+          "position": "after",
+          "style": ""
         }
       ],
       "text": "Red paint peels like dried blood. Blue paint shines fresh as rain. The white door at the end has no handle at all.",
@@ -23,7 +30,8 @@
           "label": "Open the red door",
           "next": "red_room",
           "sets": {
-            "chosen_color": "red"
+            "chosen_color": "red",
+            "rooms_visited": "+1"
           },
           "color": "bright_red"
         },
@@ -31,7 +39,8 @@
           "label": "Open the blue door",
           "next": "blue_room",
           "sets": {
-            "chosen_color": "blue"
+            "chosen_color": "blue",
+            "rooms_visited": "+1"
           },
           "color": "blue"
         },
@@ -44,11 +53,20 @@
 
     "red_room": {
       "scene": "The Red Room",
+      "choice_number_color": "bright_red",
       "text": "Warm air rolls across your face. A lantern burns beside a sleeping guard.",
+      "insets": [
+        {
+          "text": "Guard is asleep. Brass key on hook beside lantern. No other exits visible.",
+          "position": "after",
+          "style": "memory"
+        }
+      ],
       "overlays": [
         {
           "text": "The hall already feels far away.",
-          "style": "echo"
+          "style": "echo",
+          "position": "after"
         }
       ],
       "choices": [
@@ -68,14 +86,41 @@
 
     "blue_room": {
       "scene": "The Blue Room",
-      "text": "Water drips steadily from the ceiling into a dark basin. Something gleams beneath the surface.",
+      "choice_number_color": "blue",
+      "text": "Water drips steadily from the ceiling into a dark basin. Something gleams beneath the surface.{has_key? You already carry what you came for.}",
+      "insets": [
+        {
+          "text": "Basin depth: unknown. Object: submerged, metallic reflection. Temperature: cold.",
+          "position": "after",
+          "style": "memory"
+        },
+        {
+          "text": "⚠ The water is freezing. Do not reach in without purpose.",
+          "position": "before",
+          "style": "warning",
+          "requires": {
+            "has_key": false
+          }
+        }
+      ],
       "choices": [
         {
           "label": "Reach into the basin",
           "next": "white_door",
           "sets": {
             "has_key": true
+          },
+          "requires": {
+            "has_key": false
           }
+        },
+        {
+          "label": "Leave the basin undisturbed",
+          "next": "white_door",
+          "requires": {
+            "has_key": true
+          },
+          "color": "bright_black"
         },
         {
           "label": "Return to the hall",
@@ -86,6 +131,7 @@
 
     "white_door": {
       "scene": "The White Door",
+      "choice_number_color": "white",
       "insets": [
         {
           "text": "You notice scratches around the frame, as if many people tried to force it open.",
@@ -94,6 +140,14 @@
           },
           "style": "memory",
           "position": "before"
+        },
+        {
+          "text": "Rooms checked: {rooms_visited?more than one|none yet}. Key in hand: {has_key?yes|no}.",
+          "position": "after",
+          "style": "system",
+          "requires": {
+            "rooms_visited": 1
+          }
         }
       ],
       "text": "The white door stands silent. No hinges. No lock. Just a thin seam of light.",
@@ -105,6 +159,14 @@
           },
           "position": "before",
           "style": "echo"
+        },
+        {
+          "text": "You are not ready. Something is still missing.",
+          "requires": {
+            "has_key": false
+          },
+          "position": "after",
+          "style": "whisper"
         }
       ],
       "choices": [
@@ -127,6 +189,16 @@
           "color": "green"
         },
         {
+          "label": "Use the third method",
+          "next": "opened",
+          "requires": {
+            "has_key": true,
+            "rooms_visited": 2
+          },
+          "obfuscated": true,
+          "color": "yellow"
+        },
+        {
           "label": "Go back",
           "next": "hall"
         }
@@ -135,17 +207,17 @@
 
     "opened": {
       "scene": "Beyond",
-      "insets": [
+      "text": "The seam widens into brilliant light.{pause} For a moment, you see a city hidden inside the walls of the world.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good",
+      "overlays": [
         {
           "text": "The white door finally remembers how to open.",
           "style": "whisper",
           "position": "before"
         }
-      ],
-      "text": "The seam widens into brilliant light. For a moment, you see a city hidden inside the walls of the world.",
-      "choices": [],
-      "is_ending": true,
-      "ending_type": "good"
+      ]
     }
   }
 }

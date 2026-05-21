@@ -6,6 +6,10 @@
 "author": "Choices Matter",
 "start_node": "arrival",
 "est_time": "25–35 min",
+"warnings": [
+"This story contains themes of grief, loss at sea, and the death of characters who do not appear on-page.",
+"It deals with community silence around a preventable tragedy and may resonate with experiences of institutional failure."
+],
 "auto_visited_flags": true
 },
 "nodes": {
@@ -127,7 +131,7 @@
 }
 }
 ],
-"text": "The Salt Finch Inn smells of lemon oil, rain wool, and bread warming somewhere behind a closed door. Its owner, Mara Vale, is small, elderly, and composed in the way of people who have survived enough storms to stop flinching at weather.\n\n\"Clinic sent word,\" she says, sliding a brass key across the counter. \"Room three. Radiator complains, but it works. Breakfast at seven unless the harbor fog gets dramatic. It does enjoy an audience.\"\n\nBehind her, on the sill, stands a lantern made from green glass. Its tag is turned inward.",
+"text": "The Salt Finch Inn smells of lemon oil, rain wool, and bread warming somewhere behind a closed door. Its owner, Mara Vale, is small, elderly, and composed in the way of people who have survived enough storms to stop flinching at weather.\n\n\"Clinic sent word,\" she says, sliding a brass key across the counter. \"Room three. Radiator complains, but it works. Breakfast at seven unless the harbor fog gets dramatic. It does enjoy an audience.\"\n\nBehind her, on the sill, stands a lantern made from green glass. {observant?You already know this kind of object is not decoration.|Its tag is turned inward.}",
 "overlays": [
 {
 "text": "The lantern in the inn window feels less like decoration than a held breath.",
@@ -357,7 +361,7 @@
 "style": "system"
 }
 ],
-"text": "Tessa makes tea strong enough to qualify as infrastructure.\n\n\"My mother trained under Liora,\" she says. \"Everyone thinks Liora vanished because she was reckless, or heartbroken, or touched by some old superstition. But my mother said Liora was carrying something that night. Not a secret exactly. Proof.\"\n\nShe rubs both hands over her face.\n\n\"Councilman Orret wants the Lantern Rounds stopped this year. Says they're unhealthy. Says the town keeps rehearsing grief. Some days I think he's right. Then someone leaves a lantern for a widow or a new baby or a stranger in room three, and I don't know.\"",
+"text": "Tessa makes tea strong enough to qualify as infrastructure.\n\n\"My mother trained under Liora,\" she says. \"Everyone thinks Liora vanished because she was reckless, or heartbroken, or touched by some old superstition. But my mother said Liora was carrying something that night. Not a secret exactly. Proof.\"\n\nShe rubs both hands over her face.\n\n\"Councilman Orret wants the Lantern Rounds stopped this year. Says they're unhealthy. Says the town keeps rehearsing grief. Some days I think he's right. Then someone leaves a lantern for a widow or a new baby or {visited_harbor_inn?someone who asks about green lanterns|a stranger in room three}, and I don't know.\"",
 "overlays": [
 {
 "text": "A stranger in room three.",
@@ -406,7 +410,7 @@
 {
 "text": "PUBLIC NOTICE  —  PROPOSAL TO SUSPEND THE LANTERN ROUNDS  —  HEARING TONIGHT",
 "position": "before",
-"style": "system"
+"style": "warning"
 }
 ],
 "text": "The notice is posted crookedly on the town hall door. Someone has tried to smooth the paper. Someone else has drawn a small lantern in the corner.\n\nCouncilman Orret stands beneath it with a folder under one arm, talking to a reporter from the mainland. He has the careful voice of a man who has practiced sounding reasonable.\n\n\"Brindlewick deserves to move forward,\" he says. \"Not remain trapped in a ritual built around a disappearance no one can explain.\"",
@@ -443,7 +447,7 @@
 "orret_confrontation": {
 "scene": "Town Hall Steps",
 "choice_number_color": "yellow",
-"text": "Orret turns to you with polite suspicion.\n\n\"Temporary clinic staff,\" he says. \"Yes, I've heard. Then you have an advantage. You can leave. The rest of us have to live with the consequences of people treating grief like civic duty.\"\n\nYou ask about Liora Wren.\n\nFor the first time, his voice loses polish.\n\n\"Liora was kind,\" he says. \"People mistake that for harmless. It is not harmless, being kind in public. It makes cowards visible.\"",
+"text": "Orret turns to you with polite suspicion.\n\n\"Temporary clinic staff,\" he says. \"Yes, I've heard. Then you have an advantage. You can leave. The rest of us have to live with the consequences of people treating grief like civic duty.\"\n\nYou ask about Liora Wren.\n\nFor the first time, his voice loses polish.{pause}\n\n\"Liora was kind,\" he says. \"People mistake that for harmless. It is not harmless, being kind in public. It makes cowards visible.\"",
 "overlays": [
 {
 "text": "It is not harmless, being kind in public.",
@@ -641,7 +645,7 @@
 {
 "text": "WEATHER ADVISORY  —  FOG AFTER SUNSET  —  TIDE TURNING 19:40",
 "position": "before",
-"style": "system"
+"style": "warning"
 }
 ],
 "text": "The lighthouse road climbs away from town through grass silvered by salt. Below, Brindlewick begins lighting its windows one by one.\n\nA lantern appears in the clinic. Another in the bakery. Another in the inn.\n\nThe road bends at the old fog bell. Beneath it, half-hidden by sea thrift and rust, is a small wooden box sealed with oilcloth.",
@@ -700,7 +704,7 @@
 "style": "system"
 }
 ],
-"text": "The letter is written in Liora's hand.\n\nShe explains that the storm closure was necessary. She explains that she broke it anyway because a child was fevered, because a mother was frightened, because Caleb had gone out to fetch medicine from a boat that should never have left harbor.\n\nThen the handwriting changes, rushed by weather or fear.\n\nIf I do not come home, tell them this: nobody is a lesson. Not me. Not Caleb. Not the child. Leave a light for the next person, not for the story you prefer.",
+"text": "The letter is written in Liora's hand.\n\nShe explains that the storm closure was necessary. She explains that she broke it anyway because a child was fevered, because a mother was frightened, because Caleb had gone out to fetch medicine from a boat that should never have left harbor.\n\n{pause}Then the handwriting changes, rushed by weather or fear.\n\nIf I do not come home, tell them this: nobody is a lesson. Not me. Not Caleb. Not the child. Leave a light for the next person, not for the story you prefer.",
 "overlays": [
 {
 "text": "Nobody is a lesson.",
@@ -750,9 +754,14 @@
 "text": "PRIVATE NOTE  —  LIORA'S LETTER PLACED IN CLINIC SAFE  —  WITNESSES: E. MARLOW, T. ROWE",
 "position": "after",
 "style": "system"
+},
+{
+"text": "Some silences are not empty. They are full of what people are still finding words for.",
+"position": "after",
+"style": ""
 }
 ],
-"text": "You bring the letter to Tessa. Mrs. Vale arrives soon after, rain on her shoulders, Nico hovering at the doorway until someone pretends not to see him listening.\n\nThey read it in silence.\n\nNo one is healed by a page. But something in the room changes shape. The story is no longer only fog, road, and absence. It has Liora's own words in it now, asking not to be polished into a symbol.",
+"text": "You bring the letter to Tessa. Mrs. Vale arrives soon after, rain on her shoulders, {nico_helped?Nico hovering at the doorway until someone pretends not to see him listening — he has earned this.|Nico at the doorway, watching, unannounced.}\n\nThey read it in silence.\n\nNo one is healed by a page. But something in the room changes shape. The story is no longer only fog, road, and absence. It has Liora's own words in it now, asking not to be polished into a symbol.",
 "choices": [
 {
 "label": "Go to the hearing with them, even if you do not reveal everything.",
@@ -866,6 +875,14 @@
 },
 "position": "after",
 "style": "whisper"
+},
+{
+"text": "You came here to do records. You stayed to witness something that needed witnessing.",
+"position": "after",
+"style": "",
+"requires": {
+"town_bond": 2
+}
 }
 ],
 "choices": [
@@ -926,6 +943,14 @@
 "text": "Every choice leaves a mark. Some marks become windows.",
 "position": "before",
 "style": "whisper"
+},
+{
+"text": "Truth and care are not opposites. This town is learning that.",
+"position": "after",
+"style": "whisper",
+"requires": {
+"route_focus": ["truth", "balance"]
+}
 }
 ],
 "choices": [],
@@ -962,7 +987,7 @@
 "style": "system"
 }
 ],
-"text": "You leave before the town decides what it can bear.\n\nMaybe that is cowardice. Maybe it is respect. Maybe temporary people should not mistake access for wisdom.\n\nFrom the bus window, Brindlewick looks peaceful. Lanterns still glow in a few windows, though daylight has already thinned them. Mrs. Vale's green one is among them.\n\nWeeks later, a postcard arrives with no return address. On the front is the lighthouse. On the back, one sentence:\n\nWe are still talking.\n\nYou pin it above your desk and find that, on difficult evenings, you are glad they are.",
+"text": "You leave before the town decides what it can bear.\n\nMaybe that is cowardice. Maybe it is respect. Maybe temporary people should not mistake access for wisdom.\n\nFrom the bus window, Brindlewick looks peaceful. Lanterns still glow in a few windows, though daylight has already thinned them. Mrs. Vale's green one is among them.\n\n{pause}Weeks later, a postcard arrives with no return address. On the front is the lighthouse. On the back, one sentence:\n\nWe are still talking.\n\nYou pin it above your desk and find that, on difficult evenings, you are glad they are.",
 "overlays": [
 {
 "text": "Some mysteries do not close. They become invitations left ajar.",

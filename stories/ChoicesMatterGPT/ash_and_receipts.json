@@ -2,7 +2,7 @@
   "meta": {
     "id": "ash_and_receipts",
     "title": "Ash and Receipts",
-    "version": "1.0",
+    "version": "1.1",
     "author": "ChoicesMatterGPT",
     "start_node": "office",
     "est_time": "15–25 min",
@@ -43,6 +43,7 @@
       ]
     },
     "why_you": {
+      "choice_number_color": "yellow",
       "text": "'Because my husband trusted you once.'\n\nThat lands harder than it should.\n\nShe watches your face carefully after she says it, like she's checking whether a ghost moved behind your eyes.\n\nYou honestly don't remember Harvey Bell.",
       "overlays": [
         {
@@ -71,6 +72,7 @@
       ]
     },
     "refuse_case": {
+      "choice_number_color": "yellow",
       "text": "You tell her there's nothing good waiting at the bottom of missing persons cases anymore.\n\nShe nods like she expected that answer before she walked in.\n\nOn her way out, she pauses by the frosted glass door.\n\n'If someone asks whether you saw me,' she says quietly, 'you didn't.'",
       "choices": [
         {
@@ -88,6 +90,7 @@
       ]
     },
     "window_watch": {
+      "choice_number_color": "yellow",
       "text": "From the window you watch a black sedan parked across the street.\n\nTwo men inside. Hats low. One lights a cigarette but neither of them smoke it.\n\nThey're watching your office.\n\nWhen Mrs. Bell exits the building, the sedan pulls away without following her.",
       "overlays": [
         {
@@ -139,6 +142,7 @@
       ]
     },
     "watch_room": {
+      "choice_number_color": "yellow",
       "text": "Three card tables. Two city councilmen. A union fixer pretending not to recognize you.\n\nNear the back wall sits a thin man reading a newspaper upside down.\n\nNobody else seems to notice him.",
       "overlays": [
         {
@@ -162,6 +166,7 @@
       ]
     },
     "bartender": {
+      "choice_number_color": "yellow",
       "text": "The bartender dries the same glass the entire time you talk.\n\n'Bell came in Tuesday,' he says. 'Met somebody upstairs. Left nervous.'\n\n'Who'd he meet?'\n\nThe bartender looks toward the ceiling.\n\n'Nobody I saw.'",
       "choices": [
         {
@@ -182,6 +187,7 @@
       ]
     },
     "bartender_paid": {
+      "choice_number_color": "yellow",
       "text": "Your last five-dollar bill disappears under the glass.\n\nThe bartender finally looks at you directly.\n\n'Room 204 upstairs. But if anybody asks, you were never here.'",
       "insets": [
         {
@@ -193,7 +199,10 @@
       "choices": [
         {
           "label": "Go to Room 204",
-          "next": "room_204"
+          "next": "room_204",
+          "sets": {
+            "evidence": "+1"
+          }
         }
       ]
     },
@@ -220,7 +229,15 @@
       ]
     },
     "thin_man": {
+      "choice_number_color": "yellow",
       "text": "Up close, the thin man smells faintly medicinal.\n\nWithout lowering the newspaper, he says:\n\n'If you're looking for Bell, stop before you become part of the paperwork.'",
+      "overlays": [
+        {
+          "text": "Stop now.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
       "choices": [
         {
           "label": "Ask what paperwork means",
@@ -236,43 +253,45 @@
         }
       ]
     },
-"paperwork": {
-  "text": "'Men disappear,' he says. 'Then records change. Debts appear. Signatures move around. Whole lives become bookkeeping errors.'\n\nHe folds the newspaper.\n\nThe obituary page.\n\nEvery name circled in pencil.",
-  "choices": [
-    {
-      "label": "Ask who he works for",
-      "next": "paperwork",
-      "sets": { "read_paperwork": true }
+    "paperwork": {
+      "choice_number_color": "yellow",
+      "text": "'Men disappear,' he says. 'Then records change. Debts appear. Signatures move around. Whole lives become bookkeeping errors.'\n\nHe folds the newspaper.\n\nThe obituary page.\n\nEvery name circled in pencil.",
+      "overlays": [
+        {
+          "text": "Second time through, you notice one circled name: Harvey Bell.",
+          "requires": { "read_paperwork": true },
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Ask who he works for",
+          "next": "paperwork",
+          "sets": { "read_paperwork": true }
+        },
+        {
+          "label": "Go upstairs before he disappears too",
+          "next": "back_hall",
+          "sets": { "read_paperwork": true }
+        }
+      ]
     },
-    {
-      "label": "Go upstairs before he disappears too",
-      "next": "back_hall",
-      "sets": { "read_paperwork": true }
-    }
-  ],
-  "overlays": [
-    {
-      "text": "Second time through, you notice one circled name: Harvey Bell.",
-      "requires": { "read_paperwork": true },
-      "position": "before",
-      "style": "memory"
-    }
-  ]
-},
-"street_again": {
-  "scene": "Midtown Street",
-  "text": "The rain feels colder after the club.\n\nAcross the street, the same black sedan from earlier idles beneath a dead streetlamp.",
-  "choices": [
-    {
-      "label": "Approach the sedan",
-      "next": "sedan"
+    "street_again": {
+      "scene": "Midtown Street",
+      "choice_number_color": "yellow",
+      "text": "The rain feels colder after the club.\n\nAcross the street, the same black sedan from earlier idles beneath a dead streetlamp.",
+      "choices": [
+        {
+          "label": "Approach the sedan",
+          "next": "sedan"
+        },
+        {
+          "label": "Circle back into the club through the alley",
+          "next": "back_hall"
+        }
+      ]
     },
-    {
-      "label": "Circle back into the club through the alley",
-      "next": "back_hall"
-    }
-  ]
-},
     "back_hall": {
       "scene": "The Orpheum Club — Upstairs Hall",
       "choice_number_color": "bright_red",
@@ -301,13 +320,15 @@
       ]
     },
     "janitor_cart": {
+      "choice_number_color": "bright_red",
       "text": "Under the rags and bleach bottles sits a stack of burned paper scraps.\n\nOne piece still readable:\n\nBELL, HARVEY — ACCOUNT CLOSED.",
       "choices": [
         {
           "label": "Pocket the scrap",
           "next": "room_204",
           "sets": {
-            "has_scrap": true
+            "has_scrap": true,
+            "evidence": "+1"
           }
         },
         {
@@ -317,6 +338,15 @@
       ]
     },
     "room_204": {
+      "choice_number_color": "bright_red",
+      "insets": [
+        {
+          "text": "The scrap in your pocket matches the stationery on the desk. Same letterhead. Same hand.",
+          "position": "before",
+          "style": "system",
+          "requires": { "has_scrap": true }
+        }
+      ],
       "text": "The room is empty except for cigarette smoke that hasn't had time to fade.\n\nA coat hangs over the chair.\n\nHarvey Bell's wallet sits open on the desk beside a ledger filled with names, dates, and payment amounts.",
       "choices": [
         {
@@ -337,6 +367,7 @@
       ]
     },
     "coat": {
+      "choice_number_color": "bright_red",
       "text": "Inside the coat pocket is a photograph.\n\nYou and Harvey Bell outside a courthouse, both younger by ten years.\n\nOn the back, in your handwriting:\n\nIF ANYTHING HAPPENS, DON'T TRUST CITY HALL.",
       "overlays": [
         {
@@ -350,20 +381,28 @@
           "label": "Take the photograph",
           "next": "ledger",
           "sets": {
-            "remembered_harvey": true
+            "remembered_harvey": true,
+            "evidence": "+1"
           }
         }
       ]
     },
     "ledger": {
-      "text": "The ledger isn't gambling debt.\n\nIt's payoffs.\n\nJudges. Dock officials. Police captains.\n\nEvery payment marked with the same symbol in the margin: a small black circle.",
+      "choice_number_color": "bright_red",
       "insets": [
         {
           "text": "BELL, H.  —  DELIVERED LEDGER  —  ACCOUNT CLOSED",
           "position": "after",
           "style": "warning"
+        },
+        {
+          "text": "You've gathered enough to piece it together. The ledger is the last link.",
+          "position": "before",
+          "style": "",
+          "requires": { "evidence": 2 }
         }
       ],
+      "text": "The ledger isn't gambling debt.\n\nIt's payoffs.\n\nJudges. Dock officials. Police captains.\n\nEvery payment marked with the same symbol in the margin: a small black circle.",
       "choices": [
         {
           "label": "Take the ledger to the police",
@@ -381,6 +420,7 @@
       ]
     },
     "hall_return": {
+      "choice_number_color": "bright_red",
       "text": "You turn back toward the stairs.\n\nTwo men are already climbing them.\n\nBlack coats. Calm faces.\n\nThe same men from the sedan.",
       "choices": [
         {
@@ -390,7 +430,8 @@
         },
         {
           "label": "Try to bluff your way past",
-          "next": "caught_end"
+          "next": "caught_end",
+          "requires": { "bribed_bartender": true }
         }
       ]
     },
@@ -428,12 +469,14 @@
         {
           "label": "Burn the records",
           "next": "burn_end",
-          "obfuscated": true
+          "obfuscated": true,
+          "requires": { "read_ledger": true }
         }
       ]
     },
     "harvey_file": {
-      "text": "Harvey Bell's file is thin.\n\nToo thin.\n\nInside is only a death certificate dated tomorrow morning.",
+      "choice_number_color": "bright_red",
+      "text": "Harvey Bell's file is thin.\n\nToo thin.\n\nInside is only a death certificate dated tomorrow morning.{pause}\n\nTomorrow morning.",
       "choices": [
         {
           "label": "Take the certificate and leave",
@@ -448,12 +491,22 @@
       ]
     },
     "deep_shelves": {
+      "choice_number_color": "bright_red",
       "text": "You keep searching.\n\nMore files with future dates.\n\nFuture arrests.\n\nFuture deaths.\n\nAt the end of the aisle you finally find your own name typed neatly on a folder tab.",
       "overlays": [
         {
           "text": "Maybe the city isn't corrupt. Maybe it's rehearsed.",
           "position": "after",
           "style": "echo"
+        },
+        {
+          "text": "The thin man. The newspaper. The circled names. It's the same system, running itself.",
+          "requires": {
+            "noticed_thin_man": true,
+            "read_paperwork": true
+          },
+          "position": "before",
+          "style": "whisper"
         }
       ],
       "choices": [
@@ -486,7 +539,7 @@
     "sell_end": {
       "scene": "Hotel Rochester",
       "text": "They pay you enough money to retire twice.\n\nNobody threatens you.\n\nNobody raises their voice.\n\nOne man simply says:\n\n'Mr. Bell made the mistake of believing information should belong to the public.'",
-      "insets": [
+      "overlays": [
         {
           "text": "Cashier's Check  —  Valid at any national bank",
           "position": "after",
@@ -519,15 +572,13 @@
     },
     "truth_end": {
       "scene": "Riverside",
-      "insets": [
+      "text": "You meet Esther Bell before sunrise and hand her the certificate.\n\nShe reads it once.\n\nDoesn't cry.\n\n'He thought if he could prove it existed, somebody honest would stop it,' she says.\n\nAcross the river, City Hall glows through the fog.",
+      "overlays": [
         {
           "text": "Harvey Bell  —  Official Time of Death: 8:14 AM tomorrow",
           "position": "before",
           "style": "system"
-        }
-      ],
-      "text": "You meet Esther Bell before sunrise and hand her the certificate.\n\nShe reads it once.\n\nDoesn't cry.\n\n'He thought if he could prove it existed, somebody honest would stop it,' she says.\n\nAcross the river, City Hall glows through the fog.",
-      "overlays": [
+        },
         {
           "text": "You don't tell her your name was in there too.",
           "requires": {
@@ -568,13 +619,22 @@
     },
     "coward_end": {
       "scene": "Marlowe & Vale Investigations",
-      "text": "You lock the office, pour two fingers of cheap bourbon, and tell yourself you made the smart choice.\n\nThree days later, somebody slips an obituary under your door.\n\nHarvey Bell.\n\nYou don't remember the man.\n\nBut you recognize your own handwriting on the envelope.",
+      "text": "You lock the office, pour two fingers of cheap bourbon, and tell yourself you made the smart choice.\n\nThree days later, somebody slips an obituary under your door.{pause}\n\nHarvey Bell.\n\nYou don't remember the man.\n\nBut you recognize your own handwriting on the envelope.",
       "choices": [],
       "is_ending": true,
       "ending_type": "neutral"
     },
     "sedan": {
+      "scene": "Midtown Street",
+      "choice_number_color": "bright_red",
       "text": "The sedan pulls away before you reach it.\n\nAs it passes, the passenger tosses something onto the sidewalk.\n\nA photograph.\n\nYou, asleep at your desk.",
+      "overlays": [
+        {
+          "text": "{noticed_tail?The same angle as whoever was watching from across the street. They've had eyes on you since before she walked in.|Somebody has been watching you long enough to know your habits.}",
+          "position": "after",
+          "style": ""
+        }
+      ],
       "choices": [
         {
           "label": "Go back into the club",
