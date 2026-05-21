@@ -29,6 +29,23 @@ def page_fresh(page: Page):
     return page
 
 
+@pytest.fixture
+def page_mobile(browser):
+    """Mobile page with touch/coarse-pointer emulation for mobile-only UI tests."""
+    context = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        has_touch=True,
+        is_mobile=True,
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+    page.evaluate("localStorage.clear()")
+    page.reload()
+    page.wait_for_selector(".terminal-title-box", timeout=10000)
+    yield page
+    context.close()
+
+
 # ---------------------------------------------------------------------------
 # 1. Page load
 # ---------------------------------------------------------------------------
@@ -169,6 +186,9 @@ class TestTypewriterToggle:
 class TestGameplay:
     def _enter_first_story_in_folder(self, page: Page):
         """Open first folder then pick first story; return to game screen."""
+        # Disable typewriter so choices appear immediately (default story text can exceed default timeouts)
+        page.keyboard.press("t")
+        page.keyboard.press("Enter")
         page.locator("[data-action='open-folder']").first.click()
         page.wait_for_selector("[data-action='pick-story']", timeout=5000)
         page.keyboard.press("1")
@@ -243,8 +263,8 @@ class TestGameplay:
 # ---------------------------------------------------------------------------
 
 class TestMobileKeyboard:
-    def test_mobile_keyboard_button_visible(self, page_fresh: Page):
-        expect(page_fresh.locator(".mobile-keyboard-btn").first).to_be_visible()
+    def test_mobile_keyboard_button_visible(self, page_mobile: Page):
+        expect(page_mobile.locator(".mobile-keyboard-btn").first).to_be_visible()
 
 
 # ---------------------------------------------------------------------------
@@ -301,6 +321,9 @@ class TestDebugMode:
 
     def _navigate_to_game(self, page: Page) -> None:
         """Get to a game node: open first folder, pick first story, skip warnings/resume."""
+        # Disable typewriter so choices appear immediately (default story text can exceed default timeouts)
+        page.keyboard.press("t")
+        page.keyboard.press("Enter")
         # Step 1: open the first folder
         page.locator("[data-action='open-folder']").first.click()
         page.wait_for_selector("[data-action='pick-story']", timeout=5000)
