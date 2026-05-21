@@ -4,7 +4,7 @@
   --bg: #0a0e14;
   --text: #c8d8e8;
   --bright: #e8f0f8;
-  --dim: #4a5870;
+  --dim: #6a7e99;
   --cyan: #00b4c8;
   --green: #3ddc84;
   --yellow: #ffd060;
@@ -212,6 +212,11 @@ body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .terminal-cursor {
+    animation: none;
+  }
+}
 
 /* === FOOTER === */
 .terminal-footer    { margin-top: 0.75ch; }
@@ -251,7 +256,7 @@ body {
   padding: 0;
 }
 
-.setting-input:focus {
+.setting-input:focus-visible {
   outline: 1px solid var(--cyan);
 }
 
