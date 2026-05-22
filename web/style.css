@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap');
+
 /* === VARIABLES === */
 :root {
   color-scheme: dark;
@@ -333,8 +335,6 @@ body {
 
 /* === READER MODE (light paper theme) === */
 /* Source of truth: docs/claudedesign/Accessibility Testing/canvas/reader.css */
-
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap');
 
 body.reader-mode {
   background: #f4ecda;
