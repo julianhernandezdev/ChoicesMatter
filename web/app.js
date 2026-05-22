@@ -52,6 +52,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function setPageTitle(...parts) {
+  document.title = [...parts, 'Choices Matter'].filter(Boolean).join(' — ');
+}
+
 function slugClass(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "_");
 }
@@ -214,6 +218,7 @@ function renderPickerEntry(entry, num) {
 function renderPicker() {
   pendingInput = '';
   currentScreen = 'library';
+  setPageTitle();
   var twOn = isTypewriterOn();
 
   var folders = {};
@@ -274,6 +279,7 @@ function renderPicker() {
 function renderFolder(folderName) {
   pendingInput = '';
   currentScreen = 'folder';
+  setPageTitle(folderName);
   if (folderName !== currentFolder) currentPage = 0;
   currentFolder = folderName;
   var folderEntries = library.filter(function(e) { return e.category === folderName; });
@@ -300,6 +306,7 @@ function renderFolder(folderName) {
 function renderResume(entry, skipWarnings) {
   pendingInput = '';
   currentScreen = 'resume';
+  setPageTitle(storyTitle(entry));
   resumeEntry = entry;
   resumeSkipWarnings = skipWarnings;
   app.innerHTML =
@@ -314,6 +321,7 @@ function renderResume(entry, skipWarnings) {
 function renderWarnings(entry, resume) {
   pendingInput = '';
   currentScreen = 'warning';
+  setPageTitle(storyTitle(entry));
   warningEntry = entry;
   warningResume = resume;
   var warnings = entry.story.meta.warnings || [];
@@ -339,6 +347,7 @@ function renderGame() {
   if (view.isEnding) { renderEnding(view); return; }
 
   currentScreen = 'game';
+  setPageTitle(storyTitle(currentRun.entry));
   var node = view.node;
   var sceneRule = currentRun.currentScene ? renderRule(currentRun.currentScene, 'green') : '';
   var sep = '<span class="terminal-separator">' + '─'.repeat(PANEL_RULE_WIDTH) + '</span>';
@@ -422,6 +431,7 @@ function renderGame() {
 function renderEnding(view) {
   pendingInput = '';
   currentScreen = 'ending';
+  setPageTitle(storyTitle(currentRun.entry), 'Ending');
   recordEnding(currentRun.story, currentRun.nodeId);
   deleteSave(currentRun.story.meta.id);
 
@@ -448,6 +458,7 @@ function renderEnding(view) {
 function renderSettings() {
   pendingInput = '';
   currentScreen = 'settings';
+  setPageTitle('Settings');
   if (!settingsDraft) {
     var s = loadTypewriterSettings();
     settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses), page_size: s.page_size };
@@ -479,6 +490,7 @@ function renderSettings() {
 function renderSpeedPresets() {
   pendingInput = '';
   currentScreen = 'settings-speed';
+  setPageTitle('Settings');
   speedCustomEdit = false;
   var current = settingsDraft.delay_ms;
   var isPreset = SPEED_PRESETS.some(function(p) { return p.ms === current; });
