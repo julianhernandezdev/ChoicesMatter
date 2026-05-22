@@ -41,6 +41,9 @@ If the order of content matters for understanding, the DOM order must reflect th
 **Why it matters:**
 Screen readers read the DOM in source order. If CSS `order`, `float`, or `position: absolute` visually reorders elements but the DOM order differs, screen reader users hear a nonsensical sequence.
 
+**What was failing (if applicable):**
+Nothing was failing in the existing code — terminal mode already rendered content in document order. Verified clean.
+
 **What was fixed / implemented:**
 DOM order in all accessible renderers matches the intended visual reading order: page title → back navigation → story content → choices. No CSS `order` property, `position: absolute`, or `float` is used to reorder elements in reader mode. Layout is achieved with flexbox in column direction and standard block flow.
 
@@ -190,6 +193,8 @@ Reader mode focus indicator: `outline: 3px solid var(--r-focus)` plus `box-shado
 
 **How to verify:**
 Tab through all interactive elements in reader mode. The focus ring (orange double-ring) should be clearly visible on every button. Use WebAIM Contrast Checker to verify `#b34216` on `#f4ecda` = 4.8:1. Confirm the ring is 3px wide — exceeding the minimum visual indicator size.
+
+Button boundaries also fall under 1.4.11. The reader mode buttons (`.r-choice-btn`, `.r-story-btn`) use a background fill against the page background — if there is no visible border and the fill-to-page-background contrast is below 3:1, that would be a failure. When verifying, check `--r-choice-btn` background color against `--r-bg: #f4ecda` using WebAIM Contrast Checker and confirm the ratio is at least 3:1. If buttons rely on a visible border rather than fill contrast, check the border color against the page background instead.
 
 ---
 
@@ -441,6 +446,9 @@ Receiving focus must not automatically trigger a change of context (navigation, 
 **Why it matters:**
 Screen reader users and keyboard users move through elements to explore the page before activating them. If focusing an element automatically triggers navigation, they cannot review available options without unintentionally activating them.
 
+**What was failing (if applicable):**
+Nothing was failing — no elements had focus-triggered navigation. Verified clean.
+
 **What was fixed / implemented:**
 No focus event listeners trigger context changes. Programmatic `first.focus()` calls in accessible renderers move focus after a context change has already occurred (triggered by a button click), not as a cause of context change. Button `onfocus` events are not used. All navigation is triggered by `click` events only.
 
@@ -459,6 +467,9 @@ Navigation mechanisms that are repeated on multiple pages must occur in the same
 
 **Why it matters:**
 Consistent navigation placement allows screen reader users to build a mental model of the interface — they know to expect "Back to library" at the top of every screen, and can navigate directly there without exploring the entire page.
+
+**What was failing (if applicable):**
+Nothing was failing — terminal mode had a consistent library → story flow. Verified clean.
 
 **What was fixed / implemented:**
 The "Back to library" navigation button appears at the top of `<nav class="r-nav">` as the first interactive element on every accessible screen that is not the picker itself. This consistent positioning is maintained across `renderAccessibleGame()`, `renderAccessibleFolder()`, `renderAccessibleResume()`, `renderAccessibleWarnings()`, `renderAccessibleEnding()`, `renderAccessibleSettings()`, and `renderAccessibleSpeedPresets()`.
@@ -518,13 +529,15 @@ Status messages (e.g. search results, error messages, save confirmations) must b
 When content updates without a page reload (as in single-page applications), screen readers do not automatically announce the change unless the update is in a live region or focus is moved to the message. Without this, status updates are silently invisible to screen reader users.
 
 **What was fixed / implemented:**
-`<main id="app" aria-live="polite">` in `web/index.html` makes the entire app container a live region with polite announcements. When `app.innerHTML` is replaced during screen transitions, the new content is announced by screen readers with `polite` priority — it waits for the user to finish reading current content before announcing. `aria-live="polite"` (not `assertive`) is used — no content in the web viewer requires immediate interruption. `role="alert"` is not used as there are no error messages requiring urgent announcement.
+The primary mechanism for announcing new screen content is `focus()` management (covered by 2.4.3): after every `app.innerHTML =` replacement, `first.focus()` is called on the first interactive element of the new screen. Moving focus to the new content causes screen readers to announce it — this is the authoritative pattern for screen transitions in single-page applications.
+
+`<main id="app" aria-live="polite">` is present in `web/index.html` and may provide supplemental announcement for screen readers that support live-region updates triggered by wholesale `innerHTML` replacement. However, `aria-live` on a container replaced via `innerHTML` is unreliable — most screen readers announce incremental additions to live regions, not wholesale replacements — so `aria-live` alone should not be relied upon as the primary announcement mechanism. `aria-live="polite"` (not `assertive`) is used, and `role="alert"` is not used as there are no error messages requiring urgent announcement.
 
 **Where in the code:**
-`web/index.html` — `<main id="app" aria-live="polite" aria-atomic="false">` (or equivalent). All screen transitions write to this container via `app.innerHTML =`.
+`web/index.html` — `<main id="app" aria-live="polite">` container. `web/app.js` — all eight `renderAccessible*()` functions call `first.focus()` after `app.innerHTML =` assignment (primary announcement path; see 2.4.3). All screen transitions write to the container via `app.innerHTML =`.
 
 **How to verify:**
-In NVDA + Chrome, navigate to a story and select a choice. The new scene text should be announced without requiring the user to manually navigate to it. Confirm the announcement is not disruptive (polite, not assertive — it waits for silence before speaking).
+In NVDA + Chrome, navigate to a story and select a choice. Focus should land on the first button of the new screen — the screen reader will announce that element, orienting the user to the new content. Confirm the announcement is not disruptive (polite context, not assertive). Note: verifying `aria-live` supplemental announcement specifically requires screen reader testing; focus management is the guaranteed path.
 
 ---
 
