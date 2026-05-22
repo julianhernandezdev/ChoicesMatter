@@ -688,7 +688,7 @@ function renderAccessiblePicker() {
   if (nextBtn) nextBtn.addEventListener('click', function() { changePage(+1); });
 
   var first = app.querySelector('.r-story-btn');
-  if (first) first.focus();
+  if (first) setTimeout(function() { first.focus(); }, 0);
 }
 
 function renderAccessibleFolder(folderName) {
