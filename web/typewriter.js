@@ -48,6 +48,10 @@ export function isTwAnimating() {
 }
 
 export function startTypewriter(element, text) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.textContent = text;
+    return;
+  }
   var settings = loadTypewriterSettings();
   var pauses = settings.pauses || {};
   var delay = settings.delay_ms || 20;
