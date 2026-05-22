@@ -63,9 +63,9 @@ Confirm accessible mode is active: the page should render in a clean document la
 The library screen lists all available stories as buttons.
 
 1. **Load the page** with accessible mode active (see Setup above).
-   - **Expected:** Screen reader announces the page title: "Library — Choices Matter". The `<main>` region with `aria-live="polite"` is present; the SR may announce "main" or the region label on entry.
+   - **Expected:** Screen reader announces the page title: "Library — Choices Matter". The `<main>` region with `aria-live="polite"` is present; the SR may announce "main" or the region label on entry. Focus lands automatically on the first story button after the page loads — no Tab needed.
 
-2. **Press `Tab`** to move to the first story button.
+2. **Confirm the first story button has focus** (it should already be focused from the auto-focus on load; pressing `Tab` at this point moves to the second button).
    - **Expected (NVDA):** "The [Story Title]. [est time]. [N/Y endings]. Button."
    - **Expected (VoiceOver):** "[Story Title]. [est time]. [N/Y endings]. Button."
    - The full `aria-label` includes title, estimated reading time, and ending count — all announced as a single unit.
@@ -169,7 +169,7 @@ The main play screen showing story prose and choices.
    - **Expected:** The story prose inside the `<article>` element is read sequentially. Every sentence and paragraph is reachable without Tab. No box-drawing characters or raw escape sequences are present.
 
 3. **Check insets** (notes/system messages, if the node has any).
-   - **Expected:** The `<aside>` element containing insets is announced with an accessible label (e.g., "Notes" or "Supplementary information"). Inset text is readable via arrow key navigation.
+   - **Expected:** The `<aside>` element containing insets is announced with its `aria-label` — in this implementation the label is "Notes", but confirm the label is set correctly in devtools before relying on the announcement. Inset text is readable via arrow key navigation.
 
 4. **Press `Tab`** to move to the first choice button.
    - **Expected (NVDA):** "Choice 1: [choice label]. Button."
@@ -247,11 +247,11 @@ Preset configuration options for typewriter speed.
 
 2. **Tab to the currently active preset button.**
    - **Expected (NVDA):** "[Preset Name]. Button. Pressed." — NVDA announces "pressed" for `aria-pressed="true"`.
-   - **Expected (VoiceOver):** "[Preset Name]. Selected. Button." — VoiceOver announces the pressed state differently but the meaning is equivalent.
+   - **Expected (VoiceOver):** "[Preset Name]. pressed. Button." — VoiceOver announces `aria-pressed="true"` as "pressed", not "selected" (word order may vary slightly by VoiceOver version).
 
 3. **Tab to an inactive preset button.**
    - **Expected (NVDA):** "[Preset Name]. Button." — no "pressed" announcement (because `aria-pressed="false"`).
-   - **Expected (VoiceOver):** "[Preset Name]. Button." — VoiceOver may announce "not selected" depending on version.
+   - **Expected (VoiceOver):** "[Preset Name]. Button." — VoiceOver may announce "not pressed" depending on version.
 
 4. **Tab through all preset buttons** to confirm each is reachable and named.
    - **Expected:** All presets appear in the Elements List / Rotor. None are unnamed. Tab order matches visual order.
