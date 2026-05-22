@@ -284,6 +284,8 @@ function renderPicker() {
 }
 
 function renderFolder(folderName) {
+  if (isAccessibleMode()) { renderAccessibleFolder(folderName); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'folder';
   setPageTitle(folderName);
@@ -311,6 +313,8 @@ function renderFolder(folderName) {
 }
 
 function renderResume(entry, skipWarnings) {
+  if (isAccessibleMode()) { renderAccessibleResume(entry, skipWarnings); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'resume';
   setPageTitle(storyTitle(entry));
@@ -326,6 +330,8 @@ function renderResume(entry, skipWarnings) {
 }
 
 function renderWarnings(entry, resume) {
+  if (isAccessibleMode()) { renderAccessibleWarnings(entry, resume); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'warning';
   setPageTitle(storyTitle(entry));
@@ -675,6 +681,148 @@ function renderAccessiblePicker() {
 
   var first = app.querySelector('.r-story-btn');
   if (first) first.focus();
+}
+
+function renderAccessibleFolder(folderName) {
+  pendingInput = '';
+  currentScreen = 'folder';
+  if (folderName !== currentFolder) currentPage = 0;
+  currentFolder = folderName;
+  document.body.classList.add('reader-mode');
+  setPageTitle(folderName);
+
+  var folderEntries = library.filter(function(e) { return e.category === folderName; });
+  activeMenuEntries = folderEntries.map(function(entry) { return { type: 'story', entry: entry }; });
+  var totalPages = getTotalPages(activeMenuEntries);
+  var pagedEntries = getPagedEntries(activeMenuEntries);
+
+  var itemsHtml = pagedEntries.map(function(me, i) {
+    var entry = me.entry;
+    var story = entry.story;
+    var save = loadSave(story.meta.id);
+    var gallery = loadGallery(story.meta.id);
+    var endings = endingCount(story);
+    var found = gallery.endings_found ? gallery.endings_found.length : 0;
+    var time = estimateTime(story);
+    var nodeCount = nodeList(story).length;
+    var title = storyTitle(entry);
+    var ariaLabel = title + '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
+      ' endings found. About ' + time + '.' + (save ? ' Save found.' : '');
+    return '<li><button class="r-story-btn" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-story-name">' + escapeHtml(title) + '</span>' +
+      '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
+      (save ? '<span class="r-badge-resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
+      '</button></li>';
+  }).join('');
+
+  var pageHtml = totalPages > 1
+    ? '<p class="r-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '</p>' +
+      '<p class="r-page-nav">' +
+      (currentPage > 0 ? '<button class="r-prev-btn">&#8592; Previous</button> ' : '') +
+      (currentPage < totalPages - 1 ? '<button class="r-next-btn">Next &#8594;</button>' : '') +
+      '</p>'
+    : '';
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Folder: ' + escapeHtml(folderName) + '">&#128193; ' + escapeHtml(folderName) + '</p>' +
+    '<h1 class="r-page-title">' + folderEntries.length + ' stories in this folder</h1>' +
+    '<nav aria-label="Folder contents"><ul class="r-story-list">' + itemsHtml + '</ul></nav>' +
+    pageHtml +
+    '<div class="r-nav"><button class="r-btn ghost r-back-btn">&#8592; Back to library</button></div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-story-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      var me = activeMenuEntries[currentPage * getPageSize() + i];
+      if (me) startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    });
+  });
+  var prevBtn = app.querySelector('.r-prev-btn');
+  if (prevBtn) prevBtn.addEventListener('click', function() { changePage(-1); });
+  var nextBtn = app.querySelector('.r-next-btn');
+  if (nextBtn) nextBtn.addEventListener('click', function() { changePage(+1); });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  var first = app.querySelector('.r-story-btn');
+  if (first) first.focus();
+}
+
+function renderAccessibleResume(entry, skipWarnings) {
+  pendingInput = '';
+  currentScreen = 'resume';
+  resumeEntry = entry;
+  resumeSkipWarnings = skipWarnings;
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(entry));
+
+  var save = loadSave(entry.story.meta.id);
+  var saveInfo = save
+    ? 'A previous run is saved at <strong>' + escapeHtml(save.current_node) + '</strong>.'
+    : 'Save data could not be read.';
+  var saveAge = save && save.timestamp
+    ? '<p class="r-prose" style="color:var(--r-ink-muted);font-size:14px;margin-top:8px">' +
+      (save.history ? save.history.length : 0) + ' nodes visited</p>'
+    : '';
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Story title">' + escapeHtml(storyTitle(entry)) + '</p>' +
+    '<h1 class="r-page-title">A save was found</h1>' +
+    '<div class="r-panel" aria-label="Saved progress">' +
+    '<p class="r-prose">' + saveInfo + '</p>' +
+    saveAge +
+    '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-continue-btn">Continue saved run</button>' +
+    '<button class="r-btn r-new-btn">Start new game</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-continue-btn').addEventListener('click', function() {
+    startStory(resumeEntry, { resume: true, skipWarnings: resumeSkipWarnings, skipResume: true });
+  });
+  app.querySelector('.r-new-btn').addEventListener('click', function() {
+    startStory(resumeEntry, { resume: false, skipWarnings: resumeSkipWarnings, skipResume: true });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-continue-btn').focus();
+}
+
+function renderAccessibleWarnings(entry, resume) {
+  pendingInput = '';
+  currentScreen = 'warning';
+  warningEntry = entry;
+  warningResume = resume;
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(entry));
+
+  var warnings = entry.story.meta.warnings || [];
+  var itemsHtml = warnings.map(function(w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Story title">' + escapeHtml(storyTitle(entry)) + '</p>' +
+    '<h1 class="r-page-title">Content warning</h1>' +
+    '<p class="r-page-sub">This story contains material some readers may want to know about before starting.</p>' +
+    '<section class="r-panel r-warning-panel" aria-label="Content warnings">' +
+    '<h2 class="r-warning-title">This story contains</h2>' +
+    '<ul>' + itemsHtml + '</ul>' +
+    '</section>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-proceed-btn">Proceed to story</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-proceed-btn').addEventListener('click', function() {
+    startStory(warningEntry, { resume: warningResume, skipWarnings: true });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-proceed-btn').focus();
 }
 
 function startSettingsEdit(rowIndex) {
