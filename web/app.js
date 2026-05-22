@@ -476,7 +476,13 @@ function renderSettings() {
   }
   settingsEditRow = null;
 
-  var rows = SETTINGS_ROWS.map(function(row, i) {
+  var rows = '';
+  var rowNum = 0;
+  SETTINGS_ROWS.forEach(function(row, i) {
+    if (row.section) {
+      rows += renderRule(row.section, 'dim');
+    }
+    rowNum++;
     var val = getSettingValue(settingsDraft, row.key);
     var display;
     if (row.type === 'boolean') {
@@ -490,12 +496,12 @@ function renderSettings() {
     } else {
       display = val + (row.unit ? ' ' + row.unit : '');
     }
-    return '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
-      '<span class="setting-num">' + (i + 1) + '.</span>' +
+    rows += '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
+      '<span class="setting-num">' + rowNum + '.</span>' +
       '<span class="setting-name">' + escapeHtml(row.label) + '</span>' +
       '<span class="setting-value">' + escapeHtml(String(display)) + '</span>' +
       '</div>';
-  }).join('');
+  });
 
   app.innerHTML =
     '<div class="terminal-screen">' +
