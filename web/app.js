@@ -218,6 +218,8 @@ function renderPickerEntry(entry, num) {
 }
 
 function renderPicker() {
+  if (isAccessibleMode()) { renderAccessiblePicker(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'library';
   setPageTitle();
@@ -556,6 +558,123 @@ function renderSpeedPresets() {
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
+}
+
+function renderAccessiblePicker() {
+  pendingInput = '';
+  currentScreen = 'library';
+  document.body.classList.add('reader-mode');
+  setPageTitle();
+
+  var folders = {};
+  var rootStories = [];
+  library.forEach(function(entry) {
+    var cat = entry.category || null;
+    if (cat) { if (!folders[cat]) folders[cat] = []; folders[cat].push(entry); }
+    else rootStories.push(entry);
+  });
+
+  var menuEntries = [];
+  Object.keys(folders).sort().forEach(function(name) {
+    menuEntries.push({ type: 'folder', name: name });
+  });
+  rootStories.forEach(function(entry) {
+    menuEntries.push({ type: 'story', entry: entry });
+  });
+  activeMenuEntries = menuEntries;
+
+  var totalPages = getTotalPages(menuEntries);
+  var pagedEntries = getPagedEntries(menuEntries);
+
+  var itemsHtml = pagedEntries.map(function(me, i) {
+    if (me.type === 'folder') {
+      var count = folders[me.name].length;
+      return '<li><button class="r-story-btn"' +
+        ' aria-label="' + escapeHtml(me.name) + ' folder, ' + count + ' ' + (count === 1 ? 'story' : 'stories') + '">' +
+        '<span class="r-story-name">' + escapeHtml(me.name) + '/</span>' +
+        '<span class="r-story-meta">' + count + ' ' + (count === 1 ? 'story' : 'stories') + '</span>' +
+        '</button></li>';
+    }
+    var entry = me.entry;
+    var story = entry.story;
+    var save = loadSave(story.meta.id);
+    var gallery = loadGallery(story.meta.id);
+    var endings = endingCount(story);
+    var found = gallery.endings_found ? gallery.endings_found.length : 0;
+    var time = estimateTime(story);
+    var nodeCount = nodeList(story).length;
+    var hasWarn = !!(story.meta.warnings && story.meta.warnings.length);
+    var title = storyTitle(entry);
+    var ariaLabel = title +
+      (hasWarn ? ', contains content warnings' : '') +
+      '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
+      ' endings found. About ' + time + '.' +
+      (save ? ' Save found.' : '');
+    return '<li><button class="r-story-btn" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-story-name">' + escapeHtml(title) +
+      (hasWarn ? ' <span class="r-badge warning" aria-hidden="true">! Warnings</span>' : '') +
+      (save ? ' <span class="r-badge resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
+      '</span>' +
+      '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
+      '</button></li>';
+  }).join('');
+
+  var pageHtml = totalPages > 1
+    ? '<p class="r-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '</p>' +
+      '<p class="r-page-nav">' +
+      (currentPage > 0 ? '<button class="r-prev-btn">&#8592; Previous</button> ' : '') +
+      (currentPage < totalPages - 1 ? '<button class="r-next-btn">Next &#8594;</button>' : '') +
+      '</p>'
+    : '';
+
+  var twOn = isTypewriterOn();
+  var a11yOn = isAccessibleMode();
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Choices Matter</h1>' +
+    '<p class="r-page-sub">Select a story to play.</p>' +
+    '<div class="r-section-label" aria-hidden="true">Stories</div>' +
+    '<nav aria-label="Story library"><ul class="r-story-list">' + itemsHtml + '</ul></nav>' +
+    pageHtml +
+    '<div class="r-nav">' +
+    '<span class="r-nav-hint" aria-hidden="true">Tab to move \xB7 Space or Enter to choose</span>' +
+    '<button class="r-btn ghost r-settings-btn">Settings</button>' +
+    '<button class="r-btn ghost r-clear-btn">Clear all saves</button>' +
+    '</div>' +
+    '<div class="r-nav" style="border-top:none;padding-top:0;margin-top:4px">' +
+    '<button class="r-btn ghost r-tw-btn" aria-pressed="' + twOn + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>' + (twOn ? 'Typewriter ON' : 'Typewriter OFF') + '</button>' +
+    '<button class="r-btn ghost r-a11y-btn" aria-pressed="' + a11yOn + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>' + (a11yOn ? 'Accessible mode ON' : 'Accessible mode OFF') + '</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-story-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      var me = activeMenuEntries[currentPage * getPageSize() + i];
+      if (!me) return;
+      if (me.type === 'folder') renderFolder(me.name);
+      else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    });
+  });
+  var settingsBtn = app.querySelector('.r-settings-btn');
+  if (settingsBtn) settingsBtn.addEventListener('click', function() { settingsDraft = null; renderSettings(); });
+  var clearBtn = app.querySelector('.r-clear-btn');
+  if (clearBtn) clearBtn.addEventListener('click', function() {
+    if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
+  });
+  var twBtn = app.querySelector('.r-tw-btn');
+  if (twBtn) twBtn.addEventListener('click', toggleTypewriter);
+  var a11yBtn = app.querySelector('.r-a11y-btn');
+  if (a11yBtn) a11yBtn.addEventListener('click', toggleAccessibleMode);
+  var prevBtn = app.querySelector('.r-prev-btn');
+  if (prevBtn) prevBtn.addEventListener('click', function() { changePage(-1); });
+  var nextBtn = app.querySelector('.r-next-btn');
+  if (nextBtn) nextBtn.addEventListener('click', function() { changePage(+1); });
+
+  var first = app.querySelector('.r-story-btn');
+  if (first) first.focus();
 }
 
 function startSettingsEdit(rowIndex) {
