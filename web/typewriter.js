@@ -5,6 +5,7 @@ export const TYPEWRITER_DEFAULTS = {
   delay_ms: 20,
   pauses: { '.': 150, '!': 150, '?': 150, '…': 200, '—': 100 },
   page_size: 5,
+  accessible_mode: null,
 };
 
 export function loadTypewriterSettings() {
@@ -16,6 +17,9 @@ export function loadTypewriterSettings() {
       delay_ms: typeof stored.delay_ms === 'number' ? stored.delay_ms : TYPEWRITER_DEFAULTS.delay_ms,
       pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses, stored.pauses || {}),
       page_size: (typeof stored.page_size === 'number' && stored.page_size >= 1) ? stored.page_size : TYPEWRITER_DEFAULTS.page_size,
+      accessible_mode: (stored.accessible_mode === true || stored.accessible_mode === false)
+        ? stored.accessible_mode
+        : TYPEWRITER_DEFAULTS.accessible_mode,
     };
   } catch {
     return {
@@ -23,6 +27,7 @@ export function loadTypewriterSettings() {
       delay_ms: TYPEWRITER_DEFAULTS.delay_ms,
       pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses),
       page_size: TYPEWRITER_DEFAULTS.page_size,
+      accessible_mode: TYPEWRITER_DEFAULTS.accessible_mode,
     };
   }
 }
@@ -48,6 +53,10 @@ export function isTwAnimating() {
 }
 
 export function startTypewriter(element, text) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.textContent = text;
+    return;
+  }
   var settings = loadTypewriterSettings();
   var pauses = settings.pauses || {};
   var delay = settings.delay_ms || 20;
