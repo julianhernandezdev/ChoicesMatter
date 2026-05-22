@@ -234,6 +234,89 @@ Ending color map: `good` → bright green, `bad` → bright red, `neutral` → b
 
 Invalid input is caught and re-prompted in `display.py` — `Engine` never sees bad input.
 
+## Accessible Mode
+
+The web viewer supports two rendering modes: **terminal mode** (default, existing behaviour) and **reader mode** (light paper theme, semantic HTML, button-driven). The decision of which mode to use is made by `isAccessibleMode()` in `web/app.js` — call it before rendering, not once at boot.
+
+### Priority chain
+
+Three layers evaluated in order. Lower layers only apply when the layer above returns no value:
+
+| Priority | Source | Variable / API |
+| --- | --- | --- |
+| 1 (highest) | Session toggle | `sessionAccessible` (module var in `app.js`, never written to disk) |
+| 2 | Saved preference | `loadTypewriterSettings().accessible_mode` from localStorage |
+| 3 (lowest) | Auto-detect | `matchMedia('(prefers-reduced-motion: reduce)')` OR `matchMedia('(prefers-contrast: more)')` |
+
+```js
+function isAccessibleMode() {
+  if (sessionAccessible !== null) return sessionAccessible;
+  var saved = loadTypewriterSettings().accessible_mode;
+  if (saved !== null && saved !== undefined) return saved;
+  return matchMedia('(prefers-reduced-motion: reduce)').matches ||
+         matchMedia('(prefers-contrast: more)').matches;
+}
+```
+
+### `accessible_mode` in `settings.json` (web localStorage)
+
+| Value | Meaning |
+|---|---|
+| `null` (default) | Auto-detect — check OS media queries |
+| `true` | Always reader mode — auto-detect bypassed |
+| `false` | Always terminal mode — auto-detect bypassed |
+
+### Toggle surfaces
+
+- **A key** — at the library screen only (terminal mode), sets `sessionAccessible = !isAccessibleMode()`. Session-only; does not write to disk. Works even when a saved preference exists.
+- **"Accessible mode" button** — on the accessible library screen, calls `toggleAccessibleMode()`. Same effect.
+- **Settings screen row 9** — cycles `null → true → false → null`. Writes to localStorage on Save.
+
+### Dispatch pattern
+
+One line at the top of each terminal renderer:
+
+```js
+function renderGame() {
+  if (isAccessibleMode()) { renderAccessibleGame(); return; }
+  document.body.classList.remove('reader-mode');
+  // ... existing terminal code
+}
+```
+
+Each accessible renderer adds `document.body.classList.add('reader-mode')`. Each terminal renderer removes it.
+
+Naming convention: `render<ScreenName>()` = terminal renderer, `renderAccessible<ScreenName>()` = accessible renderer.
+
+The eight accessible renderers (all in `web/app.js`):
+
+- `renderAccessiblePicker()`
+- `renderAccessibleFolder(folderName)`
+- `renderAccessibleResume(entry, skipWarnings)`
+- `renderAccessibleWarnings(entry, resume)`
+- `renderAccessibleGame()`
+- `renderAccessibleEnding(view)`
+- `renderAccessibleSettings()`
+- `renderAccessibleSpeedPresets()`
+
+### Focus management rule
+
+Every accessible renderer must call `focus()` on the first meaningful interactive element **immediately after setting `app.innerHTML`**. Without this, focus lands on `<body>` and screen reader users must re-navigate from the top of the page on every screen transition.
+
+```js
+app.innerHTML = html;
+var first = app.querySelector('.r-choice-btn');
+if (first) first.focus();
+```
+
+### Typewriter prohibition
+
+Never call `startTypewriter()` from any accessible renderer. Prose appears fully rendered immediately. This is consistent with `prefers-reduced-motion` intent and eliminates animation flicker for users who triggered reader mode via the OS motion setting.
+
+### `debugMode` across mode switches
+
+`debugMode` persists when switching between terminal and reader mode. It only resets in `renderLibrary()`. In reader mode, the Debug button in `r-nav` cycles `false → "author" → "all" → false` and re-renders.
+
 ## Typewriter Effect
 
 When `typewriter.enabled` is true, `show_node` and `show_ending` stream the main prose character by character via `rich.live.Live`. Insets appear instantly. Any keypress skips to the full text.
