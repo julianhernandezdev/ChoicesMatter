@@ -271,7 +271,7 @@ function renderPicker() {
     '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
     '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -298,7 +298,7 @@ function renderFolder(folderName) {
     pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -313,7 +313,7 @@ function renderResume(entry, skipWarnings) {
     '<div class="terminal-screen">' +
     '<div class="terminal-prose">A save was found for this story.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
@@ -335,7 +335,7 @@ function renderWarnings(entry, resume) {
     '</div>' +
     renderRule(storyTitle(entry), 'dim') +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
@@ -421,7 +421,7 @@ function renderGame() {
     afterOverlays +
     debugPanel +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -448,7 +448,7 @@ function renderEnding(view) {
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -482,7 +482,7 @@ function renderSettings() {
     '<div class="terminal-footer">' +
     '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
@@ -525,7 +525,7 @@ function renderSpeedPresets() {
     '<div class="terminal-footer">' +
     '<div class="footer-hint">1–5 to pick preset &middot; <span class="key-fwd">6</span> for custom &middot; <span class="key-back">B</span> back. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
