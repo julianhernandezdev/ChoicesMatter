@@ -246,7 +246,7 @@ Three layers evaluated in order. Lower layers only apply when the layer above re
 | --- | --- | --- |
 | 1 (highest) | Session toggle | `sessionAccessible` (module var in `app.js`, never written to disk) |
 | 2 | Saved preference | `loadTypewriterSettings().accessible_mode` from localStorage |
-| 3 (lowest) | Auto-detect | `matchMedia('(prefers-reduced-motion: reduce)')` OR `matchMedia('(prefers-contrast: more)')` |
+| 3 (lowest) | Auto-detect | `matchMedia('(prefers-reduced-motion: reduce)').matches` OR `matchMedia('(prefers-contrast: more)').matches` |
 
 ```js
 function isAccessibleMode() {
@@ -258,7 +258,7 @@ function isAccessibleMode() {
 }
 ```
 
-### `accessible_mode` in `settings.json` (web localStorage)
+### `accessible_mode` in web localStorage
 
 | Value | Meaning |
 |---|---|
@@ -268,7 +268,7 @@ function isAccessibleMode() {
 
 ### Toggle surfaces
 
-- **A key** — at the library screen only (terminal mode), sets `sessionAccessible = !isAccessibleMode()`. Session-only; does not write to disk. Works even when a saved preference exists.
+- **A key** — at the library screen only (terminal mode), sets `sessionAccessible = !isAccessibleMode()`. Session-only; does not write to disk.
 - **"Accessible mode" button** — on the accessible library screen, calls `toggleAccessibleMode()`. Same effect.
 - **Settings screen row 9** — cycles `null → true → false → null`. Writes to localStorage on Save.
 
@@ -291,11 +291,11 @@ Naming convention: `render<ScreenName>()` = terminal renderer, `renderAccessible
 The eight accessible renderers (all in `web/app.js`):
 
 - `renderAccessiblePicker()`
-- `renderAccessibleFolder(folderName)`
-- `renderAccessibleResume(entry, skipWarnings)`
-- `renderAccessibleWarnings(entry, resume)`
+- `renderAccessibleFolder()`
+- `renderAccessibleResume()`
+- `renderAccessibleWarnings()`
 - `renderAccessibleGame()`
-- `renderAccessibleEnding(view)`
+- `renderAccessibleEnding()`
 - `renderAccessibleSettings()`
 - `renderAccessibleSpeedPresets()`
 
