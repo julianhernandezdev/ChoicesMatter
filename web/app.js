@@ -145,14 +145,15 @@ var SPEED_PRESETS = [
 ];
 
 var SETTINGS_ROWS = [
-  { key: 'enabled',   label: 'Enabled',        type: 'boolean' },
-  { key: 'delay_ms',  label: 'Speed',           type: 'number', unit: 'ms' },
-  { key: 'pauses..',  label: 'Pause after  .',  type: 'number', unit: 'ms' },
-  { key: 'pauses.!',  label: 'Pause after  !',  type: 'number', unit: 'ms' },
-  { key: 'pauses.?',  label: 'Pause after  ?',  type: 'number', unit: 'ms' },
-  { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms' },
-  { key: 'pauses.—', label: 'Pause after  —', type: 'number', unit: 'ms' },
-  { key: 'page_size', label: 'Stories per page', type: 'number', unit: '' },
+  { key: 'enabled',         label: 'Enabled',           type: 'boolean',            section: 'Typewriter' },
+  { key: 'delay_ms',        label: 'Speed',             type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses..',        label: 'Pause after  .',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.!',        label: 'Pause after  !',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.?',        label: 'Pause after  ?',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.…',   label: 'Pause after  …', type: 'number', unit: 'ms', section: null },
+  { key: 'pauses.—',   label: 'Pause after  —', type: 'number', unit: 'ms', section: null },
+  { key: 'page_size',       label: 'Stories per page',  type: 'number',  unit: '',   section: 'Display' },
+  { key: 'accessible_mode', label: 'Accessible mode',   type: 'a11y',               section: 'Accessibility' },
 ];
 
 function getPageSize() { return loadTypewriterSettings().page_size || 5; }
@@ -465,13 +466,30 @@ function renderSettings() {
   setPageTitle('Settings');
   if (!settingsDraft) {
     var s = loadTypewriterSettings();
-    settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses), page_size: s.page_size };
+    settingsDraft = {
+      enabled: s.enabled,
+      delay_ms: s.delay_ms,
+      pauses: Object.assign({}, s.pauses),
+      page_size: s.page_size,
+      accessible_mode: s.accessible_mode,
+    };
   }
   settingsEditRow = null;
 
   var rows = SETTINGS_ROWS.map(function(row, i) {
     var val = getSettingValue(settingsDraft, row.key);
-    var display = row.type === 'boolean' ? (val ? 'on' : 'off') : val + (row.unit ? ' ' + row.unit : '');
+    var display;
+    if (row.type === 'boolean') {
+      display = val ? 'on' : 'off';
+    } else if (row.type === 'a11y') {
+      if (val === null || val === undefined) {
+        display = 'Auto (currently: ' + (isAccessibleMode() ? 'reader' : 'terminal') + ')';
+      } else {
+        display = val ? 'On' : 'Off';
+      }
+    } else {
+      display = val + (row.unit ? ' ' + row.unit : '');
+    }
     return '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
       '<span class="setting-num">' + (i + 1) + '.</span>' +
       '<span class="setting-name">' + escapeHtml(row.label) + '</span>' +
@@ -541,6 +559,25 @@ function startSettingsEdit(rowIndex) {
   var val = getSettingValue(settingsDraft, row.key);
   if (row.type === 'boolean') {
     setSettingValue(settingsDraft, row.key, !val);
+    renderSettings();
+    return;
+  }
+  if (row.type === 'a11y') {
+    var cur = settingsDraft.accessible_mode;
+    settingsDraft.accessible_mode = cur === null ? true : cur === true ? false : null;
+    renderSettings();
+    return;
+  }
+  if (isAccessibleMode() && row.type === 'number') {
+    var currentVal = getSettingValue(settingsDraft, row.key);
+    var entered = window.prompt(row.label + ':', String(currentVal));
+    if (entered !== null) {
+      var num = parseInt(entered, 10);
+      if (!isNaN(num)) {
+        if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
+        if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+      }
+    }
     renderSettings();
     return;
   }
