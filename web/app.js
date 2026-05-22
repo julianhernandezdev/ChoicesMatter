@@ -1,6 +1,6 @@
 import { createRun, currentView, applySets } from "./engine.js";
 import { loadSave, writeSave, deleteSave, loadGallery, recordEnding, clearAllProgress } from "./storage.js";
-import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS } from "./typewriter.js";
+import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS, stripPauseTokens } from "./typewriter.js";
 
 const app = document.getElementById("app");
 const mobileCapture = document.getElementById("mobile-capture");
@@ -427,7 +427,7 @@ function renderGame() {
     '<span class="terminal-panel-title">' + escapeHtml(makeRule(storyTitle(currentRun.entry), PANEL_RULE_WIDTH)) + '</span>' +
     beforeInsets +
     (view.insets.before.length ? sep : '') +
-    '<div class="terminal-prose" id="prose-text">' + escapeHtml(node.text) + '</div>' +
+    '<div class="terminal-prose" id="prose-text">' + escapeHtml(stripPauseTokens(node.text)) + '</div>' +
     (view.insets.after.length ? sep : '') +
     afterInsets +
     '</div>' +
@@ -462,7 +462,7 @@ function renderEnding(view) {
     overlays +
     '<div class="terminal-panel ' + escapeHtml(type) + '">' +
     '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
-    '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
+    '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(stripPauseTokens(view.node.text)) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
@@ -932,7 +932,7 @@ function renderAccessibleGame() {
     '<article class="r-panel" aria-label="Story: ' + escapeHtml(titleStr) + '">' +
     '<h1 class="r-story-title"><span>' + escapeHtml(titleStr) + '</span>' +
     '<span class="r-time">~' + escapeHtml(timeStr) + '</span></h1>' +
-    '<p class="r-prose">' + escapeHtml(node.text) + '</p>' +
+    '<p class="r-prose">' + escapeHtml(stripPauseTokens(node.text)) + '</p>' +
     '</article>' +
     afterInsetsHtml +
     beforeOverlaysHtml +
@@ -989,7 +989,7 @@ function renderAccessibleEnding(view) {
     overlaysHtml +
     '<article class="r-panel r-ending ' + escapeHtml(type) + '" aria-label="' + escapeHtml(typeLabel) + ' — story complete">' +
     '<span class="r-ending-label ' + escapeHtml(type) + '" aria-hidden="true">' + escapeHtml(typeLabel) + '</span>' +
-    '<p class="r-prose">' + escapeHtml(view.node.text) + '</p>' +
+    '<p class="r-prose">' + escapeHtml(stripPauseTokens(view.node.text)) + '</p>' +
     '</article>' +
     '<div class="r-nav">' +
     '<button class="r-btn primary r-play-again-btn">Play again</button>' +

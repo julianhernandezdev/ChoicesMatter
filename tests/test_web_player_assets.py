@@ -96,3 +96,22 @@ def test_app_js_has_settings_screen() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     assert "function renderSettings(" in app
     assert "SETTINGS_ROWS" in app
+
+
+def test_typewriter_js_has_pause_token_support() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "function stripPauseTokens(" in tw
+    assert "pause_ms" in tw
+    assert "'{pause}'" in tw or '"{pause}"' in tw
+
+
+def test_typewriter_js_pause_ms_in_defaults() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "pause_ms: 500" in tw
+
+
+def test_app_js_strips_pause_tokens_in_static_html() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "stripPauseTokens" in app
+    # All four prose placements must strip the token
+    assert app.count("stripPauseTokens(node.text)") + app.count("stripPauseTokens(view.node.text)") == 4
