@@ -444,6 +444,8 @@ function renderGame() {
 }
 
 function renderEnding(view) {
+  if (isAccessibleMode()) { renderAccessibleEnding(view); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'ending';
   setPageTitle(storyTitle(currentRun.entry), 'Ending');
@@ -960,6 +962,43 @@ function renderAccessibleGame() {
 
   var firstChoice = app.querySelector('.r-choice-btn');
   if (firstChoice) firstChoice.focus();
+}
+
+function renderAccessibleEnding(view) {
+  pendingInput = '';
+  currentScreen = 'ending';
+  document.body.classList.add('reader-mode');
+
+  recordEnding(currentRun.story, currentRun.nodeId);
+  deleteSave(currentRun.story.meta.id);
+  setPageTitle(storyTitle(currentRun.entry), 'Ending');
+
+  var type = view.node.ending_type || 'neutral';
+  var typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + ' Ending';
+
+  var overlaysHtml = [].concat(view.overlays.before, view.overlays.after).map(function(o) {
+    return '<p class="r-overlay">' + escapeHtml(o.text) + '</p>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    overlaysHtml +
+    '<article class="r-panel r-ending ' + escapeHtml(type) + '" aria-label="' + escapeHtml(typeLabel) + ' — story complete">' +
+    '<span class="r-ending-label ' + escapeHtml(type) + '" aria-hidden="true">' + escapeHtml(typeLabel) + '</span>' +
+    '<p class="r-prose">' + escapeHtml(view.node.text) + '</p>' +
+    '</article>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-play-again-btn">Play again</button>' +
+    '<button class="r-btn r-library-btn">Return to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-play-again-btn').addEventListener('click', function() {
+    startStory(currentRun.entry, { resume: false, skipWarnings: true });
+  });
+  app.querySelector('.r-library-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-play-again-btn').focus();
 }
 
 function startSettingsEdit(rowIndex) {
