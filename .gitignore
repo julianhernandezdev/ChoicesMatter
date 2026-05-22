@@ -44,6 +44,9 @@ stories/showcase/
 # Social media drafts (local only)
 sm_post.md
 
+# Git worktrees (local only)
+.worktrees/
+
 # Obsidian vault metadata
 .obsidian/
 
