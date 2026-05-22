@@ -354,6 +354,8 @@ function renderWarnings(entry, resume) {
 }
 
 function renderGame() {
+  if (isAccessibleMode()) { renderAccessibleGame(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   if (!currentRun) { renderLibrary(); return; }
   var view = currentView(currentRun);
@@ -823,6 +825,135 @@ function renderAccessibleWarnings(entry, resume) {
   app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
 
   app.querySelector('.r-proceed-btn').focus();
+}
+
+function renderAccessibleGame() {
+  if (!currentRun) { renderLibrary(); return; }
+  var view = currentView(currentRun);
+  if (view.isEnding) { renderAccessibleEnding(view); return; }
+
+  pendingInput = '';
+  currentScreen = 'game';
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(currentRun.entry));
+
+  var node = view.node;
+  var titleStr = storyTitle(currentRun.entry);
+
+  var sceneHtml = currentRun.currentScene
+    ? '<p class="r-scene" aria-label="Scene: ' + escapeHtml(currentRun.currentScene) + '">' +
+      escapeHtml(currentRun.currentScene) + '</p>'
+    : '';
+
+  var insetKindMap = { system: 'Artifact', memory: 'Memory', echo: 'Echo' };
+  var overlayKindMap = { echo: 'Echo', whisper: 'Whisper', memory: 'Memory', warning: 'Warning' };
+
+  function renderInset(it) {
+    var kindLabel = insetKindMap[it.style] || 'Note';
+    return '<p class="r-inset" role="note" aria-label="' + escapeHtml(kindLabel + ': ' + it.text) + '">' +
+      '<span class="r-inset-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
+      '<span>' + escapeHtml(it.text) + '</span>' +
+      '</p>';
+  }
+
+  function renderOverlay(o) {
+    var kindLabel = overlayKindMap[o.style] || 'Note';
+    return '<p class="r-overlay ' + escapeHtml(o.style || '') + '" aria-label="' + escapeHtml(kindLabel + ': ' + o.text) + '">' +
+      '<span class="r-overlay-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
+      '<span>' + escapeHtml(o.text) + '</span>' +
+      '</p>';
+  }
+
+  var beforeInsetsHtml = view.insets.before.length
+    ? '<aside class="r-insets" aria-label="Notes">' +
+      view.insets.before.map(renderInset).join('') + '</aside>'
+    : '';
+
+  var afterInsetsHtml = view.insets.after.length
+    ? '<aside class="r-insets" aria-label="Notes">' +
+      view.insets.after.map(renderInset).join('') + '</aside>'
+    : '';
+
+  var beforeOverlaysHtml = view.overlays.before.map(renderOverlay).join('');
+  var afterOverlaysHtml  = view.overlays.after.map(renderOverlay).join('');
+
+  var choicesHtml = view.choices.map(function(choice, i) {
+    var label = choice.obfuscated ? '[REDACTED]' : choice.label;
+    var danger = choice.color === 'bright_red';
+    var safe   = choice.color === 'green';
+    var btnClass = 'r-choice-btn' + (danger ? ' danger' : '') + (safe ? ' safe' : '');
+    var ariaLabel = 'Choice ' + (i + 1) + ': ' + label + (danger ? '. Risky.' : safe ? '. Safe.' : '');
+    return '<li><button class="' + btnClass + '"' +
+      ' aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-choice-num" aria-hidden="true">' + (i + 1) + '.</span>' +
+      '<span class="r-choice-text">' + escapeHtml(label) + '</span>' +
+      (danger ? '<span class="r-choice-tag" aria-hidden="true">Risky</span>' : '') +
+      (safe   ? '<span class="r-choice-tag" aria-hidden="true">Safe</span>'  : '') +
+      '</button></li>';
+  }).join('');
+
+  var debugPressed = debugMode !== false ? 'true' : 'false';
+
+  var debugPanelHtml = '';
+  if (debugMode) {
+    var state = currentRun.state || {};
+    var flagPairs = Object.entries(state).filter(function(pair) {
+      return debugMode === 'all' || !pair[0].startsWith('visited_');
+    });
+    var hintText = debugMode === 'all'
+      ? '(showing all flags)'
+      : '(visited_* hidden — press Debug to show all)';
+    var ddsHtml = flagPairs.length === 0
+      ? '<dt>(none)</dt><dd>—</dd>'
+      : flagPairs.map(function(pair) {
+          return '<dt>' + escapeHtml(pair[0]) + '</dt><dd>' + escapeHtml(String(pair[1])) + '</dd>';
+        }).join('');
+    var debugModeLabel = debugMode === 'all' ? 'all' : 'author';
+    debugPanelHtml =
+      '<section class="r-debug" aria-label="Debug: flag state">' +
+      '<h2 class="r-debug-title">Flags \xB7 ' + debugModeLabel + '</h2>' +
+      '<dl class="r-debug-flags">' + ddsHtml + '</dl>' +
+      '<p class="r-debug-hint">' + escapeHtml(hintText) + '</p>' +
+      '</section>';
+  }
+
+  var timeStr = estimateTime(currentRun.entry);
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    sceneHtml +
+    beforeInsetsHtml +
+    '<article class="r-panel" aria-label="Story: ' + escapeHtml(titleStr) + '">' +
+    '<h1 class="r-story-title"><span>' + escapeHtml(titleStr) + '</span>' +
+    '<span class="r-time">~' + escapeHtml(timeStr) + '</span></h1>' +
+    '<p class="r-prose">' + escapeHtml(node.text) + '</p>' +
+    '</article>' +
+    afterInsetsHtml +
+    beforeOverlaysHtml +
+    '<nav aria-label="Story choices"><ul class="r-choices">' + choicesHtml + '</ul></nav>' +
+    afterOverlaysHtml +
+    '<div class="r-nav">' +
+    '<span class="r-nav-hint" aria-hidden="true">Tab to move \xB7 Space or Enter to choose</span>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '<button class="r-btn ghost r-save-btn">Save</button>' +
+    '<button class="r-btn ghost r-debug-btn" aria-pressed="' + debugPressed + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>Debug' +
+    '</button>' +
+    '</div>' +
+    debugPanelHtml +
+    '</main>';
+
+  app.querySelectorAll('.r-choice-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() { choose(i); });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+  app.querySelector('.r-debug-btn').addEventListener('click', function() {
+    debugMode = debugMode === false ? 'author' : debugMode === 'author' ? 'all' : false;
+    renderAccessibleGame();
+  });
+
+  var firstChoice = app.querySelector('.r-choice-btn');
+  if (firstChoice) firstChoice.focus();
 }
 
 function startSettingsEdit(rowIndex) {
