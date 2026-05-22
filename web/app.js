@@ -34,6 +34,7 @@ var settingsEditRow = null;
 var speedCustomEdit = false;
 var pendingInput = '';
 var debugMode = false; // false | "author" | "all"
+var sessionAccessible = null; // null | true | false — never written to disk
 
 // --- App state ---
 
@@ -594,6 +595,20 @@ function renderLibrary() {
 
 function toggleTypewriter() {
   setSessionTw(!isTypewriterOn());
+  if (currentScreen === 'library') renderPicker();
+  else if (currentScreen === 'folder') renderFolder(currentFolder);
+}
+
+function isAccessibleMode() {
+  if (sessionAccessible !== null) return sessionAccessible;
+  var saved = loadTypewriterSettings().accessible_mode;
+  if (saved !== null && saved !== undefined) return saved;
+  return matchMedia('(prefers-reduced-motion: reduce)').matches ||
+         matchMedia('(prefers-contrast: more)').matches;
+}
+
+function toggleAccessibleMode() {
+  sessionAccessible = !isAccessibleMode();
   if (currentScreen === 'library') renderPicker();
   else if (currentScreen === 'folder') renderFolder(currentFolder);
 }
