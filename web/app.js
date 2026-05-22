@@ -270,7 +270,10 @@ function renderPicker() {
     '<div class="terminal-footer">' +
     pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
-    '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
+    '<div class="footer-typewriter">' +
+    'T · Typewriter <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span>' +
+    ' &nbsp;&nbsp; A · Accessible mode <span class="' + (isAccessibleMode() ? 'tw-state-on' : 'tw-state-off') + '">' + (isAccessibleMode() ? 'ON' : 'OFF') + '</span>' +
+    '</div>' +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
@@ -590,6 +593,7 @@ function renderLibrary() {
   lastSaved = '';
   currentFolder = null;
   currentPage = 0;
+  debugMode = false;
   renderPicker();
 }
 
@@ -680,6 +684,7 @@ function handleSubmit(input) {
   if (currentScreen === 'library') {
     if (input === 'q') { window.location.href = 'https://github.com/julianhernandezdev/ChoicesMatter'; return; }
     if (input === 't') { toggleTypewriter(); return; }
+    if (input === 'a') { toggleAccessibleMode(); return; }
     if (input === 'c') {
       if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
       return;
@@ -751,6 +756,7 @@ function handleSubmit(input) {
 
 document.addEventListener('keydown', function(e) {
   if (e.target === mobileCapture) return;
+  if (isAccessibleMode()) return;
 
   var key = e.key;
   var keyUp = key.toUpperCase();
