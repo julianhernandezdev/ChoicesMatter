@@ -42,3 +42,9 @@ Before opening a code PR:
 ## Writing a Story
 
 Drop any `.json` file into `/stories/` — no code changes needed. See `README.md` for the full story format reference, or use an existing story in `/stories/` as a starting point.
+
+---
+
+## AI Tooling
+
+This project uses Claude (Anthropic) extensively — for engine development and most story content. Contributors are welcome to use AI tools in their own workflow. Story contributions should disclose if AI-generated content is included.

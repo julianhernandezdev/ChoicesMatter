@@ -399,3 +399,10 @@ The short version:
 - **Feature idea** → open a GitHub Issue with the `suggestion` label, or PR [`SUGGESTIONS.md`](SUGGESTIONS.md) directly using the template at the bottom of that file
 - **Bug** → open a GitHub Issue with steps to reproduce
 - **Code PR** → check that the feature is accepted in `SUGGESTIONS.md` first, include tests, keep it focused
+
+<details>
+<summary>AI use disclosure</summary>
+
+This project was built in close collaboration with [Claude](https://claude.ai) (Anthropic). The engine, story format, and tooling were developed using Claude Code as a coding assistant. Most story content was written by Claude under human direction — concept, structure, curation, and all design decisions are the author's own. Commits co-authored by AI include a `Co-Authored-By: Claude` trailer in the commit message.
+
+</details>
