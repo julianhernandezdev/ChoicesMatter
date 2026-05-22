@@ -34,6 +34,7 @@ var settingsEditRow = null;
 var speedCustomEdit = false;
 var pendingInput = '';
 var debugMode = false; // false | "author" | "all"
+var sessionAccessible = null; // null | true | false — never written to disk
 
 // --- App state ---
 
@@ -50,6 +51,10 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function setPageTitle(...parts) {
+  document.title = [...parts, 'Choices Matter'].filter(Boolean).join(' — ');
 }
 
 function slugClass(value) {
@@ -140,14 +145,15 @@ var SPEED_PRESETS = [
 ];
 
 var SETTINGS_ROWS = [
-  { key: 'enabled',   label: 'Enabled',        type: 'boolean' },
-  { key: 'delay_ms',  label: 'Speed',           type: 'number', unit: 'ms' },
-  { key: 'pauses..',  label: 'Pause after  .',  type: 'number', unit: 'ms' },
-  { key: 'pauses.!',  label: 'Pause after  !',  type: 'number', unit: 'ms' },
-  { key: 'pauses.?',  label: 'Pause after  ?',  type: 'number', unit: 'ms' },
-  { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms' },
-  { key: 'pauses.—', label: 'Pause after  —', type: 'number', unit: 'ms' },
-  { key: 'page_size', label: 'Stories per page', type: 'number', unit: '' },
+  { key: 'enabled',         label: 'Enabled',           type: 'boolean',            section: 'Typewriter' },
+  { key: 'delay_ms',        label: 'Speed',             type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses..',        label: 'Pause after  .',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.!',        label: 'Pause after  !',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.?',        label: 'Pause after  ?',    type: 'number',  unit: 'ms', section: null },
+  { key: 'pauses.…',   label: 'Pause after  …', type: 'number', unit: 'ms', section: null },
+  { key: 'pauses.—',   label: 'Pause after  —', type: 'number', unit: 'ms', section: null },
+  { key: 'page_size',       label: 'Stories per page',  type: 'number',  unit: '',   section: 'Display' },
+  { key: 'accessible_mode', label: 'Accessible mode',   type: 'a11y',               section: 'Accessibility' },
 ];
 
 function getPageSize() { return loadTypewriterSettings().page_size || 5; }
@@ -212,8 +218,11 @@ function renderPickerEntry(entry, num) {
 }
 
 function renderPicker() {
+  if (isAccessibleMode()) { renderAccessiblePicker(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'library';
+  setPageTitle();
   var twOn = isTypewriterOn();
 
   var folders = {};
@@ -264,16 +273,22 @@ function renderPicker() {
     '<div class="terminal-footer">' +
     pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">Q</span> to visit repo, C to clear saves, or <span class="key-fwd">S</span> for settings. Press Enter to confirm.</div>' +
-    '<div class="footer-typewriter">T · Toggle typewriter (session only) <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span></div>' +
+    '<div class="footer-typewriter">' +
+    'T · Typewriter <span class="' + (twOn ? 'tw-state-on' : 'tw-state-off') + '">' + (twOn ? 'ON' : 'OFF') + '</span>' +
+    ' &nbsp;&nbsp; A · Accessible mode <span class="' + (isAccessibleMode() ? 'tw-state-on' : 'tw-state-off') + '">' + (isAccessibleMode() ? 'ON' : 'OFF') + '</span>' +
+    '</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
 
 function renderFolder(folderName) {
+  if (isAccessibleMode()) { renderAccessibleFolder(folderName); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'folder';
+  setPageTitle(folderName);
   if (folderName !== currentFolder) currentPage = 0;
   currentFolder = folderName;
   var folderEntries = library.filter(function(e) { return e.category === folderName; });
@@ -292,28 +307,34 @@ function renderFolder(folderName) {
     pageHint +
     '<div class="footer-hint">Enter a number, <span class="key-back">B</span> to go back, or <span class="key-back">Q</span> to quit. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
 
 function renderResume(entry, skipWarnings) {
+  if (isAccessibleMode()) { renderAccessibleResume(entry, skipWarnings); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'resume';
+  setPageTitle(storyTitle(entry));
   resumeEntry = entry;
   resumeSkipWarnings = skipWarnings;
   app.innerHTML =
     '<div class="terminal-screen">' +
     '<div class="terminal-prose">A save was found for this story.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
 
 function renderWarnings(entry, resume) {
+  if (isAccessibleMode()) { renderAccessibleWarnings(entry, resume); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'warning';
+  setPageTitle(storyTitle(entry));
   warningEntry = entry;
   warningResume = resume;
   var warnings = entry.story.meta.warnings || [];
@@ -327,18 +348,21 @@ function renderWarnings(entry, resume) {
     '</div>' +
     renderRule(storyTitle(entry), 'dim') +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 }
 
 function renderGame() {
+  if (isAccessibleMode()) { renderAccessibleGame(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   if (!currentRun) { renderLibrary(); return; }
   var view = currentView(currentRun);
   if (view.isEnding) { renderEnding(view); return; }
 
   currentScreen = 'game';
+  setPageTitle(storyTitle(currentRun.entry));
   var node = view.node;
   var sceneRule = currentRun.currentScene ? renderRule(currentRun.currentScene, 'green') : '';
   var sep = '<span class="terminal-separator">' + '─'.repeat(PANEL_RULE_WIDTH) + '</span>';
@@ -412,7 +436,7 @@ function renderGame() {
     afterOverlays +
     debugPanel +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -420,8 +444,11 @@ function renderGame() {
 }
 
 function renderEnding(view) {
+  if (isAccessibleMode()) { renderAccessibleEnding(view); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'ending';
+  setPageTitle(storyTitle(currentRun.entry), 'Ending');
   recordEnding(currentRun.story, currentRun.nodeId);
   deleteSave(currentRun.story.meta.id);
 
@@ -438,7 +465,7 @@ function renderEnding(view) {
     '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(view.node.text) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div>';
   updatePrompt();
 
@@ -446,23 +473,49 @@ function renderEnding(view) {
 }
 
 function renderSettings() {
+  if (isAccessibleMode()) { renderAccessibleSettings(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings';
+  setPageTitle('Settings');
   if (!settingsDraft) {
     var s = loadTypewriterSettings();
-    settingsDraft = { enabled: s.enabled, delay_ms: s.delay_ms, pauses: Object.assign({}, s.pauses), page_size: s.page_size };
+    settingsDraft = {
+      enabled: s.enabled,
+      delay_ms: s.delay_ms,
+      pauses: Object.assign({}, s.pauses),
+      page_size: s.page_size,
+      accessible_mode: s.accessible_mode,
+    };
   }
   settingsEditRow = null;
 
-  var rows = SETTINGS_ROWS.map(function(row, i) {
+  var rows = '';
+  var rowNum = 0;
+  SETTINGS_ROWS.forEach(function(row, i) {
+    if (row.section) {
+      rows += renderRule(row.section, 'dim');
+    }
+    rowNum++;
     var val = getSettingValue(settingsDraft, row.key);
-    var display = row.type === 'boolean' ? (val ? 'on' : 'off') : val + (row.unit ? ' ' + row.unit : '');
-    return '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
-      '<span class="setting-num">' + (i + 1) + '.</span>' +
+    var display;
+    if (row.type === 'boolean') {
+      display = val ? 'on' : 'off';
+    } else if (row.type === 'a11y') {
+      if (val === null || val === undefined) {
+        display = 'Auto (currently: ' + (isAccessibleMode() ? 'reader' : 'terminal') + ')';
+      } else {
+        display = val ? 'On' : 'Off';
+      }
+    } else {
+      display = val + (row.unit ? ' ' + row.unit : '');
+    }
+    rows += '<div class="terminal-settings-row" data-action="settings-row" data-row="' + i + '">' +
+      '<span class="setting-num">' + rowNum + '.</span>' +
       '<span class="setting-name">' + escapeHtml(row.label) + '</span>' +
       '<span class="setting-value">' + escapeHtml(String(display)) + '</span>' +
       '</div>';
-  }).join('');
+  });
 
   app.innerHTML =
     '<div class="terminal-screen">' +
@@ -471,14 +524,17 @@ function renderSettings() {
     '<div class="terminal-footer">' +
     '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
 }
 
 function renderSpeedPresets() {
+  if (isAccessibleMode()) { renderAccessibleSpeedPresets(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings-speed';
+  setPageTitle('Settings');
   speedCustomEdit = false;
   var current = settingsDraft.delay_ms;
   var isPreset = SPEED_PRESETS.some(function(p) { return p.ms === current; });
@@ -513,9 +569,552 @@ function renderSpeedPresets() {
     '<div class="terminal-footer">' +
     '<div class="footer-hint">1–5 to pick preset &middot; <span class="key-fwd">6</span> for custom &middot; <span class="key-back">B</span> back. Press Enter to confirm.</div>' +
     '<div class="terminal-prompt-line"></div>' +
-    '<button class="mobile-keyboard-btn" data-action="show-keyboard">⌨ Tap to type</button>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
   updatePrompt();
+}
+
+function renderAccessiblePicker() {
+  pendingInput = '';
+  currentScreen = 'library';
+  document.body.classList.add('reader-mode');
+  setPageTitle();
+
+  var folders = {};
+  var rootStories = [];
+  library.forEach(function(entry) {
+    var cat = entry.category || null;
+    if (cat) { if (!folders[cat]) folders[cat] = []; folders[cat].push(entry); }
+    else rootStories.push(entry);
+  });
+
+  var menuEntries = [];
+  Object.keys(folders).sort().forEach(function(name) {
+    menuEntries.push({ type: 'folder', name: name });
+  });
+  rootStories.forEach(function(entry) {
+    menuEntries.push({ type: 'story', entry: entry });
+  });
+  activeMenuEntries = menuEntries;
+
+  var totalPages = getTotalPages(menuEntries);
+  var pagedEntries = getPagedEntries(menuEntries);
+
+  var itemsHtml = pagedEntries.map(function(me, i) {
+    if (me.type === 'folder') {
+      var count = folders[me.name].length;
+      return '<li><button class="r-story-btn"' +
+        ' aria-label="' + escapeHtml(me.name) + ' folder, ' + count + ' ' + (count === 1 ? 'story' : 'stories') + '">' +
+        '<span class="r-story-name">' + escapeHtml(me.name) + '/</span>' +
+        '<span class="r-story-meta">' + count + ' ' + (count === 1 ? 'story' : 'stories') + '</span>' +
+        '</button></li>';
+    }
+    var entry = me.entry;
+    var story = entry.story;
+    var save = loadSave(story.meta.id);
+    var gallery = loadGallery(story.meta.id);
+    var endings = endingCount(story);
+    var found = gallery.endings_found ? gallery.endings_found.length : 0;
+    var time = estimateTime(story);
+    var nodeCount = nodeList(story).length;
+    var hasWarn = !!(story.meta.warnings && story.meta.warnings.length);
+    var title = storyTitle(entry);
+    var ariaLabel = title +
+      (hasWarn ? ', contains content warnings' : '') +
+      '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
+      ' endings found. About ' + time + '.' +
+      (save ? ' Save found.' : '');
+    return '<li><button class="r-story-btn" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-story-name">' + escapeHtml(title) +
+      (hasWarn ? ' <span class="r-badge warning" aria-hidden="true">! Warnings</span>' : '') +
+      (save ? ' <span class="r-badge resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
+      '</span>' +
+      '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
+      '</button></li>';
+  }).join('');
+
+  var pageHtml = totalPages > 1
+    ? '<p class="r-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '</p>' +
+      '<p class="r-page-nav">' +
+      (currentPage > 0 ? '<button class="r-prev-btn">&#8592; Previous</button> ' : '') +
+      (currentPage < totalPages - 1 ? '<button class="r-next-btn">Next &#8594;</button>' : '') +
+      '</p>'
+    : '';
+
+  var twOn = isTypewriterOn();
+  var a11yOn = isAccessibleMode();
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Choices Matter</h1>' +
+    '<p class="r-page-sub">Select a story to play.</p>' +
+    '<div class="r-section-label" aria-hidden="true">Stories</div>' +
+    '<nav aria-label="Story library"><ul class="r-story-list">' + itemsHtml + '</ul></nav>' +
+    pageHtml +
+    '<div class="r-nav">' +
+    '<span class="r-nav-hint" aria-hidden="true">Tab to move \xB7 Space or Enter to choose</span>' +
+    '<button class="r-btn ghost r-settings-btn">Settings</button>' +
+    '<button class="r-btn ghost r-clear-btn">Clear all saves</button>' +
+    '</div>' +
+    '<div class="r-nav" style="border-top:none;padding-top:0;margin-top:4px">' +
+    '<button class="r-btn ghost r-tw-btn" aria-pressed="' + twOn + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>' + (twOn ? 'Typewriter ON' : 'Typewriter OFF') + '</button>' +
+    '<button class="r-btn ghost r-a11y-btn" aria-pressed="' + a11yOn + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>' + (a11yOn ? 'Accessible mode ON' : 'Accessible mode OFF') + '</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-story-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      var me = activeMenuEntries[currentPage * getPageSize() + i];
+      if (!me) return;
+      if (me.type === 'folder') renderFolder(me.name);
+      else startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    });
+  });
+  var settingsBtn = app.querySelector('.r-settings-btn');
+  if (settingsBtn) settingsBtn.addEventListener('click', function() { settingsDraft = null; renderSettings(); });
+  var clearBtn = app.querySelector('.r-clear-btn');
+  if (clearBtn) clearBtn.addEventListener('click', function() {
+    if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
+  });
+  var twBtn = app.querySelector('.r-tw-btn');
+  if (twBtn) twBtn.addEventListener('click', toggleTypewriter);
+  var a11yBtn = app.querySelector('.r-a11y-btn');
+  if (a11yBtn) a11yBtn.addEventListener('click', toggleAccessibleMode);
+  var prevBtn = app.querySelector('.r-prev-btn');
+  if (prevBtn) prevBtn.addEventListener('click', function() { changePage(-1); });
+  var nextBtn = app.querySelector('.r-next-btn');
+  if (nextBtn) nextBtn.addEventListener('click', function() { changePage(+1); });
+
+  var first = app.querySelector('.r-story-btn');
+  if (first) first.focus();
+}
+
+function renderAccessibleFolder(folderName) {
+  pendingInput = '';
+  currentScreen = 'folder';
+  if (folderName !== currentFolder) currentPage = 0;
+  currentFolder = folderName;
+  document.body.classList.add('reader-mode');
+  setPageTitle(folderName);
+
+  var folderEntries = library.filter(function(e) { return e.category === folderName; });
+  activeMenuEntries = folderEntries.map(function(entry) { return { type: 'story', entry: entry }; });
+  var totalPages = getTotalPages(activeMenuEntries);
+  var pagedEntries = getPagedEntries(activeMenuEntries);
+
+  var itemsHtml = pagedEntries.map(function(me, i) {
+    var entry = me.entry;
+    var story = entry.story;
+    var save = loadSave(story.meta.id);
+    var gallery = loadGallery(story.meta.id);
+    var endings = endingCount(story);
+    var found = gallery.endings_found ? gallery.endings_found.length : 0;
+    var time = estimateTime(story);
+    var nodeCount = nodeList(story).length;
+    var title = storyTitle(entry);
+    var ariaLabel = title + '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
+      ' endings found. About ' + time + '.' + (save ? ' Save found.' : '');
+    return '<li><button class="r-story-btn" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-story-name">' + escapeHtml(title) + '</span>' +
+      '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
+      (save ? '<span class="r-badge-resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
+      '</button></li>';
+  }).join('');
+
+  var pageHtml = totalPages > 1
+    ? '<p class="r-page-hint">Page ' + (currentPage + 1) + ' of ' + totalPages + '</p>' +
+      '<p class="r-page-nav">' +
+      (currentPage > 0 ? '<button class="r-prev-btn">&#8592; Previous</button> ' : '') +
+      (currentPage < totalPages - 1 ? '<button class="r-next-btn">Next &#8594;</button>' : '') +
+      '</p>'
+    : '';
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Folder: ' + escapeHtml(folderName) + '">&#128193; ' + escapeHtml(folderName) + '</p>' +
+    '<h1 class="r-page-title">' + folderEntries.length + ' stories in this folder</h1>' +
+    '<nav aria-label="Folder contents"><ul class="r-story-list">' + itemsHtml + '</ul></nav>' +
+    pageHtml +
+    '<div class="r-nav"><button class="r-btn ghost r-back-btn">&#8592; Back to library</button></div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-story-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      var me = activeMenuEntries[currentPage * getPageSize() + i];
+      if (me) startStory(me.entry, { resume: !!loadSave(me.entry.story.meta.id) });
+    });
+  });
+  var prevBtn = app.querySelector('.r-prev-btn');
+  if (prevBtn) prevBtn.addEventListener('click', function() { changePage(-1); });
+  var nextBtn = app.querySelector('.r-next-btn');
+  if (nextBtn) nextBtn.addEventListener('click', function() { changePage(+1); });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  var first = app.querySelector('.r-story-btn');
+  if (first) first.focus();
+}
+
+function renderAccessibleResume(entry, skipWarnings) {
+  pendingInput = '';
+  currentScreen = 'resume';
+  resumeEntry = entry;
+  resumeSkipWarnings = skipWarnings;
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(entry));
+
+  var save = loadSave(entry.story.meta.id);
+  var saveInfo = save
+    ? 'A previous run is saved at <strong>' + escapeHtml(save.current_node) + '</strong>.'
+    : 'Save data could not be read.';
+  var saveAge = save && save.timestamp
+    ? '<p class="r-prose" style="color:var(--r-ink-muted);font-size:14px;margin-top:8px">' +
+      (save.history ? save.history.length : 0) + ' nodes visited</p>'
+    : '';
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Story title">' + escapeHtml(storyTitle(entry)) + '</p>' +
+    '<h1 class="r-page-title">A save was found</h1>' +
+    '<div class="r-panel" aria-label="Saved progress">' +
+    '<p class="r-prose">' + saveInfo + '</p>' +
+    saveAge +
+    '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-continue-btn">Continue saved run</button>' +
+    '<button class="r-btn r-new-btn">Start new game</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-continue-btn').addEventListener('click', function() {
+    startStory(resumeEntry, { resume: true, skipWarnings: resumeSkipWarnings, skipResume: true });
+  });
+  app.querySelector('.r-new-btn').addEventListener('click', function() {
+    startStory(resumeEntry, { resume: false, skipWarnings: resumeSkipWarnings, skipResume: true });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-continue-btn').focus();
+}
+
+function renderAccessibleWarnings(entry, resume) {
+  pendingInput = '';
+  currentScreen = 'warning';
+  warningEntry = entry;
+  warningResume = resume;
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(entry));
+
+  var warnings = entry.story.meta.warnings || [];
+  var itemsHtml = warnings.map(function(w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<p class="r-scene" aria-label="Story title">' + escapeHtml(storyTitle(entry)) + '</p>' +
+    '<h1 class="r-page-title">Content warning</h1>' +
+    '<p class="r-page-sub">This story contains material some readers may want to know about before starting.</p>' +
+    '<section class="r-panel r-warning-panel" aria-label="Content warnings">' +
+    '<h2 class="r-warning-title">This story contains</h2>' +
+    '<ul>' + itemsHtml + '</ul>' +
+    '</section>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-proceed-btn">Proceed to story</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-proceed-btn').addEventListener('click', function() {
+    startStory(warningEntry, { resume: warningResume, skipWarnings: true });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-proceed-btn').focus();
+}
+
+function renderAccessibleGame() {
+  if (!currentRun) { renderLibrary(); return; }
+  var view = currentView(currentRun);
+  if (view.isEnding) { renderAccessibleEnding(view); return; }
+
+  pendingInput = '';
+  currentScreen = 'game';
+  document.body.classList.add('reader-mode');
+  setPageTitle(storyTitle(currentRun.entry));
+
+  var node = view.node;
+  var titleStr = storyTitle(currentRun.entry);
+
+  var sceneHtml = currentRun.currentScene
+    ? '<p class="r-scene" aria-label="Scene: ' + escapeHtml(currentRun.currentScene) + '">' +
+      escapeHtml(currentRun.currentScene) + '</p>'
+    : '';
+
+  var insetKindMap = { system: 'Artifact', memory: 'Memory', echo: 'Echo' };
+  var overlayKindMap = { echo: 'Echo', whisper: 'Whisper', memory: 'Memory', warning: 'Warning' };
+
+  function renderInset(it) {
+    var kindLabel = insetKindMap[it.style] || 'Note';
+    return '<p class="r-inset" role="note" aria-label="' + escapeHtml(kindLabel + ': ' + it.text) + '">' +
+      '<span class="r-inset-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
+      '<span>' + escapeHtml(it.text) + '</span>' +
+      '</p>';
+  }
+
+  function renderOverlay(o) {
+    var kindLabel = overlayKindMap[o.style] || 'Note';
+    return '<p class="r-overlay ' + escapeHtml(o.style || '') + '" aria-label="' + escapeHtml(kindLabel + ': ' + o.text) + '">' +
+      '<span class="r-overlay-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
+      '<span>' + escapeHtml(o.text) + '</span>' +
+      '</p>';
+  }
+
+  var beforeInsetsHtml = view.insets.before.length
+    ? '<aside class="r-insets" aria-label="Notes">' +
+      view.insets.before.map(renderInset).join('') + '</aside>'
+    : '';
+
+  var afterInsetsHtml = view.insets.after.length
+    ? '<aside class="r-insets" aria-label="Notes">' +
+      view.insets.after.map(renderInset).join('') + '</aside>'
+    : '';
+
+  var beforeOverlaysHtml = view.overlays.before.map(renderOverlay).join('');
+  var afterOverlaysHtml  = view.overlays.after.map(renderOverlay).join('');
+
+  var choicesHtml = view.choices.map(function(choice, i) {
+    var label = choice.obfuscated ? '[REDACTED]' : choice.label;
+    var danger = choice.color === 'bright_red';
+    var safe   = choice.color === 'green';
+    var btnClass = 'r-choice-btn' + (danger ? ' danger' : '') + (safe ? ' safe' : '');
+    var ariaLabel = 'Choice ' + (i + 1) + ': ' + label + (danger ? '. Risky.' : safe ? '. Safe.' : '');
+    return '<li><button class="' + btnClass + '"' +
+      ' aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-choice-num" aria-hidden="true">' + (i + 1) + '.</span>' +
+      '<span class="r-choice-text">' + escapeHtml(label) + '</span>' +
+      (danger ? '<span class="r-choice-tag" aria-hidden="true">Risky</span>' : '') +
+      (safe   ? '<span class="r-choice-tag" aria-hidden="true">Safe</span>'  : '') +
+      '</button></li>';
+  }).join('');
+
+  var debugPressed = debugMode !== false ? 'true' : 'false';
+
+  var debugPanelHtml = '';
+  if (debugMode) {
+    var state = currentRun.state || {};
+    var flagPairs = Object.entries(state).filter(function(pair) {
+      return debugMode === 'all' || !pair[0].startsWith('visited_');
+    });
+    var hintText = debugMode === 'all'
+      ? '(showing all flags)'
+      : '(visited_* hidden — press Debug to show all)';
+    var ddsHtml = flagPairs.length === 0
+      ? '<dt>(none)</dt><dd>—</dd>'
+      : flagPairs.map(function(pair) {
+          return '<dt>' + escapeHtml(pair[0]) + '</dt><dd>' + escapeHtml(String(pair[1])) + '</dd>';
+        }).join('');
+    var debugModeLabel = debugMode === 'all' ? 'all' : 'author';
+    debugPanelHtml =
+      '<section class="r-debug" aria-label="Debug: flag state">' +
+      '<h2 class="r-debug-title">Flags \xB7 ' + debugModeLabel + '</h2>' +
+      '<dl class="r-debug-flags">' + ddsHtml + '</dl>' +
+      '<p class="r-debug-hint">' + escapeHtml(hintText) + '</p>' +
+      '</section>';
+  }
+
+  var timeStr = estimateTime(currentRun.entry);
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    sceneHtml +
+    beforeInsetsHtml +
+    '<article class="r-panel" aria-label="Story: ' + escapeHtml(titleStr) + '">' +
+    '<h1 class="r-story-title"><span>' + escapeHtml(titleStr) + '</span>' +
+    '<span class="r-time">~' + escapeHtml(timeStr) + '</span></h1>' +
+    '<p class="r-prose">' + escapeHtml(node.text) + '</p>' +
+    '</article>' +
+    afterInsetsHtml +
+    beforeOverlaysHtml +
+    '<nav aria-label="Story choices"><ul class="r-choices">' + choicesHtml + '</ul></nav>' +
+    afterOverlaysHtml +
+    '<div class="r-nav">' +
+    '<span class="r-nav-hint" aria-hidden="true">Tab to move \xB7 Space or Enter to choose</span>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '<button class="r-btn ghost r-save-btn">Save</button>' +
+    '<button class="r-btn ghost r-debug-btn" aria-pressed="' + debugPressed + '">' +
+    '<span class="r-btn-dot" aria-hidden="true"></span>Debug' +
+    '</button>' +
+    '</div>' +
+    debugPanelHtml +
+    '</main>';
+
+  app.querySelectorAll('.r-choice-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() { choose(i); });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+  app.querySelector('.r-save-btn').addEventListener('click', function() {
+    if (currentRun) {
+      lastSaved = writeSave(currentRun.story, currentRun);
+      renderAccessibleGame();
+    }
+  });
+  app.querySelector('.r-debug-btn').addEventListener('click', function() {
+    debugMode = debugMode === false ? 'author' : debugMode === 'author' ? 'all' : false;
+    renderAccessibleGame();
+  });
+
+  var firstChoice = app.querySelector('.r-choice-btn');
+  if (firstChoice) firstChoice.focus();
+}
+
+function renderAccessibleEnding(view) {
+  pendingInput = '';
+  currentScreen = 'ending';
+  document.body.classList.add('reader-mode');
+
+  recordEnding(currentRun.story, currentRun.nodeId);
+  deleteSave(currentRun.story.meta.id);
+  setPageTitle(storyTitle(currentRun.entry), 'Ending');
+
+  var type = view.node.ending_type || 'neutral';
+  var typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + ' Ending';
+
+  var overlaysHtml = [].concat(view.overlays.before, view.overlays.after).map(function(o) {
+    return '<p class="r-overlay">' + escapeHtml(o.text) + '</p>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    overlaysHtml +
+    '<article class="r-panel r-ending ' + escapeHtml(type) + '" aria-label="' + escapeHtml(typeLabel) + ' — story complete">' +
+    '<span class="r-ending-label ' + escapeHtml(type) + '" aria-hidden="true">' + escapeHtml(typeLabel) + '</span>' +
+    '<p class="r-prose">' + escapeHtml(view.node.text) + '</p>' +
+    '</article>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-play-again-btn">Play again</button>' +
+    '<button class="r-btn r-library-btn">Return to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelector('.r-play-again-btn').addEventListener('click', function() {
+    startStory(currentRun.entry, { resume: false, skipWarnings: true });
+  });
+  app.querySelector('.r-library-btn').addEventListener('click', renderLibrary);
+
+  app.querySelector('.r-play-again-btn').focus();
+}
+
+function renderAccessibleSettings() {
+  pendingInput = '';
+  currentScreen = 'settings';
+  document.body.classList.add('reader-mode');
+  setPageTitle('Settings');
+
+  if (!settingsDraft) {
+    var s = loadTypewriterSettings();
+    settingsDraft = {
+      enabled: s.enabled, delay_ms: s.delay_ms,
+      pauses: Object.assign({}, s.pauses),
+      page_size: s.page_size, accessible_mode: s.accessible_mode,
+    };
+  }
+  settingsEditRow = null;
+
+  var rowsHtml = '';
+  var rowNum = 0;
+  SETTINGS_ROWS.forEach(function(row, i) {
+    rowNum++;
+    var val = getSettingValue(settingsDraft, row.key);
+    var display;
+    if (row.type === 'boolean') {
+      display = val ? 'On' : 'Off';
+    } else if (row.type === 'a11y') {
+      if (val === null || val === undefined) {
+        display = 'Auto (currently: ' + (isAccessibleMode() ? 'reader' : 'terminal') + ')';
+      } else {
+        display = val ? 'On' : 'Off';
+      }
+    } else {
+      display = val + (row.unit ? ' ' + row.unit : '');
+    }
+    if (row.section) {
+      rowsHtml += '<h2 class="r-settings-section">' + escapeHtml(row.section) + '</h2>';
+    }
+    rowsHtml +=
+      '<div role="listitem" class="r-setting-row" tabindex="0" data-row-index="' + i + '"' +
+      ' aria-label="' + escapeHtml(row.label) + ', currently ' + escapeHtml(String(display)) + '">' +
+      '<span class="r-setting-num">' + rowNum + '.</span>' +
+      '<span class="r-setting-label">' + escapeHtml(row.label) + '</span>' +
+      '<span class="r-setting-value">' + escapeHtml(String(display)) + '</span>' +
+      '</div>';
+  });
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Settings</h1>' +
+    '<p class="r-page-sub">Press Enter on a row to edit its value.</p>' +
+    '<div class="r-settings" role="list" aria-label="Settings">' + rowsHtml + '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-save-btn">Save</button>' +
+    '<button class="r-btn ghost r-discard-btn">Discard</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('[data-row-index]').forEach(function(row) {
+    row.addEventListener('click', function() { startSettingsEdit(Number(row.dataset.rowIndex)); });
+    row.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSettingsEdit(Number(row.dataset.rowIndex)); }
+    });
+  });
+  app.querySelector('.r-save-btn').addEventListener('click', function() {
+    saveTypewriterSettings(settingsDraft);
+    renderLibrary();
+  });
+  app.querySelector('.r-discard-btn').addEventListener('click', renderLibrary);
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  var first = app.querySelector('[data-row-index]');
+  if (first) first.focus();
+}
+
+function renderAccessibleSpeedPresets() {
+  pendingInput = '';
+  currentScreen = 'settings-speed';
+  document.body.classList.add('reader-mode');
+  speedCustomEdit = false;
+  setPageTitle('Settings');
+
+  var current = settingsDraft.delay_ms;
+
+  var presetsHtml = SPEED_PRESETS.map(function(p, i) {
+    var isActive = p.ms === current;
+    var ariaLabel = p.label + ', ' + p.ms + ' ms' + (isActive ? '. Currently selected.' : '');
+    return '<li><button class="r-preset-btn" aria-pressed="' + isActive + '" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-preset-name">' + escapeHtml(p.label) + (isActive ? ' \xB7 current' : '') + '</span>' +
+      '<span class="r-preset-ms">' + p.ms + ' ms</span>' +
+      '</button></li>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Typewriter Speed</h1>' +
+    '<p class="r-page-sub">Choose a preset. Current selection is highlighted.</p>' +
+    '<nav aria-label="Speed presets"><ul class="r-presets">' + presetsHtml + '</ul></nav>' +
+    '<div class="r-nav"><button class="r-btn ghost r-back-btn">&#8592; Back to settings</button></div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-preset-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      settingsDraft.delay_ms = SPEED_PRESETS[i].ms;
+      renderSettings();
+    });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderSettings);
+
+  var active = app.querySelector('.r-preset-btn[aria-pressed="true"]') || app.querySelector('.r-preset-btn');
+  if (active) active.focus();
 }
 
 function startSettingsEdit(rowIndex) {
@@ -525,6 +1124,25 @@ function startSettingsEdit(rowIndex) {
   var val = getSettingValue(settingsDraft, row.key);
   if (row.type === 'boolean') {
     setSettingValue(settingsDraft, row.key, !val);
+    renderSettings();
+    return;
+  }
+  if (row.type === 'a11y') {
+    var cur = settingsDraft.accessible_mode;
+    settingsDraft.accessible_mode = cur === null ? true : cur === true ? false : null;
+    renderSettings();
+    return;
+  }
+  if (isAccessibleMode() && row.type === 'number') {
+    var currentVal = getSettingValue(settingsDraft, row.key);
+    var entered = window.prompt(row.label + ':', String(currentVal));
+    if (entered !== null) {
+      var num = parseInt(entered, 10);
+      if (!isNaN(num)) {
+        if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
+        if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+      }
+    }
     renderSettings();
     return;
   }
@@ -577,11 +1195,26 @@ function renderLibrary() {
   lastSaved = '';
   currentFolder = null;
   currentPage = 0;
+  debugMode = false;
   renderPicker();
 }
 
 function toggleTypewriter() {
   setSessionTw(!isTypewriterOn());
+  if (currentScreen === 'library') renderPicker();
+  else if (currentScreen === 'folder') renderFolder(currentFolder);
+}
+
+function isAccessibleMode() {
+  if (sessionAccessible !== null) return sessionAccessible;
+  var saved = loadTypewriterSettings().accessible_mode;
+  if (saved !== null && saved !== undefined) return saved;
+  return matchMedia('(prefers-reduced-motion: reduce)').matches ||
+         matchMedia('(prefers-contrast: more)').matches;
+}
+
+function toggleAccessibleMode() {
+  sessionAccessible = !isAccessibleMode();
   if (currentScreen === 'library') renderPicker();
   else if (currentScreen === 'folder') renderFolder(currentFolder);
 }
@@ -653,6 +1286,7 @@ function handleSubmit(input) {
   if (currentScreen === 'library') {
     if (input === 'q') { window.location.href = 'https://github.com/julianhernandezdev/ChoicesMatter'; return; }
     if (input === 't') { toggleTypewriter(); return; }
+    if (input === 'a') { toggleAccessibleMode(); return; }
     if (input === 'c') {
       if (confirm('Clear all browser saves and ending progress?')) { clearAllProgress(); renderLibrary(); }
       return;
@@ -724,6 +1358,7 @@ function handleSubmit(input) {
 
 document.addEventListener('keydown', function(e) {
   if (e.target === mobileCapture) return;
+  if (isAccessibleMode()) return;
 
   var key = e.key;
   var keyUp = key.toUpperCase();
