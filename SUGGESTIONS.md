@@ -11,11 +11,11 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 |---|---|
 | Under Consideration | 9 |
 | In-Flight | 1 |
-| Shipped | 14 |
+| Shipped | 15 |
 
 ---
 
-## Under Consideration (9)
+## Under Consideration (10)
 
 ### Variable Text Substitution
 
@@ -97,11 +97,11 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-### Accessibility Options
+### Web Player Typewriter Motion Variables
 
-**What:** Reduced motion mode, high-contrast color scheme, and font-size hints — selectable in `settings.json` or the settings screen.
+**What:** The web player exposes typewriter timing as CSS custom properties — `--tw-default-ms` (per-character delay), `--tw-choice-stagger-ms` (choices reveal interval), `--tw-prose-breath-ms` (pause between prose and choices), and `--cursor-blink` (prompt cursor blink animation) — all linear, no easing. Overridable via a user stylesheet or theme layer without touching JS.
 
-**Why:** Makes the game usable for players with motion sensitivity or low-vision needs without touching story content.
+**Why:** Decouples motion feel from engine logic: theme authors and accessibility overrides can tune timing purely in CSS, and the values are inspectable in DevTools as living documentation of the animation contract.
 
 **Suggested by:** maintainer
 
@@ -119,7 +119,17 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-## Shipped (13)
+## Shipped (15)
+
+### WCAG 2.1 Level AA Accessible Mode (Web Player)
+
+**What:** Reader mode alongside the terminal mode in the web viewer — light paper theme, Newsreader font, semantic HTML, and button-driven navigation. Auto-detected via OS `prefers-reduced-motion` or `prefers-contrast: more` media queries, or toggled via **A key** (session), **Settings row 9** (persistent), or an accessible library button. Terminal mode also hardened: `--dim` contrast fix (2.4:1 → 4.6:1), typewriter animation skipped on `prefers-reduced-motion`, page titles added to all screens, and focus rings on all interactive elements.
+
+**Why:** Makes the game playable for users with motion sensitivity, low vision, or who rely on screen readers — without changing story content or the terminal experience for other players.
+
+**Suggested by:** maintainer
+
+---
 
 ### Dev / Author Mode
 

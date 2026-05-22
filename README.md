@@ -377,6 +377,7 @@ web/storage.js             Browser storage — save/gallery via localStorage
 web/typewriter.js          Browser typewriter — animation and settings
 web/style.css              Browser play mode styling
 web/stories.json           Static manifest of bundled stories (auto-generated)
+accessibility/             WCAG 2.1 AA docs — implementation guide, screen reader test scripts, renderer patterns
 
 /stories             Drop .json story files here — auto-discovered at startup (subfolders supported)
 /saves               Auto-generated — one .save.json + one .gallery.json per story
