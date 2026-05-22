@@ -947,6 +947,12 @@ function renderAccessibleGame() {
     btn.addEventListener('click', function() { choose(i); });
   });
   app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+  app.querySelector('.r-save-btn').addEventListener('click', function() {
+    if (currentRun) {
+      lastSaved = writeSave(currentRun.story, currentRun);
+      renderAccessibleGame();
+    }
+  });
   app.querySelector('.r-debug-btn').addEventListener('click', function() {
     debugMode = debugMode === false ? 'author' : debugMode === 'author' ? 'all' : false;
     renderAccessibleGame();
