@@ -56,6 +56,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-4ea94b" alt="WCAG 2.1 Level AA">
 </p>
 
 ---
