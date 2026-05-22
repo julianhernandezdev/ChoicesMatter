@@ -473,6 +473,8 @@ function renderEnding(view) {
 }
 
 function renderSettings() {
+  if (isAccessibleMode()) { renderAccessibleSettings(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings';
   setPageTitle('Settings');
@@ -528,6 +530,8 @@ function renderSettings() {
 }
 
 function renderSpeedPresets() {
+  if (isAccessibleMode()) { renderAccessibleSpeedPresets(); return; }
+  document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings-speed';
   setPageTitle('Settings');
@@ -999,6 +1003,118 @@ function renderAccessibleEnding(view) {
   app.querySelector('.r-library-btn').addEventListener('click', renderLibrary);
 
   app.querySelector('.r-play-again-btn').focus();
+}
+
+function renderAccessibleSettings() {
+  pendingInput = '';
+  currentScreen = 'settings';
+  document.body.classList.add('reader-mode');
+  setPageTitle('Settings');
+
+  if (!settingsDraft) {
+    var s = loadTypewriterSettings();
+    settingsDraft = {
+      enabled: s.enabled, delay_ms: s.delay_ms,
+      pauses: Object.assign({}, s.pauses),
+      page_size: s.page_size, accessible_mode: s.accessible_mode,
+    };
+  }
+  settingsEditRow = null;
+
+  var rowsHtml = '';
+  var rowNum = 0;
+  SETTINGS_ROWS.forEach(function(row, i) {
+    rowNum++;
+    var val = getSettingValue(settingsDraft, row.key);
+    var display;
+    if (row.type === 'boolean') {
+      display = val ? 'On' : 'Off';
+    } else if (row.type === 'a11y') {
+      if (val === null || val === undefined) {
+        display = 'Auto (currently: ' + (isAccessibleMode() ? 'reader' : 'terminal') + ')';
+      } else {
+        display = val ? 'On' : 'Off';
+      }
+    } else {
+      display = val + (row.unit ? ' ' + row.unit : '');
+    }
+    if (row.section) {
+      rowsHtml += '<h2 class="r-settings-section">' + escapeHtml(row.section) + '</h2>';
+    }
+    rowsHtml +=
+      '<div role="listitem" class="r-setting-row" tabindex="0" data-row-index="' + i + '"' +
+      ' aria-label="' + escapeHtml(row.label) + ', currently ' + escapeHtml(String(display)) + '">' +
+      '<span class="r-setting-num">' + rowNum + '.</span>' +
+      '<span class="r-setting-label">' + escapeHtml(row.label) + '</span>' +
+      '<span class="r-setting-value">' + escapeHtml(String(display)) + '</span>' +
+      '</div>';
+  });
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Settings</h1>' +
+    '<p class="r-page-sub">Press Enter on a row to edit its value.</p>' +
+    '<div class="r-settings" role="list" aria-label="Settings">' + rowsHtml + '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-save-btn">Save</button>' +
+    '<button class="r-btn ghost r-discard-btn">Discard</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back to library</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('[data-row-index]').forEach(function(row) {
+    row.addEventListener('click', function() { startSettingsEdit(Number(row.dataset.rowIndex)); });
+    row.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSettingsEdit(Number(row.dataset.rowIndex)); }
+    });
+  });
+  app.querySelector('.r-save-btn').addEventListener('click', function() {
+    saveTypewriterSettings(settingsDraft);
+    renderLibrary();
+  });
+  app.querySelector('.r-discard-btn').addEventListener('click', renderLibrary);
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+
+  var first = app.querySelector('[data-row-index]');
+  if (first) first.focus();
+}
+
+function renderAccessibleSpeedPresets() {
+  pendingInput = '';
+  currentScreen = 'settings-speed';
+  document.body.classList.add('reader-mode');
+  speedCustomEdit = false;
+  setPageTitle('Settings');
+
+  var current = settingsDraft.delay_ms;
+
+  var presetsHtml = SPEED_PRESETS.map(function(p, i) {
+    var isActive = p.ms === current;
+    var ariaLabel = p.label + ', ' + p.ms + ' ms' + (isActive ? '. Currently selected.' : '');
+    return '<li><button class="r-preset-btn" aria-pressed="' + isActive + '" aria-label="' + escapeHtml(ariaLabel) + '">' +
+      '<span class="r-preset-name">' + escapeHtml(p.label) + (isActive ? ' \xB7 current' : '') + '</span>' +
+      '<span class="r-preset-ms">' + p.ms + ' ms</span>' +
+      '</button></li>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Typewriter Speed</h1>' +
+    '<p class="r-page-sub">Choose a preset. Current selection is highlighted.</p>' +
+    '<nav aria-label="Speed presets"><ul class="r-presets">' + presetsHtml + '</ul></nav>' +
+    '<div class="r-nav"><button class="r-btn ghost r-back-btn">&#8592; Back to settings</button></div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-preset-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      settingsDraft.delay_ms = SPEED_PRESETS[i].ms;
+      renderSettings();
+    });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderSettings);
+
+  var active = app.querySelector('.r-preset-btn[aria-pressed="true"]') || app.querySelector('.r-preset-btn');
+  if (active) active.focus();
 }
 
 function startSettingsEdit(rowIndex) {
