@@ -18,7 +18,7 @@ Read this before writing any new `renderAccessible*()` function.
    ```
 
 3. **Set `currentScreen`** to the correct string value before building HTML.
-   Use the same string the terminal renderer uses — `handleSubmit()` branches on this value.
+   Use the same string the terminal renderer uses — page navigation handlers branch on this value.
 
 4. **Call `document.body.classList.add('reader-mode')`** as the first side-effect in the function.
 
@@ -52,9 +52,9 @@ Read this before writing any new `renderAccessible*()` function.
 | `<div data-action="...">` clickable area | `<button>` | 4.1.2, 2.1.1 |
 | `<div class="terminal-list-item">` for stories | `<button class="r-story-btn" aria-label="full description">` | 2.5.3, 4.1.2 |
 | `<div class="terminal-panel">` for prose | `<article class="r-panel" aria-label="Story: [title]">` | 1.3.1 |
-| `<span class="terminal-inset">` | `<p role="note" class="r-inset">` inside `<aside aria-label="Notes">` | 1.3.1 |
+| `<span class="terminal-inset">` | `<p role="note" class="r-inset" aria-label="[KindLabel]: [text]">` inside `<aside aria-label="Notes">`; the visual kind label is `<span class="r-inset-kind" aria-hidden="true">` | 1.3.1 |
 | `<div class="terminal-choices">` | `<nav aria-label="Story choices"><ul class="r-choices">` | 1.3.1, 2.4.6 |
-| Choice `<div>` | `<li><button class="r-choice-btn" aria-label="Choice N: [text]">` | 4.1.2 |
+| Choice `<div>` | `<li><button class="r-choice-btn" aria-label="Choice N: [text]">` for normal choices; colored choices append a suffix: `bright_red` → `. Risky.`, `green` → `. Safe.` | 4.1.2 |
 | `<span class="terminal-overlay">` | `<p class="r-overlay">` (outside the `<article>`) | 1.3.2 |
 | Section heading | `<h1>` (page title), `<h2>` (section title) | 2.4.6 |
 | Prompt line | **Not rendered** in reader mode | 2.1.4 |
@@ -105,7 +105,7 @@ if (first) first.focus();
 | Warnings | Proceed button | `.r-proceed-btn` |
 | Game | First choice button | `.r-choice-btn` |
 | Ending | Play again button | `.r-play-again-btn` |
-| Settings | First settings row | `.r-settings-row` |
+| Settings | First settings row | `[data-row-index]` (class is `r-setting-row`) |
 | Speed presets | Active preset button | `.r-preset-btn[aria-pressed="true"]`, fallback `.r-preset-btn` |
 
 The `if (first)` guard is required — do not assume the element exists. A game
