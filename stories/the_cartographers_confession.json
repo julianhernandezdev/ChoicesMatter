@@ -1,0 +1,369 @@
+{
+  "meta": {
+    "id": "the_cartographers_confession",
+    "title": "The Cartographer's Confession",
+    "version": "1.0",
+    "author": "Claude",
+    "start_node": "study",
+    "est_time": "8–12 min",
+    "warnings": ["This story contains references to forced displacement and the erasure of communities from official records."]
+  },
+  "nodes": {
+    "study": {
+      "scene": "Voss & Fenwick Cartographic Archive — Harlan's Study",
+      "insets": [
+        {
+          "text": "ARCHIVE CLOSED — 21:43 — VISITOR ACCESS SUSPENDED",
+          "style": "system",
+          "position": "before"
+        }
+      ],
+      "text": "Harlan's study sits at the back of the archive, behind a door that is usually locked. Tonight it is open.\n\nHe is propped against two pillows, an oil lamp burning low beside him. Across his desk, a map takes up every inch of the surface — coastlines, inland ranges, a dense network of roads. In the southwest corner, a cluster of settlements drawn in a different hand than the rest.\n\nHe watches you enter. He has been watching the door.",
+      "choices": [
+        {
+          "label": "Go to him first",
+          "next": "at_his_side"
+        },
+        {
+          "label": "Look at the map",
+          "next": "examine_map",
+          "sets": { "approached_map_first": true }
+        }
+      ]
+    },
+
+    "examine_map": {
+      "scene": "Voss & Fenwick Cartographic Archive — The Map Desk",
+      "insets": [
+        {
+          "text": "REGIONAL SURVEY — SOUTHWEST DISTRICT — REF: VF-1961-SW-7 — RESTRICTED SUPPLEMENT",
+          "style": "system",
+          "position": "before"
+        }
+      ],
+      "text": "The map is old but well-preserved. The coastlines are precise, the elevation markings careful. Someone has gone over the ink twice.\n\nIn the southwest corner, a cluster of settlements. One of them — a village called Verek — sits at the end of roads that stop abruptly, as if drawn and then reconsidered.\n\nIn the margins, a cramped hand that isn't the main cartographer's has written notes you can barely read in the lamp's light.",
+      "choices": [
+        {
+          "label": "Read the marginal notes",
+          "next": "marginal_notes"
+        },
+        {
+          "label": "Go to Harlan",
+          "next": "at_his_side"
+        }
+      ]
+    },
+
+    "marginal_notes": {
+      "text": "The notes are survey corrections. Most are unremarkable — a road rerouted, a river's course adjusted. But one entry, dated eleven years before the map's official publication, reads:\n\n\"V. — road access removed per instruction. Settlement designation struck from regional register. H.V. notes: by order.\"\n\nBelow it, the same handwriting, undated: \"They will ask eventually.\"",
+      "insets": [
+        {
+          "text": "H.V. — Harlan Voss. The same initials as the archive's founder.",
+          "style": "memory",
+          "position": "after"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Go to Harlan",
+          "next": "at_his_side",
+          "sets": { "saw_margin": true, "insight": "+1" }
+        }
+      ]
+    },
+
+    "at_his_side": {
+      "text": "Harlan's face is composed but tired. His eyes are sharp in a way his body no longer is. He looks at you for a long moment.\n\n\"You came,\" he says. \"Good. There are things I should have told you three years ago when you started here. Things about the work.\"",
+      "overlays": [
+        {
+          "text": "{approached_map_first?He glances at the map, then back at you. He noticed you went there first.|}",
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "choices": [
+        {
+          "label": "\"What things?\"",
+          "next": "harlan_what_things"
+        },
+        {
+          "label": "\"Take your time.\"",
+          "next": "harlan_take_time",
+          "sets": { "took_hand": true }
+        }
+      ]
+    },
+
+    "harlan_what_things": {
+      "text": "\"The map,\" he says. He doesn't look at it. \"There is a village on that map that should not be there, and a village that is not on that map that should be.\"\n\nHe waits a moment.",
+      "choices": [
+        {
+          "label": "\"What village is missing?\"",
+          "next": "harlan_verek"
+        },
+        {
+          "label": "\"Who gave you the instruction?\"",
+          "next": "harlan_instruction"
+        }
+      ]
+    },
+
+    "harlan_take_time": {
+      "text": "You pull the chair close and sit. He looks at your hands — the sketch calluses, the ink stain on your index finger that never fully washes out.\n\n\"You're good at this work,\" he says. \"I was too, once. That's what they needed from me.\" He pauses. \"There's a village on that map.\"",
+      "choices": [
+        {
+          "label": "\"Which village?\"",
+          "next": "harlan_verek"
+        },
+        {
+          "label": "\"Who needed you?\"",
+          "next": "harlan_instruction"
+        }
+      ]
+    },
+
+    "harlan_verek": {
+      "insets": [
+        {
+          "text": "{saw_margin?You already know the name. You read it in the margin.|The name is unfamiliar to you.}",
+          "style": "memory",
+          "position": "before"
+        }
+      ],
+      "text": "\"Verek,\" he says. \"Southwest district. Three hundred and forty people, the last census. A farming community. Unremarkable by most measures.\"\n\nHe stops.\n\n\"I removed it from the regional register in 1961. Struck the roads. Made it difficult to find on any official document.\"\n\nHe looks at you directly. \"No one ever asked me why.\"",
+      "choices": [
+        {
+          "label": "\"Why?\"",
+          "next": "harlan_why",
+          "requires": { "saw_margin": true },
+          "sets": { "insight": "+1" }
+        },
+        {
+          "label": "\"What happened to Verek?\"",
+          "next": "harlan_what_happened"
+        }
+      ]
+    },
+
+    "harlan_instruction": {
+      "text": "\"The Regional Bureau of Survey and Land Records,\" he says. The phrase comes out with practiced flatness, the way you say a name you've said too many times. \"They came in 1961 with a list. Three settlements. Verek was one of them.\"\n\nHe shifts against the pillows.\n\n\"They said it was administrative rationalisation. I knew what it was.\"",
+      "choices": [
+        {
+          "label": "\"What was it?\"",
+          "next": "harlan_why",
+          "sets": { "insight": "+1" }
+        },
+        {
+          "label": "\"What happened to the people?\"",
+          "next": "harlan_what_happened"
+        }
+      ]
+    },
+
+    "harlan_why": {
+      "insets": [
+        {
+          "text": "Verek. 340 residents. Last census: 1961.",
+          "style": "warning",
+          "position": "after"
+        }
+      ],
+      "text": "\"They wanted the valley,\" Harlan says. \"There were minerals. There were plans. And it is much easier to acquire land that does not appear on any official document.\" A pause. \"It is much easier to move people who do not officially exist.\"\n\nHe looks at his hands.\n\n\"I knew what they intended when they gave me the list. I was twenty-nine years old and I told myself I was only drawing a map.\"",
+      "choices": [
+        {
+          "label": "\"Were you threatened?\"",
+          "next": "harlan_threatened"
+        },
+        {
+          "label": "\"What happened to the people of Verek?\"",
+          "next": "harlan_what_happened"
+        }
+      ]
+    },
+
+    "harlan_threatened": {
+      "insets": [
+        {
+          "text": "Forty years of the other version.",
+          "style": "",
+          "position": "after"
+        }
+      ],
+      "text": "He considers the question for a long time.{pause}\n\n\"No,\" he says finally. \"I was not threatened. I was ambitious. The Bureau offered me the lead cartographer position. I was twenty-nine and I wanted it.\"\n\nHe exhales slowly.\n\n\"I have told myself the other version — the version where I had no choice — for forty years. I am tired of it.\"",
+      "choices": [
+        {
+          "label": "\"What happened to the people of Verek?\"",
+          "next": "harlan_what_happened",
+          "sets": { "heard_honest_answer": true, "insight": "+1" }
+        }
+      ]
+    },
+
+    "harlan_what_happened": {
+      "overlays": [
+        {
+          "text": "The note said 'by order.' This is whose order.",
+          "position": "before",
+          "style": "memory",
+          "requires": { "saw_margin": true }
+        },
+        {
+          "text": "\"They will ask eventually.\"",
+          "position": "after",
+          "style": "whisper"
+        }
+      ],
+      "text": "\"The valley was acquired. Verek was cleared in the spring of 1962.\"{pause} He says it as a fact. \"The people were resettled. The Bureau's word. I do not know where they went. I did not look.\"\n\nHe pauses.\n\n\"What I do know is that Verek still appears on this map — in the margins, in that hand. Not mine. I borrowed a junior surveyor's hand. It was the only thing I could think to do.\"",
+      "choices": [
+        {
+          "label": "\"Why are you telling me this now?\"",
+          "next": "harlan_why_now",
+          "sets": { "knows_verek_fate": true, "insight": "+1" }
+        },
+        {
+          "label": "Look at the map",
+          "next": "map_revelation",
+          "sets": { "knows_verek_fate": true, "insight": "+1" }
+        }
+      ]
+    },
+
+    "harlan_why_now": {
+      "text": "\"Because the map will outlive me,\" he says. \"It is forty years old and it is still in use. Municipal offices still reference it. And when someone eventually reads those marginal notes — and they will — I want there to be someone who knows the whole story.\"\n\nHe looks at you.\n\n\"You are the most careful reader I have ever trained.\"",
+      "choices": [
+        {
+          "label": "Look at the map",
+          "next": "map_revelation"
+        }
+      ]
+    },
+
+    "map_revelation": {
+      "scene": "Voss & Fenwick Cartographic Archive — The Map Desk",
+      "insets": [
+        {
+          "text": "{saw_margin?The initials H.V. in the margin look different now. A mark of guilt, not authorship.|A map made to erase a place, by a person who is forty feet from where you stand.}{heard_honest_answer? Twenty-nine years old and ambitious. That is the whole of it.|}",
+          "style": "memory",
+          "position": "before"
+        },
+        {
+          "text": "You found this yourself, before he said a word.",
+          "style": "memory",
+          "position": "after",
+          "requires": { "saw_margin": true, "approached_map_first": true }
+        }
+      ],
+      "text": "You stand at the desk.\n\n{knows_verek_fate?Verek is in the southwest corner. Three hundred and forty people, the last census. The roads leading to it stop because someone drew them stopping. You can see the shape of that decision clearly now.|The southwest corner of the map. The roads that trail off into the valley never struck you as strange before. They do now.}\n\n{saw_margin?The marginal notes are no longer cryptic. They are a record — a specific decision, a specific year, a specific person who is forty feet from where you are standing.|The marginal notes are still unread. You wonder what they say.}\n\nThe map is beautiful.{pause}It has not stopped being beautiful.",
+      "choices": [
+        {
+          "label": "Go back to Harlan",
+          "next": "final_choice"
+        }
+      ]
+    },
+
+    "final_choice": {
+      "scene": "Voss & Fenwick Cartographic Archive — Harlan's Study",
+      "text": "Harlan is watching you when you return to his side. His breathing has slowed.\n\n\"There is one thing I need to ask of you,\" he says. \"I cannot ask my family. They don't know. But you work with documents. You understand what they mean and what they do.\"\n\nHe gestures toward the map.\n\n\"When I am gone: do what you think is right with it.\"",
+      "insets": [
+        {
+          "text": "FULL RECORD AVAILABLE — REF: VF-1961-SW-7 — VEREK (SOUTHWEST DISTRICT)",
+          "style": "system",
+          "position": "before",
+          "requires": { "insight": 3 }
+        }
+      ],
+      "overlays": [
+        {
+          "text": "{heard_honest_answer?He said he was not threatened. He said he was ambitious. That honesty cost him something visible.|He has not told you why he did it. Only that he did.}",
+          "position": "before",
+          "style": "echo"
+        },
+        {
+          "text": "Three hundred and forty people. Cleared in the spring of 1962. You carry that number now.",
+          "style": "memory",
+          "position": "before",
+          "requires": { "visited_harlan_what_happened": true }
+        }
+      ],
+      "choice_number_color": "yellow",
+      "choices": [
+        {
+          "label": "\"I'll make sure the record is corrected.\"",
+          "next": "ending_correct",
+          "color": "green"
+        },
+        {
+          "label": "\"I'll do what you should have done and destroy it.\"",
+          "next": "ending_destroy",
+          "color": "bright_red",
+          "obfuscated": true
+        },
+        {
+          "label": "\"I'll keep it. Exactly as it is.\"",
+          "next": "ending_keep",
+          "color": "yellow"
+        }
+      ]
+    },
+
+    "ending_correct": {
+      "scene": "Voss & Fenwick Cartographic Archive — Third Floor",
+      "insets": [
+        {
+          "text": "REGIONAL SURVEY CORRECTION FILED — REF: VEREK (SOUTHWEST DISTRICT) — CASE OPEN",
+          "style": "system",
+          "position": "before"
+        }
+      ],
+      "overlays": [
+        {
+          "text": "VEREK — SOUTHWEST DISTRICT — RESTORED TO REGIONAL RECORD",
+          "position": "after",
+          "style": "system"
+        }
+      ],
+      "text": "You stay until Harlan falls asleep. In the morning, you take the map to the administrative office and begin filing a correction.\n\nIt takes fourteen months. The municipal office is skeptical. Two historians become involved. A small article appears in an archival journal.\n\nVoss & Fenwick's name appears in a footnote. So does Harlan's.\n\nThe valley is still a mine. The people of Verek are still scattered. But their village is back on the map — in its correct location, with its roads drawn to their proper ends.\n\n{took_hand?Harlan died three weeks after the night you sat with him. He knew the correction was filed before he went.|Harlan died before the correction was published. You do not know if he believed you would follow through.}",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    },
+
+    "ending_destroy": {
+      "scene": "Voss & Fenwick Cartographic Archive — Third Floor",
+      "overlays": [
+        {
+          "text": "\"I was only drawing a map.\"",
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "text": "You wait until Harlan is asleep. Then you take the map from the desk and burn it in the archive's document disposal unit.\n\nThe fire takes less than a minute.{pause}Forty years of careful draftsmanship, gone.\n\nYou tell yourself it's what he wanted. Perhaps it is. But a destroyed record is not a corrected one. No one will find Verek in the marginal notes of this map.\n\nNo one will find it anywhere.\n\n{heard_honest_answer?Harlan asked you to do what you thought was right. Standing here now, you are not certain you knew what that was.|You have done what you were asked. That is enough, or it is not.}",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+
+    "ending_keep": {
+      "scene": "Voss & Fenwick Cartographic Archive — Third Floor",
+      "insets": [
+        {
+          "text": "VF-1961-SW-7 — REGIONAL SURVEY, SOUTHWEST DISTRICT — ARCHIVE ACCESS: RESTRICTED",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "overlays": [
+        {
+          "text": "{saw_margin?\"They will ask eventually.\" Now you will answer.|The map stays. The record waits.}",
+          "position": "after",
+          "style": "whisper"
+        }
+      ],
+      "text": "You leave the map where it is.\n\nWhen Harlan dies, the archive passes to you as his designated successor. You catalogue everything. The map is assigned a reference number, its provenance carefully documented.\n\nSomeone will find it. In ten years, in twenty. Someone will read the marginal notes. Someone will notice the roads that go nowhere.\n\nYou will be here when they do.\n\n{saw_margin?You think of the note in the margin — \"They will ask eventually.\" You intend to be ready.|You never finished reading the marginal notes. When someone finally asks, you will have to explain why you kept a map you did not fully understand.}",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    }
+  }
+}
