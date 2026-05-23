@@ -175,7 +175,7 @@
     "abandoned": {
       "scene": "Station Exit",
       "text": "You drop the bag by the exit and walk out into the rain. You don't look back.\n\nYou never find out what was in it. Some nights you think that was the right call.",
-      "insets": [
+      "overlays": [
         { "text": "Most nights, actually.", "style": "", "position": "after" }
       ],
       "choices": [],
