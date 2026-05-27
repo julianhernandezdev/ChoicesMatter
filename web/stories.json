@@ -1,6 +1,10 @@
 {
   "stories": [
     {
+      "path": "stories/ChoicesMatterGPT/ash_and_receipts.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
       "path": "stories/horror/dead_air.json",
       "category": "horror"
     },
@@ -13,12 +17,24 @@
       "category": "uncategorized"
     },
     {
+      "path": "stories/ChoicesMatterGPT/the_lantern_rounds.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
       "path": "stories/the_last_customer_support_representative.json",
       "category": "uncategorized"
     },
     {
       "path": "stories/the_last_train.json",
       "category": "uncategorized"
+    },
+    {
+      "path": "stories/ChoicesMatterGPT/moonlitdoor.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
+      "path": "stories/horror/the_vulture_corridor_v2_1_demo.json",
+      "category": "horror"
     },
     {
       "path": "stories/horror/this_house_remembered.json",
