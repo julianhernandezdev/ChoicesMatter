@@ -5,8 +5,7 @@
     "version": "1.1",
     "author": "ChoicesMatterGPT",
     "start_node": "office",
-    "est_time": "15–25 min",
-    "warnings": ""
+    "est_time": "15–25 min"
   },
   "nodes": {
     "office": {
