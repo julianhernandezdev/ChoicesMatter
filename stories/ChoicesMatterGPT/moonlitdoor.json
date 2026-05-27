@@ -1,0 +1,140 @@
+{
+  "meta": {
+    "id": "moonlit_door",
+    "title": "The Moonlit Door",
+    "version": "1.1",
+    "author": "Choices Matter GPT",
+    "start_node": "intro",
+    "est_time": "3–5 min",
+    "warnings": ["Mild supernatural themes"]
+  },
+  "nodes": {
+    "intro": {
+      "scene": "Old Mill Road",
+      "choice_number_color": "yellow",
+      "insets": [
+        {
+          "text": "00:17  —  FULL MOON  —  ROAD CLOSED",
+          "position": "before",
+          "style": "system"
+        }
+      ],
+      "text": "The rain has stopped, but the road still shines like black glass. Ahead, where the bridge should be, stands a narrow blue door under the moonlight.\n\nThere is no wall around it.",
+      "choices": [
+        {
+          "label": "Open the door",
+          "next": "threshold",
+          "sets": {
+            "brave": true
+          },
+          "color": "bright_red"
+        },
+        {
+          "label": "Search the roadside first",
+          "next": "roadside"
+        }
+      ]
+    },
+    "roadside": {
+      "text": "In the wet grass, you find a brass key tied to a strip of blue ribbon. The ribbon is dry, as if the rain refused to touch it.",
+      "insets": [
+        {
+          "text": "FOUND: BRASS KEY",
+          "position": "after",
+          "style": "system"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Take the key and open the door",
+          "next": "threshold",
+          "sets": {
+            "has_key": true
+          },
+          "color": "green"
+        },
+        {
+          "label": "Leave the key where it is and go home",
+          "next": "walk_away"
+        }
+      ]
+    },
+    "threshold": {
+      "scene": "The Moonlit Door",
+      "choice_number_color": "yellow",
+      "text": "The door opens inward without a sound. Beyond it is not a room, but a shoreline under a sky full of unmoving stars.\n\nA voice from the dark water says, 'Payment first.'",
+      "overlays": [
+        {
+          "text": "The key warms in your hand.",
+          "requires": {
+            "has_key": true
+          },
+          "position": "before",
+          "style": "memory"
+        },
+        {
+          "text": "You came this far without knowing what waited beyond.",
+          "requires": {
+            "brave": true
+          },
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Offer the brass key",
+          "next": "safe_crossing",
+          "requires": {
+            "has_key": true
+          },
+          "color": "green"
+        },
+        {
+          "label": "Offer your name instead",
+          "next": "nameless",
+          "obfuscated": true,
+          "color": "bright_red"
+        },
+        {
+          "label": "Step back through the door",
+          "next": "return_home"
+        }
+      ]
+    },
+    "safe_crossing": {
+      "scene": "Starless Shore",
+      "text": "The voice accepts the key. A path of pale stones rises from the water, leading you safely across.\n\nBy dawn, you are standing on the far side of the broken bridge. In your pocket is the blue ribbon, now damp with rain.",
+      "overlays": [
+        {
+          "text": "Some doors only ask whether you were prepared.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    },
+    "nameless": {
+      "text": "You speak your name aloud.\n\nThe water repeats it once, perfectly, then keeps it.\n\nWhen you stumble home, everyone recognizes your face. No one remembers what to call you.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    },
+    "return_home": {
+      "scene": "Old Mill Road",
+      "text": "You step backward. The blue door closes. The bridge is there again, ordinary and wet and empty.\n\nFor years afterward, every locked door makes you pause.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+    "walk_away": {
+      "scene": "Old Mill Road",
+      "text": "You walk home without touching the key. Behind you, hinges creak softly in the dark.\n\nBy morning, the bridge is back. The blue door is gone.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    }
+  }
+}
