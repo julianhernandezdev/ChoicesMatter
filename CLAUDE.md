@@ -112,11 +112,32 @@ Flag names in inline spans must match `\w+` (letters, digits, underscores). Flag
 | Non-empty string | true branch |
 | Empty string `""` | false branch |
 
-`{key}` patterns without `?` are left intact (reserved for Variable Text Substitution).
+`{key}` patterns without `?` are handled by Variable Text Substitution (see below), which runs before inline resolution. A substituted value may appear inside a conditional branch — this is intentional and the recommended way to personalise branching text.
 
 Example: `"text": "You address {knows_name?the guard by name|the stranger}."`
 
 Inset with no false branch (collapses when unset): `{ "text": "{is_staff?STAFF ACCESS GRANTED}", "style": "system" }`
+
+**Variable Text Substitution**
+
+Any `text` field may embed `{key}` placeholders that are replaced at runtime with the string representation of the named flag's current value:
+
+```
+"text": "Hello, {player_name}. You have {coins} coins."
+```
+
+| Condition | Result |
+|---|---|
+| Key present in state | Replaced with `str(value)` — booleans become `True`/`False` (Python) or `true`/`false` (JS) |
+| Key absent from state | Placeholder left intact — `{player_name}` stays in the rendered text |
+
+Substitution runs **before** conditional inline resolution. This means a substituted value can appear inside a conditional branch:
+
+```
+"text": "{known?Hello, {player_name}!|Hello, stranger!}"
+```
+
+**Reserved flag name:** do not use `pause` as a flag name — it collides with the `{pause}` typewriter delay token, which is also a `{key}` pattern.
 
 **Choice object:**
 
