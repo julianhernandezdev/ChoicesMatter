@@ -129,6 +129,7 @@ Any `text` field may embed `{key}` placeholders that are replaced at runtime wit
 | Condition | Result |
 |---|---|
 | Key present in state | Replaced with `str(value)` — booleans become `True`/`False` (Python) or `true`/`false` (JS) |
+| Key present, value is `""` | Placeholder replaced with empty string — `{name}` disappears from the rendered text |
 | Key absent from state | Placeholder left intact — `{player_name}` stays in the rendered text |
 
 Substitution runs **before** conditional inline resolution. This means a substituted value can appear inside a conditional branch:
@@ -143,7 +144,7 @@ Substitution runs **before** conditional inline resolution. This means a substit
 
 | Field | Required | Notes |
 |---|---|---|
-| `label` | Yes | Text shown to the player |
+| `label` | Yes | Text shown to the player — does not support `{key}` substitution or `{flag?…}` conditional inline syntax |
 | `next` | Yes | Node ID to navigate to |
 | `requires` | No | `{ "flag": true/false }` — hides choice if not matched |
 | `sets` | No | `{ "flag": true/false }` — applies to player state on advance |
