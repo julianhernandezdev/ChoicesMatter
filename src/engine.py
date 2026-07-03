@@ -10,6 +10,7 @@ from .story import Choice, Story
 
 _DELTA_RE = re.compile(r"^[+-]\d+$")
 _INLINE_RE = re.compile(r"\{(\w+)\?([^|{}]*?)(?:\|([^{}]*?))?\}")
+_SUBST_RE = re.compile(r"\{(\w+)\}")
 
 
 class Engine:
@@ -52,11 +53,14 @@ class Engine:
             before_insets = [i for i in visible_insets if i.position == "before"]
             after_insets  = [i for i in visible_insets if i.position == "after"]
 
-            node_text     = self._resolve_inline(node.text, self._state)
-            before_insets = [dataclasses.replace(i, text=self._resolve_inline(i.text, self._state)) for i in before_insets]
-            after_insets  = [dataclasses.replace(i, text=self._resolve_inline(i.text, self._state)) for i in after_insets]
-            before        = [dataclasses.replace(o, text=self._resolve_inline(o.text, self._state)) for o in before]
-            after         = [dataclasses.replace(o, text=self._resolve_inline(o.text, self._state)) for o in after]
+            def _pt(text: str) -> str:
+                return self._resolve_inline(self._substitute_vars(text, self._state), self._state)
+
+            node_text     = _pt(node.text)
+            before_insets = [dataclasses.replace(i, text=_pt(i.text)) for i in before_insets]
+            after_insets  = [dataclasses.replace(i, text=_pt(i.text)) for i in after_insets]
+            before        = [dataclasses.replace(o, text=_pt(o.text)) for o in before]
+            after         = [dataclasses.replace(o, text=_pt(o.text)) for o in after]
 
             if node.is_ending or not visible:
                 self.display.show_ending(node_text, node.ending_type, overlays=before + after)
@@ -141,6 +145,13 @@ class Engine:
         self._state = {}
         self._current_scene = None
         self.save_manager.delete(self.story.id)
+
+    @staticmethod
+    def _substitute_vars(text: str, state: dict) -> str:
+        def _replace(m: re.Match) -> str:
+            val = state.get(m.group(1))
+            return str(val) if val is not None else m.group(0)
+        return _SUBST_RE.sub(_replace, text)
 
     @staticmethod
     def _resolve_inline(text: str, state: dict) -> str:
