@@ -20,11 +20,13 @@ class Engine:
         save_manager: SaveManager,
         display: Display,
         gallery_manager: GalleryManager | None = None,
+        initial_state: dict[str, bool | int | str] | None = None,
     ) -> None:
         self.story = story
         self.save_manager = save_manager
         self.display = display
         self.gallery_manager = gallery_manager
+        self._initial_state: dict[str, bool | int | str] = dict(initial_state) if initial_state else {}
         self._current_node: str = story.start_node
         self._history: list[str] = []
         self._state: dict[str, bool | int | str] = {}
@@ -122,7 +124,7 @@ class Engine:
                     return
         self._current_node = self.story.start_node
         self._history = []
-        self._state = {}
+        self._state = dict(self._initial_state)
 
     def _advance(self, choice: Choice) -> None:
         self._apply_sets(choice.sets)
@@ -142,7 +144,7 @@ class Engine:
     def _reset(self) -> None:
         self._current_node = self.story.start_node
         self._history = []
-        self._state = {}
+        self._state = dict(self._initial_state)
         self._current_scene = None
         self.save_manager.delete(self.story.id)
 

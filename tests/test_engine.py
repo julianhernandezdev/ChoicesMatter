@@ -976,3 +976,46 @@ def test_var_sub_before_inline_resolution(saves_dir: Path) -> None:
 
     mid_call = display.show_node.call_args_list[1]
     assert mid_call.args[1] == "Hello, Mira!"
+
+
+# ------------------------------------------------------------------
+# initial_state parameter tests
+# ------------------------------------------------------------------
+
+def test_initial_state_seeds_state_on_new_game(saves_dir: Path, two_node_story: Story) -> None:
+    display = _make_display(play_again=False)
+    sm = SaveManager(saves_dir)
+    engine = Engine(two_node_story, sm, display, initial_state={"player_name": "Felix"})
+    engine._resolve_start()
+    assert engine._state["player_name"] == "Felix"
+
+
+def test_initial_state_not_overwritten_on_save_resume(saves_dir: Path, two_node_story: Story) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write(SaveState(
+        story_id="test_story",
+        current_node="start",
+        history=[],
+        state={"player_name": "Saved Name"},
+    ))
+    display = _make_display(continue_save=True)
+    engine = Engine(two_node_story, sm, display, initial_state={"player_name": "Felix"})
+    engine._resolve_start()
+    assert engine._state["player_name"] == "Saved Name"
+
+
+def test_reset_reseeds_from_initial_state(saves_dir: Path, two_node_story: Story) -> None:
+    display = _make_display()
+    sm = SaveManager(saves_dir)
+    engine = Engine(two_node_story, sm, display, initial_state={"player_name": "Felix"})
+    engine._state["player_name"] = "Modified"
+    engine._reset()
+    assert engine._state["player_name"] == "Felix"
+
+
+def test_no_initial_state_defaults_to_empty(saves_dir: Path, two_node_story: Story) -> None:
+    display = _make_display(play_again=False)
+    sm = SaveManager(saves_dir)
+    engine = Engine(two_node_story, sm, display)
+    engine._resolve_start()
+    assert "player_name" not in engine._state
