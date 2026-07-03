@@ -29,6 +29,7 @@ var warningEntry = null;
 var warningResume = false;
 var resumeEntry = null;
 var resumeSkipWarnings = false;
+var namePromptEntry = null;
 var settingsDraft = null;
 var settingsEditRow = null;
 var speedCustomEdit = false;
@@ -154,6 +155,7 @@ var SETTINGS_ROWS = [
   { key: 'pauses.—',   label: 'Pause after  —', type: 'number', unit: 'ms', section: null },
   { key: 'page_size',       label: 'Stories per page',  type: 'number',  unit: '',   section: 'Display' },
   { key: 'accessible_mode', label: 'Accessible mode',   type: 'a11y',               section: 'Accessibility' },
+  { key: 'player_name',     label: 'Player name',       type: 'text',               section: 'Player' },
 ];
 
 function getPageSize() { return loadTypewriterSettings().page_size || 5; }
@@ -183,6 +185,10 @@ function promptPrefix() {
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     var row = SETTINGS_ROWS[settingsEditRow];
     return 'Edit ' + (row ? row.label : 'value') + ': ';
+  }
+  if (currentScreen === 'name-prompt') {
+    var pn = loadTypewriterSettings().player_name;
+    return 'Name' + (pn ? ' [' + escapeHtml(pn) + ']' : '') + ': ';
   }
   if (currentScreen === 'game')           return 'Your choice (or <span class="key-back">Q</span> to menu): ';
   if (currentScreen === 'resume')         return 'Continue? (<span class="key-fwd">C</span> continue &middot; <span class="key-back">N</span> new game): ';
@@ -353,6 +359,78 @@ function renderWarnings(entry, resume) {
   updatePrompt();
 }
 
+function _resolvePlayerName(entered, meta) {
+  if (entered !== '') return entered;
+  if (meta.name_default) return meta.name_default;
+  var savedName = loadTypewriterSettings().player_name;
+  if (savedName) return savedName;
+  return null; // reject — no fallback available
+}
+
+function renderNamePrompt() {
+  if (isAccessibleMode()) { renderAccessibleNamePrompt(); return; }
+  document.body.classList.remove('reader-mode');
+  pendingInput = '';
+  currentScreen = 'name-prompt';
+  setPageTitle('Protagonist');
+  var meta = namePromptEntry.story.meta;
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Protagonist', 'cyan') +
+    '<p class="terminal-prose">' + escapeHtml(meta.name_prompt) + '</p>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint"><span class="key-back">Esc</span> to go back. Press Enter to confirm.</div>' +
+    '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
+    '</div>' +
+    '</div>';
+  updatePrompt();
+}
+
+function renderAccessibleNamePrompt() {
+  document.body.classList.add('reader-mode');
+  currentScreen = 'name-prompt';
+  setPageTitle('Protagonist');
+  var meta = namePromptEntry.story.meta;
+  var savedName = loadTypewriterSettings().player_name;
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Protagonist</h1>' +
+    '<p class="r-prose">' + escapeHtml(meta.name_prompt) + '</p>' +
+    '<div class="r-name-form">' +
+    '<label for="r-name-input" class="r-name-label">Your name</label>' +
+    '<input id="r-name-input" type="text" class="r-name-input" value="' + escapeHtml(savedName || '') + '"' +
+    (meta.name_default ? ' placeholder="' + escapeHtml(meta.name_default) + '"' : '') +
+    ' autocomplete="off">' +
+    '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-submit-btn">Continue</button>' +
+    '<button class="r-btn ghost r-back-btn">&#8592; Back</button>' +
+    '</div>' +
+    '</main>';
+
+  var input = document.getElementById('r-name-input');
+  if (input) input.focus();
+
+  app.querySelector('.r-submit-btn').addEventListener('click', function() {
+    var entered = input ? input.value.trim() : '';
+    var resolvedName = _resolvePlayerName(entered, meta);
+    if (resolvedName === null) {
+      var errEl = app.querySelector('.r-name-error');
+      if (!errEl) {
+        errEl = document.createElement('p');
+        errEl.className = 'r-name-error';
+        errEl.textContent = 'Please enter a name, or set one in Settings.';
+        if (input) input.parentNode.insertBefore(errEl, input.nextSibling);
+      }
+      if (input) input.focus();
+      return;
+    }
+    startStory(namePromptEntry, { resume: false, skipWarnings: true, skipNamePrompt: true, playerName: resolvedName });
+  });
+  app.querySelector('.r-back-btn').addEventListener('click', renderLibrary);
+}
+
 function renderGame() {
   if (isAccessibleMode()) { renderAccessibleGame(); return; }
   document.body.classList.remove('reader-mode');
@@ -486,6 +564,7 @@ function renderSettings() {
       pauses: Object.assign({}, s.pauses),
       page_size: s.page_size,
       accessible_mode: s.accessible_mode,
+      player_name: s.player_name,
     };
   }
   settingsEditRow = null;
@@ -1017,6 +1096,7 @@ function renderAccessibleSettings() {
       enabled: s.enabled, delay_ms: s.delay_ms,
       pauses: Object.assign({}, s.pauses),
       page_size: s.page_size, accessible_mode: s.accessible_mode,
+      player_name: s.player_name,
     };
   }
   settingsEditRow = null;
@@ -1133,14 +1213,18 @@ function startSettingsEdit(rowIndex) {
     renderSettings();
     return;
   }
-  if (isAccessibleMode() && row.type === 'number') {
+  if (isAccessibleMode() && (row.type === 'number' || row.type === 'text')) {
     var currentVal = getSettingValue(settingsDraft, row.key);
-    var entered = window.prompt(row.label + ':', String(currentVal));
+    var entered = window.prompt(row.label + ':', String(currentVal || ''));
     if (entered !== null) {
-      var num = parseInt(entered, 10);
-      if (!isNaN(num)) {
-        if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
-        if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+      if (row.type === 'text') {
+        if (entered.trim() !== '') setSettingValue(settingsDraft, row.key, entered.trim());
+      } else {
+        var num = parseInt(entered, 10);
+        if (!isNaN(num)) {
+          if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
+          if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+        }
       }
     }
     renderSettings();
@@ -1172,10 +1256,16 @@ function confirmSettingsEdit() {
   if (!row) return;
   var inlineInput = document.getElementById('settings-edit-input');
   var valueStr = inlineInput ? inlineInput.value : pendingInput.trim();
-  var num = parseInt(valueStr, 10);
-  if (!isNaN(num)) {
-    if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
-    if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+  if (row.type === 'text') {
+    if (valueStr.trim() !== '') {
+      setSettingValue(settingsDraft, row.key, valueStr.trim());
+    }
+  } else {
+    var num = parseInt(valueStr, 10);
+    if (!isNaN(num)) {
+      if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
+      if (num >= 0) setSettingValue(settingsDraft, row.key, num);
+    }
   }
   settingsEditRow = null;
   pendingInput = '';
@@ -1221,7 +1311,7 @@ function toggleAccessibleMode() {
 
 // --- Story flow ---
 
-function startStory(entry, { resume = false, skipWarnings = false, skipResume = false } = {}) {
+function startStory(entry, { resume = false, skipWarnings = false, skipResume = false, skipNamePrompt = false, playerName = null } = {}) {
   if (!entry) return;
   if (!skipWarnings && entry.story.meta.warnings?.length) {
     renderWarnings(entry, resume);
@@ -1231,9 +1321,15 @@ function startStory(entry, { resume = false, skipWarnings = false, skipResume = 
     renderResume(entry, skipWarnings);
     return;
   }
+  if (entry.story.meta.name_prompt && !resume && !skipNamePrompt) {
+    namePromptEntry = entry;
+    renderNamePrompt();
+    return;
+  }
   const saved = resume ? loadSave(entry.story.meta.id) : null;
   if (!resume) deleteSave(entry.story.meta.id);
-  currentRun = createRun(entry, saved);
+  const resolvedName = playerName !== null ? playerName : loadTypewriterSettings().player_name;
+  currentRun = createRun(entry, saved, { player_name: resolvedName });
   lastSaved = resume ? "Restored saved progress." : "";
   renderGame();
 }
@@ -1369,6 +1465,12 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
+  if (currentScreen === 'name-prompt' && keyUp === 'ESCAPE') {
+    pendingInput = '';
+    renderLibrary();
+    return;
+  }
+
   // Settings row edit — real <input> is focused; Enter confirms, Escape cancels
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     if (keyUp === 'ENTER')  { confirmSettingsEdit(); return; }
@@ -1402,6 +1504,15 @@ document.addEventListener('keydown', function(e) {
   }
 
   if (keyUp === 'ENTER') {
+    if (currentScreen === 'name-prompt') {
+      var rawName = pendingInput.trim(); // preserve case — do NOT toLowerCase
+      pendingInput = '';
+      updatePrompt();
+      var resolvedName = _resolvePlayerName(rawName, namePromptEntry.story.meta);
+      if (resolvedName === null) { renderNamePrompt(); return; } // re-prompt
+      startStory(namePromptEntry, { resume: false, skipWarnings: true, skipNamePrompt: true, playerName: resolvedName });
+      return;
+    }
     var input = pendingInput.trim().toLowerCase();
     pendingInput = '';
     updatePrompt();
@@ -1454,6 +1565,15 @@ mobileCapture.addEventListener('keydown', function(e) {
   }
   if (e.key === 'Enter') {
     e.preventDefault();
+    if (currentScreen === 'name-prompt') {
+      var rawName = pendingInput.trim();
+      pendingInput = '';
+      mobileCapture.value = '';
+      var resolvedName = _resolvePlayerName(rawName, namePromptEntry.story.meta);
+      if (resolvedName === null) { renderNamePrompt(); return; }
+      startStory(namePromptEntry, { resume: false, skipWarnings: true, skipNamePrompt: true, playerName: resolvedName });
+      return;
+    }
     var input = pendingInput.trim().toLowerCase();
     pendingInput = '';
     mobileCapture.value = '';
