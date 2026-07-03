@@ -847,3 +847,132 @@ def test_inline_resolved_in_overlay_text(saves_dir: Path) -> None:
     after_overlays = hall_choices_call.args[2]
     assert len(after_overlays) == 1
     assert after_overlays[0].text == "ALARM SOUNDS."
+
+
+# ------------------------------------------------------------------
+# Variable text substitution: _substitute_vars unit tests
+# ------------------------------------------------------------------
+
+def test_substitute_vars_replaces_key_with_string_value() -> None:
+    assert Engine._substitute_vars("Hello, {name}!", {"name": "Mira"}) == "Hello, Mira!"
+
+
+def test_substitute_vars_missing_key_left_intact() -> None:
+    assert Engine._substitute_vars("Hello, {name}!", {}) == "Hello, {name}!"
+
+
+def test_substitute_vars_int_coerced_to_str() -> None:
+    assert Engine._substitute_vars("Score: {score}", {"score": 42}) == "Score: 42"
+
+
+def test_substitute_vars_bool_coerced_to_str() -> None:
+    assert Engine._substitute_vars("Done: {done}", {"done": True}) == "Done: True"
+
+
+def test_substitute_vars_replaces_multiple_keys() -> None:
+    assert Engine._substitute_vars("{a} and {b}", {"a": "one", "b": "two"}) == "one and two"
+
+
+def test_substitute_vars_does_not_touch_conditional_syntax() -> None:
+    # {flag?yes|no} must not be partially consumed — the ? prevents the regex matching
+    assert Engine._substitute_vars("{flag?yes|no}", {"flag": "yes"}) == "{flag?yes|no}"
+
+
+def test_substitute_vars_leaves_pause_token_intact_when_not_in_state() -> None:
+    assert Engine._substitute_vars("wait.{pause}go.", {}) == "wait.{pause}go."
+
+
+def test_substitute_vars_no_patterns_unchanged() -> None:
+    assert Engine._substitute_vars("Plain text.", {"name": "Mira"}) == "Plain text."
+
+
+# ------------------------------------------------------------------
+# Variable text substitution: integration tests through run()
+# ------------------------------------------------------------------
+
+def test_var_sub_applied_to_node_text(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(
+            text="Name set.",
+            choices=[Choice(label="Go", next="mid", sets={"player_name": "Mira"})],
+        ),
+        "mid": Node(
+            text="Hello, {player_name}!",
+            choices=[Choice(label="End", next="end")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_node.call_args_list[1]
+    assert mid_call.args[1] == "Hello, Mira!"
+
+
+def test_var_sub_applied_to_inset_text(saves_dir: Path) -> None:
+    from src.story import Inset
+    story = _make_story({
+        "start": Node(
+            text="Go.",
+            choices=[Choice(label="Go", next="mid", sets={"rank": "Captain"})],
+        ),
+        "mid": Node(
+            text="A door.",
+            choices=[Choice(label="End", next="end")],
+            insets=[Inset(text="Rank: {rank}", position="before")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_node.call_args_list[1]
+    before_insets = mid_call.args[2]
+    assert len(before_insets) == 1 and before_insets[0].text == "Rank: Captain"
+
+
+def test_var_sub_applied_to_overlay_text(saves_dir: Path) -> None:
+    from src.story import Overlay
+    story = _make_story({
+        "start": Node(
+            text="Go.",
+            choices=[Choice(label="Go", next="mid", sets={"mood": "tense"})],
+        ),
+        "mid": Node(
+            text="A room.",
+            choices=[Choice(label="End", next="end")],
+            overlays=[Overlay(text="The air feels {mood}.", position="after")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_choices.call_args_list[1]
+    after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
+    assert len(after) == 1 and after[0].text == "The air feels tense."
+
+
+def test_var_sub_before_inline_resolution(saves_dir: Path) -> None:
+    # {player_name} is substituted first, then {known?...} is resolved.
+    # If known is true, the result should use the substituted name.
+    story = _make_story({
+        "start": Node(
+            text="Setup.",
+            choices=[Choice(label="Go", next="mid", sets={"player_name": "Mira", "known": True})],
+        ),
+        "mid": Node(
+            text="{known?Hello, {player_name}!|Hello, stranger!}",
+            choices=[Choice(label="End", next="end")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    display.prompt_choice.side_effect = [1, 1]
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    mid_call = display.show_node.call_args_list[1]
+    assert mid_call.args[1] == "Hello, Mira!"

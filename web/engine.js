@@ -6,6 +6,15 @@ export function resolveInline(text, state = {}) {
   });
 }
 
+const _SUBST_RE = /\{(\w+)\}/g;
+
+export function substituteVars(text, state = {}) {
+  return text.replace(_SUBST_RE, (match, key) => {
+    const val = state[key];
+    return val !== undefined && val !== null ? String(val) : match;
+  });
+}
+
 export function checkRequires(requires = {}, state = {}) {
   return Object.entries(requires).every(([key, condition]) => {
     const current = state[key];
@@ -71,17 +80,17 @@ export function currentView(run) {
   const choices = visibleItems(node.choices || [], run.state);
   const overlays = partitionByPosition(visibleItems(node.overlays || [], run.state), "after");
   const insets = partitionByPosition(visibleItems(node.insets || [], run.state), "before");
-  const ri = (text) => resolveInline(text, run.state);
+  const pt = (text) => resolveInline(substituteVars(text, run.state), run.state);
   return {
-    node: { ...node, text: ri(node.text) },
+    node: { ...node, text: pt(node.text) },
     choices,
     overlays: {
-      before: overlays.before.map((o) => ({ ...o, text: ri(o.text) })),
-      after: overlays.after.map((o) => ({ ...o, text: ri(o.text) })),
+      before: overlays.before.map((o) => ({ ...o, text: pt(o.text) })),
+      after: overlays.after.map((o) => ({ ...o, text: pt(o.text) })),
     },
     insets: {
-      before: insets.before.map((i) => ({ ...i, text: ri(i.text) })),
-      after: insets.after.map((i) => ({ ...i, text: ri(i.text) })),
+      before: insets.before.map((i) => ({ ...i, text: pt(i.text) })),
+      after: insets.after.map((i) => ({ ...i, text: pt(i.text) })),
     },
     isEnding: Boolean(node.is_ending || choices.length === 0),
   };

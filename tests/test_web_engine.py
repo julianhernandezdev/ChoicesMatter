@@ -168,3 +168,128 @@ currentView(run);
 console.log(story.nodes.n.text);
 """
     assert _run(script) == "{f?yes|no}"
+
+
+# ---------------------------------------------------------------------------
+# substituteVars — helper
+# ---------------------------------------------------------------------------
+
+def _sv(text: str, state: dict) -> str:
+    """Call substituteVars(text, state) in JS and return the result string."""
+    script = f"""
+import {{ substituteVars }} from './web/engine.js';
+console.log(substituteVars({json.dumps(text)}, {json.dumps(state)}));
+"""
+    return _run(script)
+
+
+# ---------------------------------------------------------------------------
+# substituteVars — unit tests
+# ---------------------------------------------------------------------------
+
+def test_substitute_vars_js_replaces_key() -> None:
+    assert _sv("Hello, {name}!", {"name": "Mira"}) == "Hello, Mira!"
+
+
+def test_substitute_vars_js_missing_key_left_intact() -> None:
+    assert _sv("Hello, {name}!", {}) == "Hello, {name}!"
+
+
+def test_substitute_vars_js_int_coerced_to_str() -> None:
+    assert _sv("Score: {score}", {"score": 42}) == "Score: 42"
+
+
+def test_substitute_vars_js_bool_coerced_to_str() -> None:
+    # JS true → "true" (lowercase), consistent with String(true)
+    assert _sv("Done: {done}", {"done": True}) == "Done: true"
+
+
+def test_substitute_vars_js_multiple_keys() -> None:
+    assert _sv("{a} and {b}", {"a": "one", "b": "two"}) == "one and two"
+
+
+def test_substitute_vars_js_does_not_touch_conditional_syntax() -> None:
+    assert _sv("{flag?yes|no}", {"flag": "yes"}) == "{flag?yes|no}"
+
+
+def test_substitute_vars_js_leaves_pause_token_intact_when_not_in_state() -> None:
+    assert _sv("wait.{pause}go.", {}) == "wait.{pause}go."
+
+
+def test_substitute_vars_js_no_patterns_unchanged() -> None:
+    assert _sv("Plain text.", {"name": "Mira"}) == "Plain text."
+
+
+# ---------------------------------------------------------------------------
+# substituteVars — currentView integration tests
+# ---------------------------------------------------------------------------
+
+def _view(story_json: str, state: dict) -> dict:
+    """Call currentView(run) in JS and return the parsed result."""
+    script = f"""
+import {{ createRun, currentView }} from './web/engine.js';
+const entry = {{ story: {story_json} }};
+const run = createRun(entry);
+run.state = {json.dumps(state)};
+console.log(JSON.stringify(currentView(run)));
+"""
+    return json.loads(_run(script))
+
+
+def test_substitute_vars_js_in_node_text() -> None:
+    story = json.dumps({
+        "meta": {"id": "t", "title": "T", "version": "1", "author": "T", "start_node": "start"},
+        "nodes": {
+            "start": {
+                "text": "Hello, {player_name}!",
+                "choices": [{"label": "Go", "next": "start"}],
+            }
+        },
+    })
+    view = _view(story, {"player_name": "Mira"})
+    assert view["node"]["text"] == "Hello, Mira!"
+
+
+def test_substitute_vars_js_in_overlay_text() -> None:
+    story = json.dumps({
+        "meta": {"id": "t", "title": "T", "version": "1", "author": "T", "start_node": "start"},
+        "nodes": {
+            "start": {
+                "text": "A room.",
+                "choices": [{"label": "Go", "next": "start"}],
+                "overlays": [{"text": "The air feels {mood}.", "position": "after"}],
+            }
+        },
+    })
+    view = _view(story, {"mood": "tense"})
+    assert view["overlays"]["after"][0]["text"] == "The air feels tense."
+
+
+def test_substitute_vars_js_in_inset_text() -> None:
+    story = json.dumps({
+        "meta": {"id": "t", "title": "T", "version": "1", "author": "T", "start_node": "start"},
+        "nodes": {
+            "start": {
+                "text": "A door.",
+                "choices": [{"label": "Go", "next": "start"}],
+                "insets": [{"text": "Rank: {rank}", "position": "before"}],
+            }
+        },
+    })
+    view = _view(story, {"rank": "Captain"})
+    assert view["insets"]["before"][0]["text"] == "Rank: Captain"
+
+
+def test_substitute_vars_js_before_inline_resolution() -> None:
+    # Substitution runs first; then conditional resolves using substituted text
+    story = json.dumps({
+        "meta": {"id": "t", "title": "T", "version": "1", "author": "T", "start_node": "start"},
+        "nodes": {
+            "start": {
+                "text": "{known?Hello, {player_name}!|Hello, stranger!}",
+                "choices": [{"label": "Go", "next": "start"}],
+            }
+        },
+    })
+    view = _view(story, {"known": True, "player_name": "Mira"})
+    assert view["node"]["text"] == "Hello, Mira!"
