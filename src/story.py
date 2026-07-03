@@ -71,6 +71,8 @@ class Story:
     est_time: str = ""
     warnings: list[str] = field(default_factory=list)
     auto_visited_flags: bool = True
+    name_prompt: str | None = None
+    name_default: str | None = None
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -238,6 +240,28 @@ class StoryLoader:
                                 f"set 'auto_visited_flags: false' in meta to manage these manually"
                             )
 
+        name_prompt_raw = meta.get("name_prompt")
+        name_prompt: str | None = None
+        if name_prompt_raw is not None:
+            if not isinstance(name_prompt_raw, str) or not name_prompt_raw.strip():
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'name_prompt' must be a non-empty string if provided"
+                )
+            name_prompt = name_prompt_raw.strip()
+
+        name_default_raw = meta.get("name_default")
+        name_default: str | None = None
+        if name_default_raw is not None:
+            if name_prompt is None:
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'name_default' requires 'name_prompt' to also be set"
+                )
+            if not isinstance(name_default_raw, str) or not name_default_raw.strip():
+                raise StoryValidationError(
+                    f"'{path.name}': meta field 'name_default' must be a non-empty string if provided"
+                )
+            name_default = name_default_raw.strip()
+
         return Story(
             id=story_id,
             title=title,
@@ -251,6 +275,8 @@ class StoryLoader:
             est_time=est_time,
             warnings=warnings,
             auto_visited_flags=auto_visited_flags,
+            name_prompt=name_prompt,
+            name_default=name_default,
         )
 
     @staticmethod

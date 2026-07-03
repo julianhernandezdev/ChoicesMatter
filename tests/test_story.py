@@ -644,3 +644,57 @@ def test_sets_invalid_type_raises(tmp_path: Path, sample_story_dict: dict) -> No
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     with pytest.raises(StoryValidationError, match="sets"):
         StoryLoader.load(path)
+
+
+# ------------------------------------------------------------------
+# name_prompt and name_default
+# ------------------------------------------------------------------
+
+def test_name_prompt_valid(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["name_prompt"] = "What is your name, Detective?"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.name_prompt == "What is your name, Detective?"
+    assert story.name_default is None
+
+
+def test_name_prompt_and_default_valid(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["name_prompt"] = "What is your name?"
+    sample_story_dict["meta"]["name_default"] = "The Detective"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.name_prompt == "What is your name?"
+    assert story.name_default == "The Detective"
+
+
+def test_name_prompt_absent_defaults_to_none(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert story.name_prompt is None
+    assert story.name_default is None
+
+
+def test_name_prompt_empty_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["name_prompt"] = ""
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="name_prompt"):
+        StoryLoader.load(path)
+
+
+def test_name_default_without_name_prompt_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["name_default"] = "The Detective"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="name_default"):
+        StoryLoader.load(path)
+
+
+def test_name_default_empty_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["name_prompt"] = "What is your name?"
+    sample_story_dict["meta"]["name_default"] = ""
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="name_default"):
+        StoryLoader.load(path)
