@@ -7,6 +7,7 @@ export const TYPEWRITER_DEFAULTS = {
   pauses: { '.': 150, '!': 150, '?': 150, '…': 200, '—': 100 },
   page_size: 5,
   accessible_mode: null,
+  player_name: "Felix",
 };
 
 export function loadTypewriterSettings() {
@@ -22,6 +23,7 @@ export function loadTypewriterSettings() {
       accessible_mode: (stored.accessible_mode === true || stored.accessible_mode === false)
         ? stored.accessible_mode
         : TYPEWRITER_DEFAULTS.accessible_mode,
+      player_name: typeof stored.player_name === 'string' ? stored.player_name : TYPEWRITER_DEFAULTS.player_name,
     };
   } catch {
     return {
@@ -31,6 +33,7 @@ export function loadTypewriterSettings() {
       pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses),
       page_size: TYPEWRITER_DEFAULTS.page_size,
       accessible_mode: TYPEWRITER_DEFAULTS.accessible_mode,
+      player_name: TYPEWRITER_DEFAULTS.player_name,
     };
   }
 }
