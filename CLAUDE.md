@@ -17,7 +17,7 @@ python main.py
 | File | Role |
 |---|---|
 | `main.py` | Entry point — story picker, wires together all components |
-| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection |
+| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection; accepts `initial_state` dict to seed state before game loop and on "play again" resets |
 | `src/story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
 | `src/save.py` | Persistent save state — read/write/delete per story |
 | `src/gallery.py` | Ending gallery — tracks found endings per story across runs |
@@ -63,6 +63,19 @@ main.py
 Stories have two top-level keys: `meta` and `nodes`.
 
 **`meta`** — `id` is the save file key; `start_node` must match a key in `nodes`. `est_time` is optional; if omitted the engine auto-computes it from word count. `warnings` is optional; if present, a warning screen is shown before the story launches. `auto_visited_flags` defaults to `true`; set to `false` to disable automatic `visited_` flag tracking.
+
+| Field | Required | Notes |
+|---|---|---|
+| `id` | Yes | Save file key |
+| `title` | Yes | Display title |
+| `version` | Yes | Version string |
+| `author` | Yes | Author name |
+| `start_node` | Yes | Must match a key in `nodes` |
+| `est_time` | No | Optional; if omitted the engine auto-computes it from word count |
+| `warnings` | No | Optional; if present, a warning screen is shown before the story launches |
+| `auto_visited_flags` | No | Defaults to `true`; set to `false` to disable automatic `visited_` flag tracking |
+| `name_prompt` | No | Non-empty string. Triggers a protagonist name prompt after content warnings and before the first node. Prompt is skipped on save resume. |
+| `name_default` | No | Non-empty string. Fallback name used when the player submits empty and no saved `player_name` exists. Requires `name_prompt` to also be set. |
 
 ```json
 {
@@ -138,7 +151,9 @@ Substitution runs **before** conditional inline resolution. This means a substit
 "text": "{known?Hello, {player_name}!|Hello, stranger!}"
 ```
 
-**Reserved flag name:** do not use `pause` as a flag name — it collides with the `{pause}` typewriter delay token, which is also a `{key}` pattern.
+`{player_name}` is the standard token for the player's protagonist name. It is populated automatically from `settings.json` (default: `"Felix"`) or overridden per-story via `meta.name_prompt`.
+
+**Reserved flag names:** do not use `pause` as a flag name — it collides with the `{pause}` typewriter delay token, which is also a `{key}` pattern. Do not use `player_name` as a flag name set by `choice.sets` — it is reserved for the protagonist name prompt feature and the engine's `initial_state`.
 
 **Choice object:**
 
@@ -218,6 +233,9 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `choice_number_color` present but not a non-empty string
 - Choice `color` present but not a non-empty string
 - Choice `obfuscated` present but not a boolean
+- `name_prompt` present but not a non-empty string
+- `name_default` present without `name_prompt` also being set
+- `name_default` present but not a non-empty string
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
