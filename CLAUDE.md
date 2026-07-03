@@ -26,9 +26,17 @@ python main.py
 
 ```
 /src                 Python CLI engine package (imported as src.X from main.py and tests/)
-/stories             Drop .json story files here — auto-discovered at startup
-/saves               Auto-generated at runtime — one .save.json + one .gallery.json per story
+/web                 Browser-based web player — app.js (rendering/UI), engine.js (pure game logic), typewriter.js, storage.js, style.css
+/stories             Story JSON files — auto-discovered at startup; organized into subfolders:
+                       examples/         (01–20: one file per engine feature)
+                       horror/
+                       showcase/         (including showcase/sci-fi/)
+                       ChoicesMatterGPT/ (GPT-authored stories)
+/tests               Test suite — pytest for Python; node tests/test_web_engine.js for JS engine parity
+/education           Feature guide docs — one .md per example story + feature-reference.md master index
+/accessibility       WCAG docs: implementation guide, screen reader test scripts, renderer authoring checklist
 /scripts             Developer tools (sync_stories.py, validate_story.py)
+/saves               Auto-generated at runtime — one .save.json + one .gallery.json per story
 settings.json        Gitignored, per-user visual style overrides
 settings.example.json  Committed template
 ```
