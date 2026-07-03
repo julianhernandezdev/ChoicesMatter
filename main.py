@@ -159,9 +159,9 @@ def _launch_story(
     if story.warnings:
         if not display.show_content_warnings(story.title, story.warnings):
             return
-    initial_state: dict[str, bool | int | str] = {}
+    settings_name = load_settings().get("player_name", "Felix")
+    initial_state: dict[str, bool | int | str] = {"player_name": settings_name}
     if story.name_prompt and not save_manager.has_save(story.id):
-        settings_name = load_settings().get("player_name", "Felix")
         name = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
         if name is None:
             return
