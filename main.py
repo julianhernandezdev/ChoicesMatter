@@ -8,6 +8,7 @@ from src.display import Display
 from src.engine import Engine
 from src.gallery import GalleryManager
 from src.save import SaveManager
+from src.config import load_settings
 from src.story import StoryLoader, StoryValidationError
 
 STORIES_DIR = Path("stories")
@@ -158,7 +159,22 @@ def _launch_story(
     if story.warnings:
         if not display.show_content_warnings(story.title, story.warnings):
             return
-    Engine(story, save_manager, display, gallery_manager).run()
+    initial_state: dict[str, bool | int | str] = {}
+    if story.name_prompt and not save_manager.has_save(story.id):
+        settings_name = load_settings().get("player_name", "Felix")
+        name = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
+        if name is None:
+            return
+        if not name:
+            if story.name_default:
+                name = story.name_default
+            elif settings_name:
+                name = settings_name
+            else:
+                display.show_name_required()
+                return
+        initial_state = {"player_name": name}
+    Engine(story, save_manager, display, gallery_manager, initial_state=initial_state).run()
     display.clear_screen()
 
 

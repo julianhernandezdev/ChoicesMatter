@@ -663,3 +663,25 @@ def test_show_choices_no_debug_no_panel():
     d.show_choices(choices, [], [], debug_state={"trust": True})
     all_prints = " ".join(str(c) for c in d.console.print.call_args_list)
     assert "debug: flags" not in all_prints
+
+
+# ------------------------------------------------------------------
+# Prompt: protagonist name
+# ------------------------------------------------------------------
+
+def test_prompt_protagonist_name_returns_entered_name(display) -> None:
+    display.console.input.return_value = "Aria"
+    result = display.prompt_protagonist_name("What is your name?", prefill="Felix")
+    assert result == "Aria"
+
+
+def test_prompt_protagonist_name_q_returns_none(display) -> None:
+    display.console.input.return_value = "q"
+    result = display.prompt_protagonist_name("What is your name?", prefill="Felix")
+    assert result is None
+
+
+def test_prompt_protagonist_name_empty_returns_empty_string(display) -> None:
+    display.console.input.return_value = ""
+    result = display.prompt_protagonist_name("What is your name?", prefill="Felix")
+    assert result == ""
