@@ -809,3 +809,17 @@ def test_inline_corrupt_valid_in_overlay(tmp_path: Path, sample_story_dict: dict
     path = tmp_path / "s.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     StoryLoader.load(path)   # should not raise
+
+def test_inline_corrupt_flag_name_starting_with_corrupt_not_flagged(tmp_path: Path, sample_story_dict: dict) -> None:
+    """Flag names that start with 'corrupt' must not be mistaken for {corrupt} tokens."""
+    sample_story_dict["nodes"]["start"]["text"] = "{corrupt_zone?tainted|clean}"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    StoryLoader.load(path)   # must not raise
+
+def test_inline_corrupt_substitution_flag_starting_with_corrupt_not_flagged(tmp_path: Path, sample_story_dict: dict) -> None:
+    """Variable substitution with flag starting with 'corrupt' must not raise."""
+    sample_story_dict["nodes"]["start"]["text"] = "Zone: {corrupt_level}"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    StoryLoader.load(path)   # must not raise

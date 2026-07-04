@@ -474,11 +474,8 @@ class StoryLoader:
 
     @staticmethod
     def _validate_corruption_spans(text: str, location: str, filename: str) -> None:
-        _OPEN = re.compile(r"\{corrupt(?::([^}]*))?\}")
-        _CLOSE = re.compile(r"\{/corrupt\}")
-
         tokens = []
-        for m in re.finditer(r"\{corrupt[^}]*\}|\{/corrupt\}", text):
+        for m in re.finditer(r"\{corrupt(?::[^}]*)?\}|\{/corrupt\}", text):
             tokens.append(("open" if not m.group().startswith("{/") else "close", m.start(), m.group()))
 
         depth = 0
