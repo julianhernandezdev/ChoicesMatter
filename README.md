@@ -25,6 +25,10 @@
     <td>🤖 <strong>GPT authoring tool</strong><br>ChoicesMatterGPT writes the JSON</td>
   </tr>
   <tr>
+    <td>🔤 <strong>Variable text substitution</strong><br><code>{player_name}</code> in any text field</td>
+    <td>👤 <strong>Protagonist name prompt</strong><br>Per-story name input, <code>{player_name}</code> token</td>
+  </tr>
+  <tr>
     <td valign="top">
       <strong>Getting started</strong><br>
       <a href="#requirements">Requirements</a><br>
@@ -47,7 +51,9 @@
         &nbsp;&nbsp;&nbsp;<a href="#choice-number-color">Choice colors</a><br>
         &nbsp;&nbsp;&nbsp;<a href="#insets">Insets</a><br>
         &nbsp;&nbsp;&nbsp;<a href="#conditional-overlays">Overlays</a><br>
-        &nbsp;&nbsp;&nbsp;<a href="#conditional-inline-text">Conditional inline text</a>
+        &nbsp;&nbsp;&nbsp;<a href="#conditional-inline-text">Conditional inline text</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#variable-text-substitution">Variable substitution</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#protagonist-name-prompt">Protagonist name</a>
       </details>
     </td>
   </tr>
@@ -110,7 +116,9 @@ Stories are JSON files with two top-level keys: `meta` and `nodes`.
 }
 ```
 
-`id` is used as the save file key. `start_node` must match a key in `nodes`. `est_time` is optional — if omitted, the engine auto-computes it from word count. If supplied, it's shown as-is in the story picker. `warnings` is optional — a list of strings shown in a yellow warning panel before launch; affected stories are marked `[!]` in the picker. `auto_visited_flags` defaults to `true` — see the Flags section below.
+`id` is used as the save file key. `start_node` must match a key in `nodes`. `est_time` is optional — if omitted, the engine auto-computes it from word count. `warnings` is optional — a list of strings shown in a yellow warning panel before launch; affected stories are marked `[!]` in the picker. `auto_visited_flags` defaults to `true` — see the Flags section below.
+
+`name_prompt` is optional — a non-empty string that triggers a name input screen after content warnings and before the first node. The entered name is stored as `player_name` and available as `{player_name}` in any text field. `name_default` is optional — a per-story fallback used when the player submits empty input; requires `name_prompt` to also be set.
 
 ### Nodes
 
@@ -274,6 +282,46 @@ The false branch is optional; omitting it collapses to nothing when the flag is 
 
 Truthiness mirrors the flag system: `true`, integer ≥ 1, and non-empty strings resolve to the true branch; `false`, `0`, `""`, and missing flags resolve to the false branch. Flag names must match `\w+` (letters, digits, underscores).
 
+### Variable Text Substitution
+
+Write `{key}` inside any text field — node text, insets, or overlays — and the engine replaces it at runtime with the current value of that flag:
+
+```json
+"text": "Welcome back, {player_name}. You have {coins} gold coins."
+```
+
+- Missing keys leave the placeholder intact (`{unknown_flag}` stays as-is)
+- Substitution runs **before** conditional inline resolution, so substituted values can appear inside `{flag?...}` branches:
+
+```json
+"text": "{known?Hello, {player_name}!|Hello, stranger!}"
+```
+
+> [!WARNING]
+> `{pause}` is reserved by the typewriter system — don't use it as a flag name. `player_name` is reserved for the protagonist name feature.
+
+### Protagonist Name Prompt
+
+Add `name_prompt` to `meta` to ask the player for a name before the first node:
+
+```json
+{
+  "meta": {
+    "name_prompt": "What is your name, Detective?",
+    "name_default": "The Detective"
+  }
+}
+```
+
+- `name_prompt` — text shown on the name input screen (triggers the feature)
+- `name_default` — fallback used when the player submits empty input and has no saved name (optional; requires `name_prompt`)
+- The entered name is stored as `player_name` and available as `{player_name}` anywhere via variable substitution
+- Prompt is skipped on save resume — the saved name is used directly
+- Players can set a persistent default name via **Settings → Player name** (default: `Felix`)
+
+> [!NOTE]
+> Stories that use `{player_name}` without `name_prompt` will use the player's saved name. You don't need a prompt to use the token.
+
 ## Named Styles
 
 Both overlays and insets accept a `style` field. The built-in named styles are:
@@ -335,6 +383,14 @@ Enable character-by-character text streaming in `settings.json`:
 - Press any key mid-animation to skip to the full text
 - After prose finishes, choices stagger in at 60ms each after a short breath
 - Toggle on/off at the story picker with **T** without editing `settings.json`
+
+**Inline pause token** — embed `{pause}` anywhere in node or ending `text` to inject a deliberate mid-stream delay:
+
+```json
+"text": "You reach for the handle.{pause}The door swings open."
+```
+
+The pause duration is `typewriter.pause_ms` (default 500 ms). In non-typewriter mode the token is stripped silently.
 
 ## Adding a Story
 

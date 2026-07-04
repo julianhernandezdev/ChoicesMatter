@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Choices Matter** is a Python CLI text adventure engine. Stories are fully data-driven — all content lives in `.json` files under `/stories/`. The engine discovers and runs them; no story content belongs in code.
 
+**v1.0 goal: Godot library readiness.** The Python CLI and JS web player are reference implementations. v1.0 ships when the story format and engine semantics are stable enough for a GDScript port (`ChoicesMatter-Godot`). Until then, versioning is 0.x. Format-breaking features (Chapters, Cross-Story Persistent State, Asset Association Layer) must ship and stabilise before v1.0 is declared. Design decisions should favour format stability and clean API surfaces over convenience features.
+
 ## Running the Game
 
 ```bash
@@ -419,3 +421,4 @@ Drop a `.json` file into `/stories/`. No code changes needed.
 - **Story validator CLI:** `python scripts/validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python scripts/validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments.
 - **Multiple save slots:** Change `SaveManager` to accept a slot index; save path becomes `<story_id>.<slot>.save.json`.
 - **Graph branching (convergent nodes):** No engine changes needed — just point multiple `next` values at the same node ID.
+- **Godot / host engine binding:** The v1.0 deliverable. A GDScript port reads the same `.json` files and emits signals defined in `docs/superpowers/specs/godot-signal-api.md` (not yet written). Format-changing backlog items (Chapters, Cross-Story Persistent State, Asset Association Layer) must ship before the signal API is frozen. Do not introduce new top-level `node` fields or new reserved flag namespaces without considering their GDScript surface.
