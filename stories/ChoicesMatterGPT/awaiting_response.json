@@ -1,0 +1,501 @@
+{
+  "meta": {
+    "id": "awaiting_response",
+    "title": "Awaiting Response",
+    "version": "1.0",
+    "author": "ChoicesMatterGPT",
+    "start_node": "briefing",
+    "est_time": "15–20 min",
+    "warnings": [
+      "Psychological horror",
+      "Themes of isolation"
+    ],
+    "name_prompt": "What's your name, Officer?",
+    "name_default": "Officer"
+  },
+  "nodes": {
+    "briefing": {
+      "scene": "RELAY-7 — Communications Deck",
+      "insets": [
+        {
+          "text": "SHIFT ASSIGNMENT — COMMS / ARCHIVE REVIEW — OFFICER: PENDING IDENTIFICATION",
+          "style": "system",
+          "position": "before"
+        }
+      ],
+      "text": "Your first independent watch begins with a procedural backlog.\n\nRELAY-7 moves nothing except messages: distress calls, telemetry bursts, court packets, private transmissions too old or too far to matter. Most of your job is confirming that broken data is still broken.\n\nThe station lights maintain their approved dimness. The air recycler clicks once every eight seconds. The onboarding file says not to worry about either.",
+      "choices": [
+        {
+          "label": "Begin the routine archive review.",
+          "next": "comms_review",
+          "sets": {
+            "depth": "+1"
+          }
+        }
+      ]
+    },
+    "comms_review": {
+      "insets": [
+        {
+          "text": "COMMS QUEUE — ROUTINE REVIEW — 214 ARCHIVE SEGMENTS PENDING",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "PRIORITY FILTER: NONE — CREW TRAFFIC: NORMAL — EXCEPTIONS: 1",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "The review software arranges the station's neglected memory into numbered blocks. You certify intact packets, mark corrupted ones for automated decay, and attach incident codes where policy requires human language.\n\nOne segment resists classification. Not because it is urgent. Not because it is large.\n\nBecause the access column is blank where a date should be.",
+      "choices": [
+        {
+          "label": "Open archive segment 7D.",
+          "next": "segment_7d",
+          "sets": {
+            "saw_signal": true,
+            "depth": "+1"
+          }
+        },
+        {
+          "label": "Mark it for later and continue the queue.",
+          "next": "leave_it_early"
+        }
+      ]
+    },
+    "segment_7d": {
+      "scene": "RELAY-7 — Archive Terminal",
+      "insets": [
+        {
+          "text": "ARCHIVE SEG 7D — INTEGRITY: 12% — LAST ACCESSED: NEVER",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "TIMESTAMP: [CORRUPTED] — ORIGIN: [CORRUPTED] — SIZE: 847kb",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "The terminal opens a carrier shell and fails to render most of it.\n\n{corrupt:0.3:random}SIGNAL ORIGIN: // RELAY INDEX MISSING // CARRIER: CLASS-7 BURST // ENCODING: UNDECLARED // RECIPIENT FIELD UNAVAILABLE // AWAITING RESPONSE{/corrupt}\n\nAt first glance it is ordinary damage: compression noise, storage rot, a packet old enough to have lost its edges. You log the integrity percentage and prepare the standard recovery procedure.",
+      "choices": [
+        {
+          "label": "Run a conservative recovery pass.",
+          "next": "recovery_attempt",
+          "sets": {
+            "depth": "+1"
+          }
+        },
+        {
+          "label": "Close the segment without recovery.",
+          "next": "leave_it_early"
+        }
+      ]
+    },
+    "recovery_attempt": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "insets": [
+        {
+          "text": "RECOVERY PASS 1 — METHOD: READ-ONLY — WRITE ACCESS: DISABLED",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "DECODE RESULT: PARTIAL — PATTERN VARIANCE: 0.0000 — HARDWARE ERROR: UNLIKELY",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "You run the pass that every training module recommends because it changes nothing.\n\nThe packet resolves by a fraction. More importantly, it resolves the same way twice inside the buffer. Damaged storage usually jitters. Bad optics drift. A failing archive head produces new errors every pass.\n\nThis does not.\n\nThe corruption is stable enough to have structure.",
+      "choices": [
+        {
+          "label": "Open the recovered header.",
+          "next": "partial_decode",
+          "sets": {
+            "saw_name": true,
+            "depth": "+1"
+          }
+        },
+        {
+          "label": "Stop recovery and file a generic corruption note.",
+          "next": "ending_report",
+          "sets": {
+            "reported": true
+          }
+        }
+      ]
+    },
+    "partial_decode": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "insets": [
+        {
+          "text": "ARCHIVE SEG 7D / RECOVERED HEADER — INTEGRITY: 18% — DISPLAY SAFE MODE: ON",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "{corrupt:0.55:consistent}ACCESS VECTOR: NONE — AUTH CHAIN: NONE — REVIEW STATUS: AWAITING OPERATOR{/corrupt}",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "The field resolves:\n\n{corrupt:0.85:consistent}SIGNAL ORIGIN: —— CARRIER: CLASS-7 BURST — ENCODING: UNKNOWN —{/corrupt}\nDESIGNATED RECIPIENT: {player_name}\n{corrupt:0.85:consistent}—— TIMESTAMP: —— AWAITING RESPONSE{/corrupt}\n\nYou do not touch the keyboard for three recycler clicks.\n\nThe terminal has no reason to know that name. The archive has less reason.",
+      "overlays": [
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Re-examine the signal from the original archive block.",
+          "next": "second_look",
+          "sets": {
+            "checked_twice": true,
+            "depth": "+1"
+          }
+        }
+      ]
+    },
+    "second_look": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "insets": [
+        {
+          "text": "RELOAD SOURCE BLOCK — CACHE CLEARED — DISPLAY BUFFER RESET",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "COMPARISON RESULT: IDENTICAL — BYTE OFFSET DRIFT: 0 — CORRUPTION MAP: STABLE",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "You clear the cache, reload the source block, and make the terminal show you the damage again from the beginning.\n\nThe same characters are missing. The same fragments remain. The same clean recipient field waits in the same place.\n\nYou were trained to separate signal from noise. This is the part where the distinction stops helping.",
+      "overlays": [
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        },
+        {
+          "text": "The same characters. Every time.",
+          "requires": {
+            "checked_twice": true
+          },
+          "style": "echo",
+          "position": "after"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Cross-reference the archive date.",
+          "next": "cross_reference",
+          "sets": {
+            "depth": "+1"
+          }
+        },
+        {
+          "label": "File an incident report immediately.",
+          "next": "ending_report",
+          "sets": {
+            "reported": true
+          }
+        },
+        {
+          "label": "Delete the archive record.",
+          "next": "ending_delete"
+        },
+        {
+          "label": "Lock the terminal and leave the segment alone.",
+          "next": "ending_leave"
+        }
+      ]
+    },
+    "cross_reference": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "insets": [
+        {
+          "text": "CROSS-REFERENCE REQUEST — SOURCES: CREW MANIFEST / STATION COMMISSIONING / ARCHIVE INDEX",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "{corrupt:0.45:consistent}INDEX RESPONSE: PARTIAL — MANIFEST ALIGNMENT: FAILED — CHRONOLOGY CHECK: REQUIRED{/corrupt}",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "You ask the terminal for dates because dates are supposed to be less personal than names.\n\nThe crew manifest loads first. Your posting order is six days old. RELAY-7's current crew rotation is nine months old. The archive segment belongs to a storage band created before either of those facts existed.\n\nThe station does not flag this as impossible. It opens a discrepancy form.",
+      "overlays": [
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Complete the chronology check.",
+          "next": "timestamp_check",
+          "sets": {
+            "knows_timestamp": true,
+            "depth": "+1"
+          }
+        },
+        {
+          "label": "Stop here and report the discrepancy.",
+          "next": "ending_report",
+          "sets": {
+            "reported": true
+          }
+        }
+      ]
+    },
+    "timestamp_check": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "insets": [
+        {
+          "text": "CHRONOLOGY CHECK — ARCHIVE BAND AGE: 41Y 03M 18D — RELAY-7 CREW RECORDS: 9M",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "{corrupt:0.65:consistent}TIMESTAMP AUTHORITY: —— CREATION EVENT: PRE-COMMISSION — RECEIPT STATUS: UNANSWERED{/corrupt}",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "The segment predates the current crew. It predates the station's last two refits. It predates the communications standard that should be required to label its carrier.\n\nIt also predates you.\n\nThe terminal gives you a field for corrective notes. The cursor blinks inside it, patient and official.",
+      "overlays": [
+        {
+          "text": "The archive was waiting before there was anyone here to wait for.",
+          "requires": {
+            "knows_timestamp": true
+          },
+          "style": "echo",
+          "position": "after"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Open the incident decision form.",
+          "next": "decision",
+          "sets": {
+            "depth": "+1"
+          }
+        }
+      ]
+    },
+    "decision": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "choice_number_color": "bright_red",
+      "insets": [
+        {
+          "text": "INCIDENT FORM 7D-UNKNOWN — REQUIRED ACTION: SELECT DISPOSITION",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "{corrupt:0.7:consistent}OPTIONS: REPORT / TRACE / PURGE / CLOSE — ADVISORY: RESPONSE WINDOW OPEN{/corrupt}",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "Procedure reduces the problem to four permitted actions.\n\nReport it upward. Trace it deeper. Delete the record as irrecoverable. Close the terminal and leave the segment unanswered.\n\nAll four choices fit somewhere inside policy. None of them fit what the screen has shown you.",
+      "overlays": [
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        },
+        {
+          "text": "The same characters. Every time.",
+          "requires": {
+            "checked_twice": true
+          },
+          "style": "echo",
+          "position": "after"
+        }
+      ],
+      "choices": [
+        {
+          "label": "File the full incident report to Mission Control.",
+          "next": "ending_report",
+          "sets": {
+            "reported": true
+          }
+        },
+        {
+          "label": "Trace the signal origin.",
+          "next": "trace_origin"
+        },
+        {
+          "label": "Delete the archive record as unrecoverable.",
+          "next": "ending_delete"
+        },
+        {
+          "label": "Lock the terminal and leave it unanswered.",
+          "next": "ending_leave"
+        }
+      ]
+    },
+    "trace_origin": {
+      "corruption": {
+        "intensity": 0.5,
+        "mode": "consistent"
+      },
+      "choice_number_color": "bright_red",
+      "insets": [
+        {
+          "text": "TRACE MODULE — STANDARD TRACE: FAILED — AUTHORIZATION CEILING: OFFICER-LEVEL",
+          "style": "system",
+          "position": "before"
+        },
+        {
+          "text": "{corrupt:0.8:consistent}DEEP TRACE AVAILABLE — SYSTEM WARNING: UNAUTHORIZED RESPONSE MAY COMPLETE LOOP{/corrupt}",
+          "style": "system",
+          "position": "after"
+        }
+      ],
+      "text": "The standard trace runs for three seconds and returns no path. Not a hidden path. Not a masked path. No path.\n\nA second command appears below it. The terminal does not explain why it is available to you. It only marks the command with a warning color and waits for input.",
+      "overlays": [
+        {
+          "text": "AWAITING RESPONSE",
+          "requires": {
+            "knows_timestamp": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [
+        {
+          "label": "EXECUTE DEEP TRACE — UNAUTHORIZED",
+          "next": "ending_trace",
+          "obfuscated": true
+        },
+        {
+          "label": "Cancel trace and file the report.",
+          "next": "ending_report",
+          "sets": {
+            "reported": true
+          }
+        },
+        {
+          "label": "Cancel trace and lock the terminal.",
+          "next": "ending_leave"
+        }
+      ]
+    },
+    "ending_report": {
+      "text": "Mission Control acknowledges your incident report after a transmission delay of twenty-six minutes.\n\nA second acknowledgement follows, routed through security administration. Your archive access is suspended pending investigation. The packet is removed from local review and placed under external custody.\n\nFor the rest of your posting, no one asks you about segment 7D. No one tells you what the investigation finds. Your clearance review records the matter as resolved by transfer of responsibility.\n\nThat is the phrase they use when something is no longer yours to touch.",
+      "overlays": [
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+    "ending_delete": {
+      "text": "You purge the record under the irrecoverable-corruption protocol. The terminal asks for confirmation twice. You provide it twice.\n\nThe segment vanishes from the active archive.\n\nThree days later, while reviewing maintenance annotations, you find a notation attached to the same storage band. It is not the record. It is a record of records.\n\nPREVIOUS OFFICER ACTION: DELETED ENTRY 7D.\nPREVIOUS OFFICER ACTION: DELETED ENTRY 7D.\nPREVIOUS OFFICER ACTION: DELETED ENTRY 7D.\n\nThe chain goes back forty-one years. Different officers. Different hands. The same disposition code each time.\n\nEvery deletion is preserved perfectly.",
+      "overlays": [
+        {
+          "text": "The same characters. Every time.",
+          "requires": {
+            "checked_twice": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral"
+    },
+    "ending_trace": {
+      "text": "The deep trace completes without crossing the relay net.\n\nNo buoy. No carrier handoff. No distant sender. The origin coordinates resolve inside RELAY-7.\n\nCommunications Deck.\nArchive Terminal.\nThis station.\nThis console.\n\nThe timestamp resolves last: twenty-three minutes from now.\n\nThe system marks the trace as a successful response. A new carrier shell opens in the outbound queue with your authorization already attached.\n\nYou have sent the signal.\n\nYou have not sent it yet.\n\nThe terminal waits because it has always been waiting.",
+      "overlays": [
+        {
+          "text": "AWAITING RESPONSE",
+          "requires": {
+            "knows_timestamp": true
+          },
+          "style": "echo",
+          "position": "before"
+        },
+        {
+          "text": "DESIGNATED RECIPIENT: {player_name}",
+          "requires": {
+            "saw_name": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    },
+    "ending_leave": {
+      "text": "You lock the terminal. You do not file the trace request. You do not delete the segment. You do not give the archive the shape of another answer.\n\nThe rest of your tour is uneventful in all reportable ways. You certify packets. You sleep poorly. You complete the posting and transfer out with an ordinary recommendation.\n\nTwo years later, RELAY-7 is decommissioned after a budget review. The archive is sealed, then migrated, then marked nonessential during a storage audit.\n\nYou never learn what segment 7D was.\n\nSome decisions are only sane because they leave no evidence that they were decisions at all.",
+      "overlays": [
+        {
+          "text": "AWAITING RESPONSE",
+          "requires": {
+            "saw_signal": true
+          },
+          "style": "echo",
+          "position": "before"
+        }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    },
+    "leave_it_early": {
+      "text": "You close segment 7D before recovery and continue the queue.\n\nThe archive accepts your non-action without complaint. By the end of shift, the exception count returns to zero. Your report contains no incident number, no escalation request, and no reason for anyone else to open the block tonight.\n\nThe station continues relaying messages through the dark.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good"
+    }
+  }
+}
