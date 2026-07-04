@@ -11,10 +11,10 @@ export const TYPEWRITER_DEFAULTS = {
   corruption: {
     enabled: true,
     charset: "blocks",
-    intensity: 1.0,
+    intensity: 0.6,
     animate: true,
-    scramble_frames: 25,
-    scramble_delay_ms: 25,
+    scramble_frames: 85,
+    scramble_delay_ms: 40,
   },
 };
 

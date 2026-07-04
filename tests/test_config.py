@@ -175,13 +175,13 @@ def test_corruption_defaults_present(tmp_path: Path) -> None:
     cfg = load_settings(tmp_path / "nonexistent.json")
     c = cfg["corruption"]
     assert c["enabled"] is True
-    assert c["intensity"] == pytest.approx(1.0)
+    assert c["intensity"] == pytest.approx(0.6)
     assert c["mode"] == "consistent"
     assert c["charset"] == "blocks"
     assert c["custom_chars"] == "█▓▒░"
     assert c["animate"] is True
-    assert c["scramble_frames"] == 25
-    assert c["scramble_delay_ms"] == 25
+    assert c["scramble_frames"] == 85
+    assert c["scramble_delay_ms"] == 40
 
 
 def test_corruption_partial_override_preserves_defaults(tmp_path: Path) -> None:

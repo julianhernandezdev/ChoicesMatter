@@ -40,13 +40,13 @@ _DEFAULTS: dict = {
     },
     "corruption": {
         "enabled": True,
-        "intensity": 1.0,
+        "intensity": 0.6,
         "mode": "consistent",
         "charset": "blocks",
         "custom_chars": "█▓▒░",
         "animate": True,
-        "scramble_frames": 25,
-        "scramble_delay_ms": 25,
+        "scramble_frames": 85,
+        "scramble_delay_ms": 40,
     },
 }
 
