@@ -31,5 +31,15 @@
     "warning": { "color": "yellow",  "dim": false, "italic": false, "bold": true,  "prefix": "⚠ " },
     "memory":  { "color": "magenta", "dim": true,  "italic": true,  "bold": false, "prefix": "◈ " },
     "system":  { "color": "white",   "dim": true,  "italic": false, "bold": false, "prefix": ""  }
+  },
+  "corruption": {
+    "enabled": true,
+    "intensity": 1.0,
+    "mode": "consistent",
+    "charset": "blocks",
+    "custom_chars": "█▓▒░",
+    "animate": true,
+    "scramble_frames": 8,
+    "scramble_delay_ms": 60
   }
 }

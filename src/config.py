@@ -38,6 +38,16 @@ _DEFAULTS: dict = {
         "memory":  {"color": "magenta", "dim": True,  "italic": True,  "bold": False, "underline": False, "strike": False, "prefix": "◈ "},
         "system":  {"color": "white",   "dim": True,  "italic": False, "bold": False, "underline": False, "strike": False, "prefix": ""},
     },
+    "corruption": {
+        "enabled": True,
+        "intensity": 1.0,
+        "mode": "consistent",
+        "charset": "blocks",
+        "custom_chars": "█▓▒░",
+        "animate": True,
+        "scramble_frames": 8,
+        "scramble_delay_ms": 60,
+    },
 }
 
 

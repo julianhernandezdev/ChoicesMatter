@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from src.config import load_settings, save_settings
 
 
@@ -163,3 +165,36 @@ def test_player_name_override_in_settings(tmp_path: Path) -> None:
     path.write_text(json.dumps({"player_name": "Zara"}), encoding="utf-8")
     cfg = load_settings(path)
     assert cfg["player_name"] == "Zara"
+
+
+# ------------------------------------------------------------------
+# Corruption config
+# ------------------------------------------------------------------
+
+def test_corruption_defaults_present(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    c = cfg["corruption"]
+    assert c["enabled"] is True
+    assert c["intensity"] == pytest.approx(1.0)
+    assert c["mode"] == "consistent"
+    assert c["charset"] == "blocks"
+    assert c["custom_chars"] == "█▓▒░"
+    assert c["animate"] is True
+    assert c["scramble_frames"] == 8
+    assert c["scramble_delay_ms"] == 60
+
+
+def test_corruption_partial_override_preserves_defaults(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"corruption": {"intensity": 0.5}}), encoding="utf-8")
+    cfg = load_settings(path)
+    assert cfg["corruption"]["intensity"] == pytest.approx(0.5)
+    assert cfg["corruption"]["enabled"] is True      # preserved
+    assert cfg["corruption"]["charset"] == "blocks"  # preserved
+
+
+def test_corruption_enabled_false_override(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"corruption": {"enabled": False}}), encoding="utf-8")
+    cfg = load_settings(path)
+    assert cfg["corruption"]["enabled"] is False
