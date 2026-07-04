@@ -5,7 +5,7 @@
 <table align="center" width="100%"><tr><td align="center">
 <strong>✦ New in v0.11.0</strong> &nbsp;·&nbsp;
 <a href="#corrupted-text">Corrupted text</a> — <code>{corrupt}…{/corrupt}</code> spans with scramble-settle animation &nbsp;·&nbsp;
-<a href="docs/projectmanagement/CHANGELOG.md">Full changelog →</a>
+<a href="CHANGELOG.md">Full changelog →</a>
 </td></tr></table>
 
 <p align="center"><strong>Every choice leaves a mark. Every ending remembers.</strong></p>
