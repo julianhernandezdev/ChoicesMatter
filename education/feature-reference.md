@@ -1,6 +1,6 @@
 # Engine Feature Reference
 
-All 20 engine features in one place — each illustrated by a numbered example story and documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
+All 23 engine features in one place — each illustrated by a numbered example story and documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
 
 ## Quick Lookup
 
@@ -28,6 +28,7 @@ All 20 engine features in one place — each illustrated by a numbered example s
 | 20 | Pause Token | `stories/examples/20_pause_token.json` | Inject a configurable delay mid-stream during typewriter playback |
 | 21 | Variable Text Substitution | `stories/examples/21_variable_text_substitution.json` | `{key}` placeholders replaced at runtime with flag values; missing keys preserved intact |
 | 22 | Protagonist Name Prompt | `stories/examples/22_protagonist_name_prompt.json` | `meta.name_prompt` triggers a pre-game name input; `{player_name}` available in all text fields |
+| 23 | Corrupted Text | `stories/examples/23_corrupted_text.json` | `{corrupt}…{/corrupt}` inline spans with node baseline and scramble-settle typewriter animation |
 
 ---
 
@@ -1215,4 +1216,74 @@ Fires after content warnings, before the first node. Skipped on save resume — 
 | `Display.prompt_protagonist_name()` | `src/display.py` |
 | `renderNamePrompt()` / `renderAccessibleNamePrompt()` | `web/app.js` |
 | Unit tests | `tests/test_story.py`, `tests/test_engine.py`, `tests/test_display.py` |
+| JS parity tests | `tests/test_web_engine.py` |
+
+---
+
+## 23 — Corrupted Text
+
+**Story:** `stories/examples/23_corrupted_text.json`
+**Feature:** `{corrupt}…{/corrupt}` inline spans in any text field, a node-level baseline, a global settings multiplier, and scramble-settle typewriter animation.
+
+### What the story does
+
+*Static* — a derelict relay station archive. `console` uses a `{corrupt:0.75:random}` inline span on the warning text — heavy, unpredictable glitch. `recent_log` sets `corruption: { "intensity": 0.45, "mode": "consistent" }` as a node baseline, so all text in that node renders with the same stable corruption pattern on every read. Inside `recent_log`, a `{corrupt:0.9:random}` inline span on the director's log entry overrides the node baseline for that span only (higher intensity, random mode), while bare `{corrupt}……{/corrupt}` spans on the redacted fields inherit the node baseline fully. An overlay on `recent_log` fires only if the player visited `old_log` first (using the auto-set `visited_old_log` flag), demonstrating how flag state can layer on top of corruption.
+
+### Syntax
+
+```
+{corrupt:intensity:mode}text{/corrupt}
+```
+
+Both `intensity` (float 0–1) and `mode` (`consistent` or `random`) are optional. Omitting them inherits from the node baseline or global config. A bare `{corrupt}` with no params uses the full inheritance chain.
+
+### Inheritance chain
+
+Three levels, evaluated for each span:
+
+1. **Inline span param** — the value written directly in `{corrupt:0.8:random}`
+2. **Node baseline** — `node.corruption` (float or `{ "intensity": float, "mode": string }`)
+3. **Global config** — `settings.json` `corruption.intensity` multiplier; clamped to 1.0
+
+The effective intensity is `min(author_intensity × cfg_intensity, 1.0)`. Each level overrides only the fields it specifies — a span can override intensity while inheriting mode from the node baseline.
+
+### Engine code path
+
+**`src/corruption.py`** — `resolve_corruption(text, node_corruption, cfg_corruption)` is the main entry. It scans `text` for `\{corrupt(?::[^}]*)?\}…\{/corrupt\}` spans (the regex is intentionally narrow — it does not match flag names like `{corrupt_zone}`). For each span it builds a `CorruptedSpan` frozen dataclass containing `text`, `intensity`, `mode`, and `charset`. Plain strings between spans are left as `str`. The return type is `TextSegments = list[str | CorruptedSpan]`.
+
+**`corrupt_string(span: CorruptedSpan) → str`** — applies corruption to span text. For each character (punctuation is immune), `_text_seed(text, index)` computes a stable integer seed via a polynomial hash over the character positions; a lightweight LCG then decides whether to replace that character. In `consistent` mode the same seed always produces the same replacement decision, so the rendered text is identical on every call. In `random` mode the seed is perturbed by a runtime random, producing different glitch patterns each time.
+
+**`Engine._pt()` in `src/engine.py`** — `_pt` is the per-text resolution closure in `Engine.run()`. It chains three steps: (1) `_substitute_vars` for `{key}` VTS, (2) `_resolve_inline` for `{flag?…}` conditionals, (3) `resolve_corruption`. The result is a `TextSegments` value; downstream code handles both `str` and `CorruptedSpan` items.
+
+**`Display._assemble_text()` in `src/display.py`** — walks `TextSegments` and builds the final rendered string: plain strings concatenated verbatim, `CorruptedSpan` objects processed via `corrupt_string`. Called by `show_node` and `show_ending` for non-typewriter rendering.
+
+**`Display._typewrite()` in `src/display.py`** — the typewriter path. When `corruption.animate` is `true`, `CorruptedSpan` objects enter a **scramble-then-settle** phase before the settled characters stream in. The scramble phase runs `scramble_frames` full-intensity random corruptions at `scramble_delay_ms` intervals — the text appears maximally glitched — then settles into the final corrupted form character by character. Plain string segments stream normally. Any keypress skips to the full assembled text.
+
+**JS parity** — `resolveCorruption()` in `web/engine.js` mirrors the Python pipeline. `_textSeed` uses the same polynomial hash formula (confirmed by cross-engine parity test in `tests/test_web_engine.py`), producing bit-identical seeds for `consistent` mode. `_assembleText` in `web/app.js` and `startTypewriter` in `web/typewriter.js` handle rendering and scramble-settle animation respectively. All `renderAccessible*()` renderers call `_assembleText` with `{ enabled: false }` — corruption is stripped and the reader always sees plain text.
+
+### Validation
+
+`StoryLoader._validate_corruption_spans()` in `src/story.py` checks that all `{corrupt}` spans are well-formed and properly closed. The validator also checks that `node.corruption`, if present, is a valid float or `{ intensity, mode }` dict.
+
+> [!WARNING]
+> `{corrupt:random:0.8}` (mode before intensity — wrong order) passes schema validation but renders as literal text. The resolution regex cannot parse it. Always use `{corrupt:intensity:mode}`.
+
+### Key references
+
+| Symbol | Location |
+|---|---|
+| `CorruptedSpan`, `TextSegments` | `src/corruption.py` |
+| `resolve_corruption()` | `src/corruption.py` |
+| `corrupt_string()`, `_text_seed()` | `src/corruption.py` |
+| `Node.corruption` field | `src/story.py` |
+| `_validate_corruption_spans()` | `src/story.py` |
+| `corruption` config block | `src/config.py`, `settings.example.json` |
+| `_pt` closure (chains `resolve_corruption`) | `src/engine.py` |
+| `Display._assemble_text()` | `src/display.py` |
+| `Display._typewrite()` — scramble-settle | `src/display.py` |
+| `resolveCorruption()` (JS) | `web/engine.js` |
+| `_assembleText` (JS) | `web/app.js` |
+| Scramble-settle animation (JS) | `web/typewriter.js` |
+| Unit tests (27) | `tests/test_corruption.py` |
+| Story + display integration tests | `tests/test_story.py`, `tests/test_display.py` |
 | JS parity tests | `tests/test_web_engine.py` |

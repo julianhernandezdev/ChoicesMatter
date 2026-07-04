@@ -3,9 +3,8 @@
 </p>
 
 <table align="center" width="100%"><tr><td align="center">
-<strong>✦ New in v0.10.0</strong> &nbsp;·&nbsp;
-<a href="#variable-text-substitution">Variable text substitution</a> — <code>{key}</code> in any text field &nbsp;·&nbsp;
-<a href="#protagonist-name-prompt">Protagonist name prompt</a> — <code>{player_name}</code> token &nbsp;·&nbsp;
+<strong>✦ New in v0.11.0</strong> &nbsp;·&nbsp;
+<a href="#corrupted-text">Corrupted text</a> — <code>{corrupt}…{/corrupt}</code> spans with scramble-settle animation &nbsp;·&nbsp;
 <a href="docs/projectmanagement/CHANGELOG.md">Full changelog →</a>
 </td></tr></table>
 
@@ -36,6 +35,10 @@
     <td>👤 <strong>Protagonist name prompt</strong><br>Per-story name input, <code>{player_name}</code> token</td>
   </tr>
   <tr>
+    <td>💀 <strong>Corrupted text</strong><br><code>{corrupt}…{/corrupt}</code> spans, scramble-settle animation</td>
+    <td>⚡ <strong>Typewriter mode</strong><br>Character streaming, punctuation pauses, inline <code>{pause}</code></td>
+  </tr>
+  <tr>
     <td valign="top">
       <strong>Getting started</strong><br>
       <a href="#requirements">Requirements</a><br>
@@ -60,7 +63,8 @@
         &nbsp;&nbsp;&nbsp;<a href="#conditional-overlays">Overlays</a><br>
         &nbsp;&nbsp;&nbsp;<a href="#conditional-inline-text">Conditional inline text</a><br>
         &nbsp;&nbsp;&nbsp;<a href="#variable-text-substitution">Variable substitution</a><br>
-        &nbsp;&nbsp;&nbsp;<a href="#protagonist-name-prompt">Protagonist name</a>
+        &nbsp;&nbsp;&nbsp;<a href="#protagonist-name-prompt">Protagonist name</a><br>
+        &nbsp;&nbsp;&nbsp;<a href="#corrupted-text">Corrupted text</a>
       </details>
     </td>
   </tr>
@@ -328,6 +332,55 @@ Add `name_prompt` to `meta` to ask the player for a name before the first node:
 
 > [!NOTE]
 > Stories that use `{player_name}` without `name_prompt` will use the player's saved name. You don't need a prompt to use the token.
+
+### Corrupted Text
+
+Wrap any text in `{corrupt}…{/corrupt}` to render glitched characters at runtime:
+
+```json
+"text": "{corrupt:0.8:random}THE SIGNAL IS NOT —— ARTEFACT{/corrupt} — it responded."
+```
+
+Both params are optional. `intensity` is a float 0–1 controlling how many characters are replaced. `mode` is `consistent` (same characters every render — stable glitch) or `random` (different each time).
+
+Set a **node-level baseline** via `node.corruption` to corrupt all text in that node without repeating the span on every field:
+
+```json
+"corrupted_room": {
+  "corruption": { "intensity": 0.4, "mode": "consistent" },
+  "text": "The label is barely readable. {corrupt:0.9:random}DANGER{/corrupt}"
+}
+```
+
+Inline span params override the node baseline. The node baseline itself is multiplied against the global `corruption.intensity` from `settings.json`.
+
+Configure globally:
+
+```json
+{
+  "corruption": {
+    "enabled": true,
+    "intensity": 0.5,
+    "mode": "consistent",
+    "charset": "blocks",
+    "animate": true,
+    "scramble_frames": 6,
+    "scramble_delay_ms": 40
+  }
+}
+```
+
+| `charset` | Characters used |
+|---|---|
+| `blocks` (default) | `█ ▓ ▒ ░` |
+| `symbols` | `░ ╬ ▐ ╫` and similar box-drawing |
+| `diacritics` | Combining Unicode diacritic marks |
+| _(custom)_ | Any characters via `"custom_chars": "…"` |
+
+When `animate: true` and typewriter mode is on, corrupted spans run a **scramble-then-settle** animation — the text appears maximally glitched, then resolves character by character into its settled form.
+
+> [!NOTE]
+> Accessible mode strips all corruption — reader mode always shows plain text regardless of story or settings configuration.
 
 ## Named Styles
 
