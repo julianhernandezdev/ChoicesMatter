@@ -14,6 +14,7 @@ export const TYPEWRITER_DEFAULTS = {
     intensity: 1.0,
     animate: false,
     scramble_frames: 5,
+    scramble_delay_ms: 50,
   },
 };
 
@@ -157,9 +158,13 @@ export function startTypewriter(element, textOrSegments) {
         if (i < parts.length - 1) playQueue.push({ type: 'pause' });
       });
     } else {
-      // CorruptedSpan — render to settled form and stream as text
+      // CorruptedSpan
       var rendered = corruption.enabled ? _twCorruptString(seg, corruption) : seg.text;
-      if (rendered.length > 0) playQueue.push({ type: 'text', text: rendered });
+      if (corruption.enabled && corruption.animate && corruption.scramble_frames > 0) {
+        playQueue.push({ type: 'scramble', span: seg, frames: corruption.scramble_frames, delay: corruption.scramble_delay_ms, settled: rendered });
+      } else if (rendered.length > 0) {
+        playQueue.push({ type: 'text', text: rendered });
+      }
     }
   });
 
@@ -171,6 +176,8 @@ export function startTypewriter(element, textOrSegments) {
 
   var queueIdx = 0;
   var charIdx = 0;
+  var scrambleFrame = 0;
+  var scrambleBase = '';
 
   function step() {
     // Advance past exhausted text items
@@ -189,6 +196,23 @@ export function startTypewriter(element, textOrSegments) {
     if (item.type === 'pause') {
       queueIdx++;
       twAnimation = { id: setTimeout(step, pauseMs), text: fullText, element: element, toReveal: toReveal };
+      return;
+    }
+    if (item.type === 'scramble') {
+      if (scrambleFrame === 0) {
+        scrambleBase = element.textContent;
+      }
+      var scrambled = _twCorruptString({ text: item.span.text, intensity: 1.0, mode: 'random', seed: 0 }, corruption);
+      element.textContent = scrambleBase + scrambled;
+      scrambleFrame++;
+      if (scrambleFrame < item.frames) {
+        twAnimation = { id: setTimeout(step, item.delay != null ? item.delay : delay), text: fullText, element: element, toReveal: toReveal };
+      } else {
+        scrambleFrame = 0;
+        element.textContent = scrambleBase;
+        playQueue[queueIdx] = { type: 'text', text: item.settled };
+        twAnimation = { id: setTimeout(step, delay), text: fullText, element: element, toReveal: toReveal };
+      }
       return;
     }
     // type === 'text'
