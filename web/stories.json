@@ -5,6 +5,10 @@
       "category": "ChoicesMatterGPT"
     },
     {
+      "path": "stories/ChoicesMatterGPT/awaiting_response.json",
+      "category": "ChoicesMatterGPT"
+    },
+    {
       "path": "stories/horror/dead_air.json",
       "category": "horror"
     },
