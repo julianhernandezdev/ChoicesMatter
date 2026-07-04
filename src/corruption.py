@@ -12,6 +12,10 @@ CHARSETS: dict[str, list[str]] = {
     "diacritics": ["̈", "̊", "̃", "̂", "̄"],
 }
 
+_LCG_A: int = 1664525
+_LCG_C: int = 1013904223
+_LCG_M: int = 2 ** 32
+
 _CORRUPT_RE = re.compile(
     r"\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?\}(.*?)\{/corrupt\}",
     re.DOTALL,
@@ -36,7 +40,7 @@ def _text_seed(text: str, index: int) -> int:
 
 def _lcg_select(n_total: int, n_select: int, seed: int) -> list[int]:
     """Return n_select indices from range(n_total) via seeded Fisher-Yates (LCG)."""
-    a, c, m = 1664525, 1013904223, 2 ** 32
+    a, c, m = _LCG_A, _LCG_C, _LCG_M
     state = seed % m
     indices = list(range(n_total))
     for i in range(n_total - 1, n_total - n_select - 1, -1):
@@ -61,7 +65,7 @@ def corrupt_string(
         return text
     if mode == "consistent":
         positions = set(_lcg_select(len(corruptible), count, seed))
-        a, c, m = 1664525, 1013904223, 2 ** 32
+        a, c, m = _LCG_A, _LCG_C, _LCG_M
         state = seed % m
         chars = list(text)
         for pos_idx, char_idx in enumerate(corruptible):
