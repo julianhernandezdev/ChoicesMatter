@@ -102,6 +102,7 @@ Stories have two top-level keys: `meta` and `nodes`.
 | `ending_type` | No | `good`, `bad`, or `neutral` — controls ending panel color |
 | `scene` | No | Location label displayed as a dim Rule header above the story panel; once set, carries forward to nodes without a `scene` key |
 | `choice_number_color` | No | `rich` color name or hex (e.g. `bright_red`, `#ffaa00`) — node-level fallback for choice number prefixes; overridden per-choice by `choice.color` |
+| `corruption` | No | `float` 0–1 or `{ "intensity": float, "mode": "consistent"\|"random" }` — baseline corruption for all text on this node; provides defaults for inline `{corrupt}` spans that omit params |
 
 An empty `choices` array is treated as an ending even without `is_ending: true`.
 
@@ -155,7 +156,7 @@ Substitution runs **before** conditional inline resolution. This means a substit
 
 `{player_name}` is the standard token for the player's protagonist name. It is populated automatically from `settings.json` (default: `"Felix"`) or overridden per-story via `meta.name_prompt`.
 
-**Reserved flag names:** do not use `pause` as a flag name — it collides with the `{pause}` typewriter delay token, which is also a `{key}` pattern. Do not use `player_name` as a flag name set by `choice.sets` — it is reserved for the protagonist name prompt feature and the engine's `initial_state`.
+**Reserved flag names:** do not use `pause` as a flag name — it collides with the `{pause}` typewriter delay token, which is also a `{key}` pattern. Do not use `player_name` as a flag name set by `choice.sets` — it is reserved for the protagonist name prompt feature and the engine's `initial_state`. The tokens `{corrupt}` and `{/corrupt}` are reserved corruption span delimiters; `corrupt` alone (without the closing brace syntax) is not a reserved flag name and can be used freely as a flag key.
 
 **Choice object:**
 
@@ -238,6 +239,8 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `name_prompt` present but not a non-empty string
 - `name_default` present without `name_prompt` also being set
 - `name_default` present but not a non-empty string
+- `corruption` (node field): float not in `[0.0, 1.0]`; dict containing unknown keys (only `intensity` and `mode` are allowed); dict `intensity` not a float in `[0.0, 1.0]`; dict `mode` not `"consistent"` or `"random"`; any other type
+- `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
@@ -388,6 +391,16 @@ Per-character extra pauses are configurable in `settings.json`:
       "…": 200,
       "—": 100
     }
+  },
+  "corruption": {
+    "enabled": true,
+    "intensity": 1.0,
+    "mode": "consistent",
+    "charset": "blocks",
+    "custom_chars": "█▓▒░",
+    "animate": true,
+    "scramble_frames": 8,
+    "scramble_delay_ms": 60
   }
 }
 ```
@@ -403,6 +416,23 @@ Authors may embed `{pause}` anywhere in node or ending `text` to inject an inten
 The pause duration is `typewriter.pause_ms` (default 500 ms). In non-typewriter mode the token is stripped silently. `{pause}` has no effect in inset or overlay text.
 
 `T` at the story picker toggles the effect for the current session. `settings.json` controls the permanent default.
+
+**Corruption Spans**
+
+Authors wrap phrases in `{corrupt}…{/corrupt}` to mark them for glitch rendering. Optional params control intensity and mode for that span:
+
+| Syntax | Effect |
+|---|---|
+| `{corrupt}text{/corrupt}` | Inherits node-level and global settings defaults |
+| `{corrupt:0.8}text{/corrupt}` | Sets intensity (0.0–1.0) for this span |
+| `{corrupt:random}text{/corrupt}` | Sets mode for this span (`consistent` or `random`) |
+| `{corrupt:0.8:random}text{/corrupt}` | Sets both — intensity first, then mode |
+
+Inheritance chain: span param → node `corruption` field → `settings.json` `corruption` defaults. Effective intensity is `min(author_intensity × cfg["corruption"]["intensity"], 1.0)`.
+
+`{corrupt}` spans are not supported in choice `label` fields. Nested spans are forbidden. Every open tag must have a matching close tag — mismatches raise `StoryValidationError` at load time.
+
+In web accessible mode, all corruption is stripped and original text is shown. The CLI `enabled: false` setting has the same effect.
 
 ## Key Design Constraints
 
