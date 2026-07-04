@@ -58,7 +58,7 @@ export function partitionByPosition(items = [], fallback = "after") {
   };
 }
 
-export function createRun(entry, saved = null) {
+export function createRun(entry, saved = null, initialState = {}) {
   const story = entry.story;
   return {
     entry,
@@ -67,7 +67,9 @@ export function createRun(entry, saved = null) {
       ? saved.current_node
       : story.meta.start_node,
     history: Array.isArray(saved?.history) ? [...saved.history] : [],
-    state: saved?.state && typeof saved.state === "object" ? { ...saved.state } : {},
+    state: saved?.state && typeof saved.state === "object"
+      ? { ...saved.state }
+      : { ...initialState },
     currentScene: null,
   };
 }

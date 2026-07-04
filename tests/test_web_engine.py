@@ -293,3 +293,53 @@ def test_substitute_vars_js_before_inline_resolution() -> None:
     })
     view = _view(story, {"known": True, "player_name": "Mira"})
     assert view["node"]["text"] == "Hello, Mira!"
+
+
+# ---------------------------------------------------------------------------
+# createRun — initialState parameter
+# ---------------------------------------------------------------------------
+
+def _create_run_state(story_json: dict, saved=None, initial_state: dict | None = None) -> dict:
+    """Call createRun in JS and return the resulting run.state as a Python dict."""
+    initial_state_json = json.dumps(initial_state if initial_state is not None else {})
+    script = f"""
+import {{ createRun }} from './web/engine.js';
+const entry = {{ story: {json.dumps(story_json)} }};
+const saved = {json.dumps(saved)};
+const initialState = {initial_state_json};
+const run = createRun(entry, saved, initialState);
+console.log(JSON.stringify(run.state));
+"""
+    return json.loads(_run(script))
+
+
+_MINIMAL_STORY = {
+    "meta": {"id": "t", "title": "T", "version": "1", "author": "A", "start_node": "s"},
+    "nodes": {"s": {"text": "x", "choices": []}},
+}
+
+
+def test_create_run_initial_state_seeds_new_game() -> None:
+    state = _create_run_state(_MINIMAL_STORY, None, {"player_name": "Felix"})
+    assert state["player_name"] == "Felix"
+
+
+def test_create_run_saved_state_overrides_initial() -> None:
+    saved = {"current_node": "s", "history": [], "state": {"player_name": "Zara"}}
+    state = _create_run_state(_MINIMAL_STORY, saved, {"player_name": "Felix"})
+    assert state["player_name"] == "Zara"
+
+
+def test_create_run_no_initial_state_backwards_compat() -> None:
+    state = _create_run_state(_MINIMAL_STORY, None, {})
+    assert "player_name" not in state
+
+
+def test_load_typewriter_settings_player_name_default() -> None:
+    """loadTypewriterSettings() returns player_name: 'Felix' when no localStorage is set."""
+    script = """
+import { loadTypewriterSettings } from './web/typewriter.js';
+// Simulate empty localStorage (Node has no localStorage — function catches and returns defaults)
+console.log(loadTypewriterSettings().player_name);
+"""
+    assert _run(script) == "Felix"

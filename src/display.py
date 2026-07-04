@@ -426,6 +426,8 @@ class Display:
             self.console.print(f"  [cyan]6.[/cyan]  Pause after  …   [bold]{pauses.get('…', 700)} ms[/bold]")
             self.console.print(f"  [cyan]7.[/cyan]  Pause after  —   [bold]{pauses.get('—', 600)} ms[/bold]")
             self.console.print(f"  [cyan]8.[/cyan]  Stories per page [bold]{page_size}[/bold]")
+            player_name_val = draft.get("player_name", "Felix")
+            self.console.print(f"  [cyan]9.[/cyan]  Player name      [bold]{player_name_val}[/bold]")
             self.console.print()
             self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
             raw = self.console.input("  › ").strip().lower()
@@ -447,6 +449,8 @@ class Display:
                 self._settings_edit_pause(pauses, key, pauses.get(key, default))
             elif raw == "8":
                 self._settings_edit_page_size(picker)
+            elif raw == "9":
+                self._settings_edit_player_name(draft)
 
     def _settings_edit_speed(self, tw: dict) -> None:
         self.clear_screen()
@@ -506,6 +510,21 @@ class Display:
                 return
             self.console.print("  [red]Enter a number between 1 and 50.[/red]")
 
+    def _settings_edit_player_name(self, draft: dict) -> None:
+        self.clear_screen()
+        self.console.print()
+        self.console.print(Rule("[bold cyan]Settings — Player Name[/bold cyan]"))
+        self.console.print()
+        current = draft.get("player_name", "Felix")
+        self.console.print(f"  Current: [bold]{current}[/bold]")
+        self.console.print()
+        while True:
+            raw = self.console.input("  Enter name (or Enter to keep): ").strip()
+            if raw == "":
+                return
+            draft["player_name"] = raw
+            return
+
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})
         cfg["enabled"] = not cfg.get("enabled", False)
@@ -549,6 +568,36 @@ class Display:
             if raw in ("n", "no"):
                 return False
             self.console.print("  [red]Press Y to continue or N to go back.[/red]")
+
+    def prompt_protagonist_name(self, prompt_text: str, prefill: str = "") -> str | None:
+        """Returns entered name string, or None if player presses Q (back to picker).
+        Empty string is valid — caller handles fallback logic.
+        """
+        self.console.print()
+        self.console.print(
+            Panel(
+                f"[bold]{prompt_text}[/bold]",
+                title="[bold cyan]Protagonist[/bold cyan]",
+                border_style="cyan",
+                padding=(1, 2),
+            )
+        )
+        self.console.print()
+        hint = f" [{prefill}]" if prefill else ""
+        while True:
+            raw = self.console.input(
+                f"  [bold]Enter name{hint} (Q to go back):[/bold] "
+            ).strip()
+            if raw.lower() == "q":
+                return None
+            return raw
+
+    def show_name_required(self) -> None:
+        self.console.print(
+            "\n  [yellow]Please set your Player Name in Settings "
+            "(press S at the story picker).[/yellow]"
+        )
+        self.console.input("\n  [dim]Press Enter to return.[/dim] ")
 
     def prompt_continue_or_new(self) -> bool:
         """Return True to continue saved game, False for new game."""

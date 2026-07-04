@@ -6,6 +6,7 @@ from pathlib import Path
 _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefix")
 
 _DEFAULTS: dict = {
+    "player_name": "Felix",
     "picker": {
         "page_size": 5,
     },

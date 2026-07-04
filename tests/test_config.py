@@ -147,3 +147,19 @@ def test_typewriter_partial_override_preserves_defaults(tmp_path: Path) -> None:
 def test_typewriter_pause_ms_default_present(tmp_path: Path) -> None:
     cfg = load_settings(tmp_path / "nonexistent.json")
     assert cfg["typewriter"]["pause_ms"] == 500
+
+
+# ------------------------------------------------------------------
+# Player name config
+# ------------------------------------------------------------------
+
+def test_player_name_default_is_felix(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    assert cfg["player_name"] == "Felix"
+
+
+def test_player_name_override_in_settings(tmp_path: Path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"player_name": "Zara"}), encoding="utf-8")
+    cfg = load_settings(path)
+    assert cfg["player_name"] == "Zara"
