@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 from io import StringIO
+from pathlib import Path
 
 import pytest
 from rich.console import Console
@@ -7,6 +8,7 @@ from rich.panel import Panel
 
 from src.display import Display, _strip_pause_tokens
 from src.story import Choice, Inset, Overlay
+from src.corruption import CorruptedSpan, TextSegments
 
 
 @pytest.fixture
@@ -93,7 +95,7 @@ def test_strip_pause_tokens_empty_string():
 
 def test_show_node_strips_pause_token_when_typewriter_off(display):
     display._cfg["typewriter"]["enabled"] = False
-    display.show_node("Title", "Hello{pause}World", [], [])
+    display.show_node("Title", ["Hello{pause}World"], [], [])
     panel = next(
         (c[0][0] for c in display.console.print.call_args_list if c[0] and isinstance(c[0][0], Panel)),
         None,
@@ -108,7 +110,7 @@ def test_show_node_strips_pause_token_when_typewriter_off(display):
 
 def test_show_ending_strips_pause_token_when_typewriter_off(display):
     display._cfg["typewriter"]["enabled"] = False
-    display.show_ending("The end{pause}.", "good", [])
+    display.show_ending(["The end{pause}."], "good", [])
     panel = next(
         (c[0][0] for c in display.console.print.call_args_list if c[0] and isinstance(c[0][0], Panel)),
         None,
@@ -685,3 +687,61 @@ def test_prompt_protagonist_name_empty_returns_empty_string(display) -> None:
     display.console.input.return_value = ""
     result = display.prompt_protagonist_name("What is your name?", prefill="Felix")
     assert result == ""
+
+
+# ------------------------------------------------------------------
+# _assemble_text
+# ------------------------------------------------------------------
+
+def _make_display_obj(cfg_overrides: dict | None = None):
+    """Return a Display instance with a mocked console and optional config overrides."""
+    import copy
+    from src.config import load_settings
+    from src.display import Display
+    d = Display.__new__(Display)
+    d.console = MagicMock()
+    base_cfg = load_settings(Path("nonexistent_settings.json"))
+    if cfg_overrides:
+        base_cfg.update(cfg_overrides)
+    d._cfg = base_cfg
+    d._debug = {"enabled": False, "all": False}
+    return d
+
+
+def test_assemble_text_plain_strip_pause() -> None:
+    from src.display import _assemble_text
+    from src.config import load_settings
+    cfg = load_settings(Path("nonexistent_settings.json"))["corruption"]
+    charset = ["█"]
+    result = _assemble_text(["hello{pause}world"], charset, cfg)
+    assert result == "helloworld"
+
+
+def test_assemble_text_with_span_enabled() -> None:
+    from src.display import _assemble_text
+    from src.config import load_settings
+    cfg = load_settings(Path("nonexistent_settings.json"))["corruption"]
+    charset = ["█"]
+    span = CorruptedSpan(text="aaa", intensity=1.0, mode="consistent", seed=0)
+    result = _assemble_text(["before ", span, " after"], charset, cfg)
+    assert result.startswith("before ")
+    assert result.endswith(" after")
+    assert "█" in result   # corrupted chars present
+
+
+def test_assemble_text_with_span_disabled() -> None:
+    from src.display import _assemble_text
+    cfg = {"enabled": False, "intensity": 1.0}
+    charset = ["█"]
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=0)
+    result = _assemble_text([span], charset, cfg)
+    assert result == "hello"   # original text when disabled
+
+
+def test_assemble_text_global_multiplier() -> None:
+    from src.display import _assemble_text
+    cfg = {"enabled": True, "intensity": 0.0}   # multiplier kills all corruption
+    charset = ["█"]
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=0)
+    result = _assemble_text([span], charset, cfg)
+    assert result == "hello"   # multiplied to zero

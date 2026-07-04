@@ -13,6 +13,7 @@ from rich.rule import Rule
 from rich import box
 
 from .config import load_settings, save_settings
+from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string
 from .story import Choice, Inset, Overlay
 
 try:
@@ -45,6 +46,26 @@ _MODIFIERS = ("bold", "dim", "italic", "underline", "strike")
 
 def _strip_pause_tokens(text: str) -> str:
     return text.replace("{pause}", "")
+
+
+def _assemble_text(
+    segments: TextSegments,
+    charset: list[str],
+    cfg_corruption: dict,
+) -> str:
+    parts = []
+    enabled = cfg_corruption.get("enabled", True)
+    multiplier = cfg_corruption.get("intensity", 1.0)
+    for seg in segments:
+        if isinstance(seg, str):
+            parts.append(_strip_pause_tokens(seg))
+        else:
+            if enabled:
+                effective = min(seg.intensity * multiplier, 1.0)
+                parts.append(corrupt_string(seg.text, effective, seg.mode, seg.seed, charset))
+            else:
+                parts.append(seg.text)
+    return "".join(parts)
 
 
 _TW_SPEED_PRESETS = [
@@ -152,7 +173,7 @@ class Display:
     def show_node(
         self,
         story_title: str,
-        node_text: str,
+        node_text: TextSegments,
         before_insets: list[Inset] | None = None,
         after_insets: list[Inset] | None = None,
         current_scene: str | None = None,
@@ -161,12 +182,15 @@ class Display:
         if current_scene:
             self.console.print(Rule(f"[dim]{current_scene}[/dim]", style="dim"))
             self.console.print()
+        charset = self._get_charset()
+        cfg_corruption = self._cfg.get("corruption", {})
         make = lambda t: self._node_panel(story_title, t, before_insets, after_insets)
         delay_s = self._typewriter_delay()
         if delay_s:
             self._typewrite(make, node_text, delay_s)
         else:
-            self.console.print(make(_strip_pause_tokens(node_text)))
+            assembled = _assemble_text(node_text, charset, cfg_corruption)
+            self.console.print(make(assembled))
 
     def show_choices(
         self,
@@ -205,7 +229,7 @@ class Display:
 
     def show_ending(
         self,
-        node_text: str,
+        node_text: TextSegments,
         ending_type: str,
         overlays: list[Overlay] | None = None,
     ) -> None:
@@ -214,6 +238,8 @@ class Display:
         self.console.print()
         for overlay in (overlays or []):
             self._render_overlay(overlay)
+        charset = self._get_charset()
+        cfg_corruption = self._cfg.get("corruption", {})
         make = lambda t: Panel(
             Text(t, justify="center"),
             title=f"[bold {color}]— {label} ENDING —[/bold {color}]",
@@ -225,7 +251,8 @@ class Display:
         if delay_s:
             self._typewrite(make, node_text, delay_s)
         else:
-            self.console.print(make(_strip_pause_tokens(node_text)))
+            assembled = _assemble_text(node_text, charset, cfg_corruption)
+            self.console.print(make(assembled))
         self.console.print()
 
     def show_save_indicator(self) -> None:
@@ -240,6 +267,13 @@ class Display:
         if not cfg.get("enabled"):
             return 0.0
         return max(0.0, cfg.get("delay_ms", 20) / 1000)
+
+    def _get_charset(self) -> list[str]:
+        cfg = self._cfg.get("corruption", {})
+        key = cfg.get("charset", "blocks")
+        if key == "custom":
+            return list(cfg.get("custom_chars", "█▓▒░"))
+        return CHARSETS.get(key, CHARSETS["blocks"])
 
     def _typewrite(self, make_panel, text: str, delay_s: float) -> None:
         raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
@@ -300,13 +334,16 @@ class Display:
         color = cfg.get("color", "cyan")
         style = f"{' '.join(parts)} {color}".strip()
         prefix = cfg.get("prefix", "✦ ")
+        text = overlay.text
+        if isinstance(text, list):
+            text = _assemble_text(text, self._get_charset(), self._cfg.get("corruption", {}))
         if self._debug["enabled"] and overlay.style is not None:
             tag = overlay.style if overlay.style else "empty"
-            t = Text(f"  {prefix}{overlay.text}", style=style)
+            t = Text(f"  {prefix}{text}", style=style)
             t.append(f"  [{tag}]", style="dim")
             self.console.print(t)
         else:
-            self.console.print(f"  {prefix}{overlay.text}", style=style)
+            self.console.print(f"  {prefix}{text}", style=style)
 
     def _render_debug_panel(self, state: dict) -> None:
         show_all = self._debug["all"]
@@ -336,6 +373,9 @@ class Display:
         )
 
     def _inset_renderable(self, inset: Inset) -> Text:
+        text = inset.text
+        if isinstance(text, list):
+            text = _assemble_text(text, self._get_charset(), self._cfg.get("corruption", {}))
         if inset.style:
             cfg = self._style_cfg(inset.style)
             parts = [m for m in _MODIFIERS if cfg.get(m)]
@@ -345,7 +385,7 @@ class Display:
         else:
             style = "dim italic"
             prefix = ""
-        t = Text(f"{prefix}{inset.text}", style=style)
+        t = Text(f"{prefix}{text}", style=style)
         if self._debug["enabled"] and inset.style is not None:
             tag = inset.style if inset.style else "empty"
             t.append(f"  [{tag}]", style="dim")
