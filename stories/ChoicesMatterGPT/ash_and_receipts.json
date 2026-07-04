@@ -2,10 +2,12 @@
   "meta": {
     "id": "ash_and_receipts",
     "title": "Ash and Receipts",
-    "version": "1.1",
+    "version": "1.2",
     "author": "ChoicesMatterGPT",
     "start_node": "office",
-    "est_time": "15–25 min"
+    "est_time": "15–25 min",
+    "name_prompt": "What's your name, Detective?",
+    "name_default": "Marlowe"
   },
   "nodes": {
     "office": {
@@ -487,7 +489,7 @@
     },
     "deep_shelves": {
       "choice_number_color": "bright_red",
-      "text": "You keep searching.\n\nMore files with future dates.\n\nFuture arrests.\n\nFuture deaths.\n\nAt the end of the aisle you finally find your own name typed neatly on a folder tab.",
+      "text": "You keep searching.\n\nMore files with future dates.\n\nFuture arrests.\n\nFuture deaths.\n\nAt the end of the aisle you finally find {player_name} typed neatly on a folder tab.",
       "overlays": [
         {
           "text": "Maybe the city isn't corrupt. Maybe it's rehearsed.",
@@ -546,7 +548,7 @@
       "ending_type": "bad"
     },
     "caught_end": {
-      "text": "'Evening, detective,' one of the men says.\n\nThe other takes your gun before you think to reach for it.\n\nThey're polite about the whole thing.\n\nThat somehow makes it worse.",
+      "text": "'Evening, {player_name},' one of the men says.\n\nThe other takes your gun before you think to reach for it.\n\nThey're polite about the whole thing.\n\nThat somehow makes it worse.",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
