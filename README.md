@@ -2,6 +2,13 @@
   <img src="assets/banner.png" alt="Choices Matter" width="100%">
 </p>
 
+<table align="center" width="100%"><tr><td align="center">
+<strong>✦ New in v0.10.0</strong> &nbsp;·&nbsp;
+<a href="#variable-text-substitution">Variable text substitution</a> — <code>{key}</code> in any text field &nbsp;·&nbsp;
+<a href="#protagonist-name-prompt">Protagonist name prompt</a> — <code>{player_name}</code> token &nbsp;·&nbsp;
+<a href="docs/projectmanagement/CHANGELOG.md">Full changelog →</a>
+</td></tr></table>
+
 <p align="center"><strong>Every choice leaves a mark. Every ending remembers.</strong></p>
 
 <p align="center">
