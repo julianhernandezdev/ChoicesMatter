@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import re
 
+from .corruption import CorruptedSpan, TextSegments, resolve_corruption
 from .display import Display
 from .gallery import GalleryManager
 from .save import SaveManager, SaveState
@@ -55,8 +56,11 @@ class Engine:
             before_insets = [i for i in visible_insets if i.position == "before"]
             after_insets  = [i for i in visible_insets if i.position == "after"]
 
-            def _pt(text: str) -> str:
-                return self._resolve_inline(self._substitute_vars(text, self._state), self._state)
+            def _pt(text: str) -> TextSegments:
+                resolved = self._resolve_inline(
+                    self._substitute_vars(text, self._state), self._state
+                )
+                return resolve_corruption(resolved, node.corruption)
 
             node_text     = _pt(node.text)
             before_insets = [dataclasses.replace(i, text=_pt(i.text)) for i in before_insets]

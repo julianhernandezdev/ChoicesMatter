@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
+from src.corruption import CorruptedSpan, TextSegments
 from src.engine import Engine
 from src.gallery import GalleryManager
 from src.save import SaveManager, SaveState
@@ -51,8 +52,8 @@ def test_advance_moves_to_next_node(saves_dir: Path, two_node_story: Story) -> N
     engine = Engine(two_node_story, sm, display)
     engine.run()
 
-    display.show_node.assert_any_call("Test Story", "You begin.", [], [], None)
-    display.show_ending.assert_any_call("You win.", "good", overlays=[])
+    display.show_node.assert_any_call("Test Story", ["You begin."], [], [], None)
+    display.show_ending.assert_any_call(["You win."], "good", overlays=[])
 
 
 def test_autosave_called_on_advance(saves_dir: Path, two_node_story: Story) -> None:
@@ -93,7 +94,7 @@ def test_play_again_true_resets_to_start(saves_dir: Path) -> None:
     engine.run()
 
     # show_node called twice for "start" (once per play-through)
-    start_calls = [c for c in display.show_node.call_args_list if c.args[1] == "Begin."]
+    start_calls = [c for c in display.show_node.call_args_list if c.args[1] == ["Begin."]]
     assert len(start_calls) == 2
 
 
@@ -187,7 +188,7 @@ def test_sets_applies_flag_after_advance(saves_dir: Path, flag_story: Story) -> 
     # The fact that "Flag end" was reachable proves the flag was applied
     display.show_ending.assert_called_once()
     args = display.show_ending.call_args.args
-    assert args[0] == "Good."  # reached the good ending
+    assert args[0] == ["Good."]  # reached the good ending
 
 
 def test_state_saved_and_restored(saves_dir: Path, flag_story: Story) -> None:
@@ -211,7 +212,7 @@ def test_state_saved_and_restored(saves_dir: Path, flag_story: Story) -> None:
 
     # Flag end is only reachable if state was restored correctly
     display.show_ending.assert_called_once()
-    assert display.show_ending.call_args.args[0] == "Good."
+    assert display.show_ending.call_args.args[0] == ["Good."]
 
 
 def test_overlay_with_unmet_requires_not_passed_to_show_choices(saves_dir: Path) -> None:
@@ -252,7 +253,7 @@ def test_overlay_with_met_requires_passed_to_show_choices(saves_dir: Path) -> No
 
     mid_call = display.show_choices.call_args_list[1]
     after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
-    assert len(after) == 1 and after[0].text == "Secret revealed."
+    assert len(after) == 1 and after[0].text == ["Secret revealed."]
 
 
 def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
@@ -274,8 +275,8 @@ def test_before_and_after_overlays_split_correctly(saves_dir: Path) -> None:
     call = display.show_choices.call_args_list[0]
     before = call.args[1] if len(call.args) > 1 else call.kwargs.get("before_overlays", [])
     after  = call.args[2] if len(call.args) > 2 else call.kwargs.get("after_overlays", [])
-    assert len(before) == 1 and before[0].text == "Before whisper."
-    assert len(after)  == 1 and after[0].text  == "After whisper."
+    assert len(before) == 1 and before[0].text == ["Before whisper."]
+    assert len(after)  == 1 and after[0].text  == ["After whisper."]
 
 
 def test_insets_with_unmet_requires_not_passed_to_show_node(saves_dir: Path) -> None:
@@ -316,7 +317,7 @@ def test_insets_with_met_requires_passed_to_show_node(saves_dir: Path) -> None:
 
     mid_call = display.show_node.call_args_list[1]
     after_insets = mid_call.args[3] if len(mid_call.args) > 3 else mid_call.kwargs.get("after_insets", [])
-    assert len(after_insets) == 1 and after_insets[0].text == "The secret."
+    assert len(after_insets) == 1 and after_insets[0].text == ["The secret."]
 
 
 def test_before_and_after_insets_split_correctly(saves_dir: Path) -> None:
@@ -338,8 +339,8 @@ def test_before_and_after_insets_split_correctly(saves_dir: Path) -> None:
     call = display.show_node.call_args_list[0]
     before = call.args[2] if len(call.args) > 2 else call.kwargs.get("before_insets", [])
     after  = call.args[3] if len(call.args) > 3 else call.kwargs.get("after_insets", [])
-    assert len(before) == 1 and before[0].text == "Header."
-    assert len(after)  == 1 and after[0].text  == "Footer."
+    assert len(before) == 1 and before[0].text == ["Header."]
+    assert len(after)  == 1 and after[0].text  == ["Footer."]
 
 
 # ------------------------------------------------------------------
@@ -392,7 +393,7 @@ def test_scene_tracked_in_show_node(saves_dir: Path) -> None:
     })
     display = _make_display(play_again=False)
     Engine(story, SaveManager(saves_dir), display).run()
-    display.show_node.assert_any_call("Test Story", "Begin.", [], [], "Act I")
+    display.show_node.assert_any_call("Test Story", ["Begin."], [], [], "Act I")
 
 
 def test_quit_to_menu_returns_without_ending(saves_dir: Path) -> None:
@@ -459,7 +460,7 @@ def test_visited_flag_gates_revisit_choice(saves_dir: Path) -> None:
 
     # Should reach the secret ending
     display.show_ending.assert_called_once()
-    assert display.show_ending.call_args.args[0] == "Secret."
+    assert display.show_ending.call_args.args[0] == ["Secret."]
 
 
 def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
@@ -476,8 +477,8 @@ def test_reset_clears_state(saves_dir: Path, flag_story: Story) -> None:
 
     ending_calls = display.show_ending.call_args_list
     assert len(ending_calls) == 2
-    assert ending_calls[0].args[0] == "Good."   # first run reached good end
-    assert ending_calls[1].args[0] == "Bad."    # second run state was cleared
+    assert ending_calls[0].args[0] == ["Good."]   # first run reached good end
+    assert ending_calls[1].args[0] == ["Bad."]    # second run state was cleared
 
 
 # ------------------------------------------------------------------
@@ -500,7 +501,7 @@ def test_int_threshold_met(saves_dir: Path) -> None:
     display.prompt_choice.side_effect = [1, 1]
     engine = Engine(story, SaveManager(saves_dir), display)
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Done."
+    assert display.show_ending.call_args.args[0] == ["Done."]
 
 
 def test_int_threshold_not_met_hides_choice(saves_dir: Path) -> None:
@@ -519,7 +520,7 @@ def test_int_threshold_not_met_hides_choice(saves_dir: Path) -> None:
     engine = Engine(story, SaveManager(saves_dir), display)
     engine._state["trust"] = 1  # 1 < 3
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Fallback."
+    assert display.show_ending.call_args.args[0] == ["Fallback."]
 
 
 def test_int_threshold_unset_key_treated_as_zero(saves_dir: Path) -> None:
@@ -538,7 +539,7 @@ def test_int_threshold_unset_key_treated_as_zero(saves_dir: Path) -> None:
     engine = Engine(story, SaveManager(saves_dir), display)
     # trust not set → treated as 0 → 0 < 1 → choice hidden
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Fallback."
+    assert display.show_ending.call_args.args[0] == ["Fallback."]
 
 
 def test_string_exact_match_requires(saves_dir: Path) -> None:
@@ -561,7 +562,7 @@ def test_string_exact_match_requires(saves_dir: Path) -> None:
     display.prompt_choice.side_effect = [1, 1]
     engine = Engine(story, SaveManager(saves_dir), display)
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Red."
+    assert display.show_ending.call_args.args[0] == ["Red."]
 
 
 def test_list_membership_requires_met(saves_dir: Path) -> None:
@@ -584,7 +585,7 @@ def test_list_membership_requires_met(saves_dir: Path) -> None:
     display.prompt_choice.side_effect = [1, 1]
     engine = Engine(story, SaveManager(saves_dir), display)
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Allied."
+    assert display.show_ending.call_args.args[0] == ["Allied."]
 
 
 def test_list_membership_requires_not_met(saves_dir: Path) -> None:
@@ -603,7 +604,7 @@ def test_list_membership_requires_not_met(saves_dir: Path) -> None:
     engine = Engine(story, SaveManager(saves_dir), display)
     engine._state["allegiance"] = "green"
     engine.run()
-    assert display.show_ending.call_args.args[0] == "Neutral."
+    assert display.show_ending.call_args.args[0] == ["Neutral."]
 
 
 # ------------------------------------------------------------------
@@ -716,7 +717,7 @@ def test_counter_gates_choice_integration(saves_dir: Path) -> None:
     engine = Engine(story, SaveManager(saves_dir), display)
     engine.run()
     assert engine._state.get("trust") == 4
-    assert display.show_ending.call_args.args[0] == "They tell you."
+    assert display.show_ending.call_args.args[0] == ["They tell you."]
 
 
 # ------------------------------------------------------------------
@@ -798,7 +799,7 @@ def test_inline_resolved_in_node_text(saves_dir: Path) -> None:
     Engine(story, SaveManager(saves_dir), display).run()
 
     hall_call = display.show_node.call_args_list[1]
-    assert hall_call.args[1] == "A familiar face."
+    assert hall_call.args[1] == ["A familiar face."]
 
 
 def test_inline_resolved_in_inset_text(saves_dir: Path) -> None:
@@ -822,7 +823,7 @@ def test_inline_resolved_in_inset_text(saves_dir: Path) -> None:
     hall_call = display.show_node.call_args_list[1]
     before_insets = hall_call.args[2]
     assert len(before_insets) == 1
-    assert before_insets[0].text == "STAFF ACCESS GRANTED"
+    assert before_insets[0].text == ["STAFF ACCESS GRANTED"]
 
 
 def test_inline_resolved_in_overlay_text(saves_dir: Path) -> None:
@@ -846,7 +847,7 @@ def test_inline_resolved_in_overlay_text(saves_dir: Path) -> None:
     hall_choices_call = display.show_choices.call_args_list[1]
     after_overlays = hall_choices_call.args[2]
     assert len(after_overlays) == 1
-    assert after_overlays[0].text == "ALARM SOUNDS."
+    assert after_overlays[0].text == ["ALARM SOUNDS."]
 
 
 # ------------------------------------------------------------------
@@ -907,7 +908,7 @@ def test_var_sub_applied_to_node_text(saves_dir: Path) -> None:
     Engine(story, SaveManager(saves_dir), display).run()
 
     mid_call = display.show_node.call_args_list[1]
-    assert mid_call.args[1] == "Hello, Mira!"
+    assert mid_call.args[1] == ["Hello, Mira!"]
 
 
 def test_var_sub_applied_to_inset_text(saves_dir: Path) -> None:
@@ -930,7 +931,7 @@ def test_var_sub_applied_to_inset_text(saves_dir: Path) -> None:
 
     mid_call = display.show_node.call_args_list[1]
     before_insets = mid_call.args[2]
-    assert len(before_insets) == 1 and before_insets[0].text == "Rank: Captain"
+    assert len(before_insets) == 1 and before_insets[0].text == ["Rank: Captain"]
 
 
 def test_var_sub_applied_to_overlay_text(saves_dir: Path) -> None:
@@ -953,7 +954,7 @@ def test_var_sub_applied_to_overlay_text(saves_dir: Path) -> None:
 
     mid_call = display.show_choices.call_args_list[1]
     after = mid_call.args[2] if len(mid_call.args) > 2 else mid_call.kwargs.get("after_overlays", [])
-    assert len(after) == 1 and after[0].text == "The air feels tense."
+    assert len(after) == 1 and after[0].text == ["The air feels tense."]
 
 
 def test_var_sub_before_inline_resolution(saves_dir: Path) -> None:
@@ -975,7 +976,7 @@ def test_var_sub_before_inline_resolution(saves_dir: Path) -> None:
     Engine(story, SaveManager(saves_dir), display).run()
 
     mid_call = display.show_node.call_args_list[1]
-    assert mid_call.args[1] == "Hello, Mira!"
+    assert mid_call.args[1] == ["Hello, Mira!"]
 
 
 # ------------------------------------------------------------------
@@ -1019,3 +1020,56 @@ def test_no_initial_state_defaults_to_empty(saves_dir: Path, two_node_story: Sto
     engine = Engine(two_node_story, sm, display)
     engine._resolve_start()
     assert "player_name" not in engine._state
+
+
+# ------------------------------------------------------------------
+# Corruption pipeline: resolve_corruption wired into _pt
+# ------------------------------------------------------------------
+
+def test_engine_resolve_corruption_plain_text(saves_dir, two_node_story) -> None:
+    """show_node receives TextSegments — plain text becomes a one-element list."""
+    display = _make_display(play_again=False)
+    sm = SaveManager(saves_dir)
+    engine = Engine(two_node_story, sm, display)
+    engine.run()
+    call_args = display.show_node.call_args_list[0]
+    node_text = call_args[0][1]  # second positional arg is node_text
+    assert isinstance(node_text, list)
+    assert node_text == ["You begin."]
+
+def test_engine_resolve_corruption_span(saves_dir) -> None:
+    """show_node receives a TextSegments with a CorruptedSpan for marked spans."""
+    story = _make_story({
+        "start": Node(
+            text="Before {corrupt:0.5}glitch{/corrupt} after.",
+            choices=[Choice(label="Go", next="end")],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="neutral"),
+    })
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    node_text = display.show_node.call_args_list[0][0][1]
+    assert isinstance(node_text, list)
+    assert node_text[0] == "Before "
+    span = node_text[1]
+    assert isinstance(span, CorruptedSpan)
+    assert span.text == "glitch"
+    assert span.intensity == pytest.approx(0.5)
+    assert node_text[2] == " after."
+
+def test_engine_resolve_corruption_node_level(saves_dir) -> None:
+    """Node-level corruption field is passed through to span's intensity."""
+    from src.story import Node as N
+    node = N(
+        text="{corrupt}text{/corrupt}",
+        choices=[Choice(label="Go", next="end")],
+        corruption=0.3,
+    )
+    story = _make_story({"start": node, "end": N(text="Done.", choices=[], is_ending=True, ending_type="neutral")})
+    display = _make_display(play_again=False)
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    node_text = display.show_node.call_args_list[0][0][1]
+    assert isinstance(node_text[0], CorruptedSpan)
+    assert node_text[0].intensity == pytest.approx(0.3)
