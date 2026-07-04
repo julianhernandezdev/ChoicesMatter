@@ -180,8 +180,8 @@ def test_corruption_defaults_present(tmp_path: Path) -> None:
     assert c["charset"] == "blocks"
     assert c["custom_chars"] == "█▓▒░"
     assert c["animate"] is True
-    assert c["scramble_frames"] == 8
-    assert c["scramble_delay_ms"] == 60
+    assert c["scramble_frames"] == 25
+    assert c["scramble_delay_ms"] == 25
 
 
 def test_corruption_partial_override_preserves_defaults(tmp_path: Path) -> None:

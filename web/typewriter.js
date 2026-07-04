@@ -13,8 +13,8 @@ export const TYPEWRITER_DEFAULTS = {
     charset: "blocks",
     intensity: 1.0,
     animate: true,
-    scramble_frames: 5,
-    scramble_delay_ms: 50,
+    scramble_frames: 25,
+    scramble_delay_ms: 25,
   },
 };
 

@@ -45,8 +45,8 @@ _DEFAULTS: dict = {
         "charset": "blocks",
         "custom_chars": "█▓▒░",
         "animate": True,
-        "scramble_frames": 8,
-        "scramble_delay_ms": 60,
+        "scramble_frames": 25,
+        "scramble_delay_ms": 25,
     },
 }
 
