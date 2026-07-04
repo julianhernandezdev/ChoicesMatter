@@ -698,3 +698,114 @@ def test_name_default_empty_string_raises(tmp_path: Path, sample_story_dict: dic
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     with pytest.raises(StoryValidationError, match="name_default"):
         StoryLoader.load(path)
+
+
+# --- Node corruption field ---
+
+def test_node_corruption_float_loads(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = 0.5
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].corruption == pytest.approx(0.5)
+
+def test_node_corruption_dict_loads(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = {"intensity": 0.3, "mode": "random"}
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].corruption == {"intensity": 0.3, "mode": "random"}
+
+def test_node_corruption_absent_is_none(tmp_path: Path, sample_story_dict: dict) -> None:
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)
+    assert story.nodes["start"].corruption is None
+
+def test_node_corruption_above_1_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = 1.4
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corruption"):
+        StoryLoader.load(path)
+
+def test_node_corruption_string_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = "heavy"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corruption"):
+        StoryLoader.load(path)
+
+def test_node_corruption_dict_bad_mode_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = {"intensity": 0.5, "mode": "semi"}
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corruption"):
+        StoryLoader.load(path)
+
+def test_node_corruption_dict_unknown_key_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["corruption"] = {"intensity": 0.5, "extra": True}
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corruption"):
+        StoryLoader.load(path)
+
+# --- Inline span validation ---
+
+def test_inline_corrupt_span_valid(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "Hello {corrupt}world{/corrupt}."
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    story = StoryLoader.load(path)   # should not raise
+    assert story.nodes["start"].text == "Hello {corrupt}world{/corrupt}."
+
+def test_inline_corrupt_unclosed_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "Hello {corrupt}world."
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corrupt"):
+        StoryLoader.load(path)
+
+def test_inline_corrupt_unmatched_close_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "Hello {/corrupt}."
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corrupt"):
+        StoryLoader.load(path)
+
+def test_inline_corrupt_nested_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "{corrupt}{corrupt}bad{/corrupt}{/corrupt}"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="nested"):
+        StoryLoader.load(path)
+
+def test_inline_corrupt_bad_intensity_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "{corrupt:1.5}text{/corrupt}"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corrupt"):
+        StoryLoader.load(path)
+
+def test_inline_corrupt_bad_mode_raises(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["text"] = "{corrupt:semi}text{/corrupt}"
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    with pytest.raises(StoryValidationError, match="corrupt"):
+        StoryLoader.load(path)
+
+def test_inline_corrupt_valid_in_inset(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["insets"] = [
+        {"text": "{corrupt:0.5}signal lost{/corrupt}", "position": "before"}
+    ]
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    StoryLoader.load(path)   # should not raise
+
+def test_inline_corrupt_valid_in_overlay(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["start"]["overlays"] = [
+        {"text": "{corrupt}noise{/corrupt}", "position": "after"}
+    ]
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    StoryLoader.load(path)   # should not raise

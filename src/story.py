@@ -55,6 +55,7 @@ class Node:
     insets: list[Inset] = field(default_factory=list)
     scene: str | None = None
     choice_number_color: str | None = None
+    corruption: float | dict | None = None
 
 
 @dataclass
@@ -177,6 +178,11 @@ class StoryLoader:
                     )
                 choice_number_color = cnc_raw.strip()
 
+            corruption_raw = node_data.get("corruption")
+            corruption: float | dict | None = None
+            if corruption_raw is not None:
+                corruption = StoryLoader._parse_corruption(corruption_raw, node_id, path.name)
+
             nodes[node_id] = Node(
                 text=text,
                 choices=choices,
@@ -186,6 +192,7 @@ class StoryLoader:
                 insets=insets,
                 scene=scene,
                 choice_number_color=choice_number_color,
+                corruption=corruption,
             )
 
         for node_id, node in nodes.items():
@@ -195,6 +202,13 @@ class StoryLoader:
                         f"'{path.name}': node '{node_id}' choice '{choice.label}' "
                         f"references nonexistent node '{choice.next}'"
                     )
+
+        for node_id, node in nodes.items():
+            StoryLoader._validate_corruption_spans(node.text, f"node '{node_id}' text", path.name)
+            for idx, inset in enumerate(node.insets):
+                StoryLoader._validate_corruption_spans(inset.text, f"node '{node_id}' inset[{idx}]", path.name)
+            for idx, overlay in enumerate(node.overlays):
+                StoryLoader._validate_corruption_spans(overlay.text, f"node '{node_id}' overlay[{idx}]", path.name)
 
         node_count = len(nodes)
         ending_count = sum(1 for n in nodes.values() if n.is_ending or not n.choices)
@@ -424,6 +438,85 @@ class StoryLoader:
                     f"'{file_name}': {location} values must be bool, int, str, or list of strings"
                 )
         return result
+
+    @staticmethod
+    def _parse_corruption(value: object, node_id: str, filename: str) -> float | dict:
+        _CORRUPTION_MODES = {"consistent", "random"}
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            v = float(value)
+            if not (0.0 <= v <= 1.0):
+                raise StoryValidationError(
+                    f"'{filename}': node '{node_id}' corruption intensity must be 0.0–1.0, got {v}"
+                )
+            return v
+        if isinstance(value, dict):
+            unknown = set(value.keys()) - {"intensity", "mode"}
+            if unknown:
+                raise StoryValidationError(
+                    f"'{filename}': node '{node_id}' corruption dict has unknown keys: {sorted(unknown)}"
+                )
+            if "intensity" in value:
+                i = value["intensity"]
+                if not isinstance(i, (int, float)) or isinstance(i, bool) or not (0.0 <= i <= 1.0):
+                    raise StoryValidationError(
+                        f"'{filename}': node '{node_id}' corruption intensity must be 0.0–1.0"
+                    )
+            if "mode" in value:
+                m = value["mode"]
+                if m not in _CORRUPTION_MODES:
+                    raise StoryValidationError(
+                        f"'{filename}': node '{node_id}' corruption mode must be 'consistent' or 'random', got '{m}'"
+                    )
+            return value
+        raise StoryValidationError(
+            f"'{filename}': node '{node_id}' corruption must be a float or dict, got {type(value).__name__}"
+        )
+
+    @staticmethod
+    def _validate_corruption_spans(text: str, location: str, filename: str) -> None:
+        _OPEN = re.compile(r"\{corrupt(?::([^}]*))?\}")
+        _CLOSE = re.compile(r"\{/corrupt\}")
+
+        tokens = []
+        for m in re.finditer(r"\{corrupt[^}]*\}|\{/corrupt\}", text):
+            tokens.append(("open" if not m.group().startswith("{/") else "close", m.start(), m.group()))
+
+        depth = 0
+        for kind, pos, raw in tokens:
+            if kind == "open":
+                if depth > 0:
+                    raise StoryValidationError(
+                        f"'{filename}': {location}: nested {{corrupt}} spans are not allowed"
+                    )
+                depth += 1
+                # Validate params inside the open tag
+                inner = raw[len("{corrupt"):-1].lstrip(":")
+                if inner:
+                    parts = inner.split(":")
+                    for part in parts:
+                        if part in ("consistent", "random"):
+                            continue
+                        try:
+                            v = float(part)
+                            if not (0.0 <= v <= 1.0):
+                                raise StoryValidationError(
+                                    f"'{filename}': {location}: {{corrupt}} intensity must be 0.0–1.0, got {v}"
+                                )
+                        except ValueError:
+                            raise StoryValidationError(
+                                f"'{filename}': {location}: unknown {{corrupt}} mode '{part}' — use 'consistent' or 'random'"
+                            )
+            else:
+                if depth == 0:
+                    raise StoryValidationError(
+                        f"'{filename}': {location}: unmatched {{/corrupt}} tag"
+                    )
+                depth -= 1
+
+        if depth > 0:
+            raise StoryValidationError(
+                f"'{filename}': {location}: unclosed {{corrupt}} span"
+            )
 
     @staticmethod
     def _parse_sets(value: object, file_name: str, location: str) -> dict[str, StateValue]:
