@@ -108,9 +108,9 @@ const story = {
 const run = createRun({ story });
 run.state = { f: true };
 const view = currentView(run);
-console.log(view.node.text);
+console.log(JSON.stringify(view.node.text));
 """
-    assert _run(script) == "hello"
+    assert json.loads(_run(script)) == ["hello"]
 
 
 def test_current_view_resolves_inset_text() -> None:
@@ -129,9 +129,9 @@ const story = {
 const run = createRun({ story });
 run.state = { f: true };
 const view = currentView(run);
-console.log(view.insets.before[0].text);
+console.log(JSON.stringify(view.insets.before[0].text));
 """
-    assert _run(script) == "staff"
+    assert json.loads(_run(script)) == ["staff"]
 
 
 def test_current_view_resolves_overlay_text() -> None:
@@ -150,9 +150,9 @@ const story = {
 const run = createRun({ story });
 run.state = { f: false };
 const view = currentView(run);
-console.log(view.overlays.after[0].text);
+console.log(JSON.stringify(view.overlays.after[0].text));
 """
-    assert _run(script) == "silence"
+    assert json.loads(_run(script)) == ["silence"]
 
 
 def test_current_view_does_not_mutate_story_node() -> None:
@@ -247,7 +247,7 @@ def test_substitute_vars_js_in_node_text() -> None:
         },
     })
     view = _view(story, {"player_name": "Mira"})
-    assert view["node"]["text"] == "Hello, Mira!"
+    assert view["node"]["text"] == ["Hello, Mira!"]
 
 
 def test_substitute_vars_js_in_overlay_text() -> None:
@@ -262,7 +262,7 @@ def test_substitute_vars_js_in_overlay_text() -> None:
         },
     })
     view = _view(story, {"mood": "tense"})
-    assert view["overlays"]["after"][0]["text"] == "The air feels tense."
+    assert view["overlays"]["after"][0]["text"] == ["The air feels tense."]
 
 
 def test_substitute_vars_js_in_inset_text() -> None:
@@ -277,7 +277,7 @@ def test_substitute_vars_js_in_inset_text() -> None:
         },
     })
     view = _view(story, {"rank": "Captain"})
-    assert view["insets"]["before"][0]["text"] == "Rank: Captain"
+    assert view["insets"]["before"][0]["text"] == ["Rank: Captain"]
 
 
 def test_substitute_vars_js_before_inline_resolution() -> None:
@@ -292,7 +292,7 @@ def test_substitute_vars_js_before_inline_resolution() -> None:
         },
     })
     view = _view(story, {"known": True, "player_name": "Mira"})
-    assert view["node"]["text"] == "Hello, Mira!"
+    assert view["node"]["text"] == ["Hello, Mira!"]
 
 
 # ---------------------------------------------------------------------------
@@ -343,3 +343,95 @@ import { loadTypewriterSettings } from './web/typewriter.js';
 console.log(loadTypewriterSettings().player_name);
 """
     assert _run(script) == "Felix"
+
+
+# ---------------------------------------------------------------------------
+# resolveCorruption — unit tests
+# ---------------------------------------------------------------------------
+
+def _rc(text: str, node_corruption) -> str:
+    """Call resolveCorruption(text, nodeCorruption) in JS and JSON.stringify the result."""
+    script = f"""
+import {{ resolveCorruption }} from './web/engine.js';
+const result = resolveCorruption({json.dumps(text)}, {json.dumps(node_corruption)});
+console.log(JSON.stringify(result));
+"""
+    return _run(script)
+
+
+def test_js_resolve_corruption_no_spans() -> None:
+    result = json.loads(_rc("plain text", None))
+    assert result == ["plain text"]
+
+
+def test_js_resolve_corruption_span_object() -> None:
+    result = json.loads(_rc("{corrupt}broken{/corrupt}", None))
+    assert len(result) == 1
+    assert result[0]["text"] == "broken"
+    assert result[0]["mode"] == "consistent"
+
+
+def test_js_resolve_corruption_intensity_override() -> None:
+    result = json.loads(_rc("{corrupt:0.7}text{/corrupt}", None))
+    assert abs(result[0]["intensity"] - 0.7) < 0.001
+
+
+def test_js_resolve_corruption_mode_override() -> None:
+    result = json.loads(_rc("{corrupt:random}text{/corrupt}", None))
+    assert result[0]["mode"] == "random"
+
+
+def test_js_resolve_corruption_node_level_float() -> None:
+    result = json.loads(_rc("{corrupt}text{/corrupt}", 0.4))
+    assert abs(result[0]["intensity"] - 0.4) < 0.001
+
+
+def test_js_resolve_corruption_mixed_segments() -> None:
+    result = json.loads(_rc("before {corrupt}bad{/corrupt} after", None))
+    assert len(result) == 3
+    assert result[0] == "before "
+    assert result[1]["text"] == "bad"
+    assert result[2] == " after"
+
+
+def test_js_resolve_corruption_seed_matches_python() -> None:
+    """Seed formula must produce identical values in Python and JS."""
+    from src.corruption import _text_seed
+    py_seed = _text_seed("glitch", 0)
+    script = f"""
+import {{ resolveCorruption }} from './web/engine.js';
+const result = resolveCorruption('{{corrupt}}glitch{{/corrupt}}', null);
+console.log(result[0].seed);
+"""
+    js_seed = int(_run(script))
+    assert py_seed == js_seed
+
+
+def test_js_current_view_chains_corruption() -> None:
+    story = {
+        "meta": {"start_node": "start"},
+        "nodes": {
+            "start": {
+                "text": "Hello {corrupt}world{/corrupt}.",
+                "choices": [{"label": "Go", "next": "end", "requires": {}, "sets": {}}],
+                "overlays": [], "insets": [],
+            },
+            "end": {
+                "text": "Done.", "choices": [],
+                "is_ending": True, "overlays": [], "insets": [],
+            },
+        },
+    }
+    script = f"""
+import {{ createRun, currentView }} from './web/engine.js';
+const entry = {{ story: {json.dumps(story)} }};
+const run = createRun(entry);
+const view = currentView(run);
+console.log(JSON.stringify(view.node.text));
+"""
+    result = json.loads(_run(script))
+    # result is TextSegments: ["Hello ", {{text:"world",...}}, "."]
+    assert isinstance(result, list)
+    assert result[0] == "Hello "
+    assert result[1]["text"] == "world"
+    assert result[2] == "."

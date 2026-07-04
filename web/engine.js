@@ -15,6 +15,54 @@ export function substituteVars(text, state = {}) {
   });
 }
 
+const _CORRUPT_RE = /\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?\}([\s\S]*?)\{\/corrupt\}/g;
+
+function _textSeed(text, index) {
+  const combined = text + String(index);
+  let sum = 0;
+  for (let i = 0; i < combined.length; i++) {
+    sum = (sum + combined.charCodeAt(i) * (i + 1)) % 4294967296;
+  }
+  return sum;
+}
+
+export function resolveCorruption(text, nodeCorruption) {
+  let nodeIntensity = 1.0;
+  let nodeMode = "consistent";
+  if (typeof nodeCorruption === "number") {
+    nodeIntensity = nodeCorruption;
+  } else if (nodeCorruption && typeof nodeCorruption === "object") {
+    nodeIntensity = nodeCorruption.intensity ?? 1.0;
+    nodeMode = nodeCorruption.mode ?? "consistent";
+  }
+
+  const segments = [];
+  let lastEnd = 0;
+  let spanIndex = 0;
+  let match;
+  _CORRUPT_RE.lastIndex = 0;
+
+  while ((match = _CORRUPT_RE.exec(text)) !== null) {
+    if (match.index > lastEnd) {
+      segments.push(text.slice(lastEnd, match.index));
+    }
+    const rawIntensity = match[1];
+    const rawMode = match[2];
+    const spanText = match[3];
+    const intensity = rawIntensity !== undefined ? parseFloat(rawIntensity) : nodeIntensity;
+    const mode = rawMode !== undefined ? rawMode : nodeMode;
+    const seed = _textSeed(spanText, spanIndex);
+    segments.push({ text: spanText, intensity, mode, seed });
+    lastEnd = match.index + match[0].length;
+    spanIndex++;
+  }
+
+  if (lastEnd < text.length) {
+    segments.push(text.slice(lastEnd));
+  }
+  return segments.length ? segments : [text];
+}
+
 export function checkRequires(requires = {}, state = {}) {
   return Object.entries(requires).every(([key, condition]) => {
     const current = state[key];
@@ -82,7 +130,10 @@ export function currentView(run) {
   const choices = visibleItems(node.choices || [], run.state);
   const overlays = partitionByPosition(visibleItems(node.overlays || [], run.state), "after");
   const insets = partitionByPosition(visibleItems(node.insets || [], run.state), "before");
-  const pt = (text) => resolveInline(substituteVars(text, run.state), run.state);
+  const pt = (text) => resolveCorruption(
+    resolveInline(substituteVars(text, run.state), run.state),
+    run.story.nodes[run.nodeId].corruption ?? null
+  );
   return {
     node: { ...node, text: pt(node.text) },
     choices,
