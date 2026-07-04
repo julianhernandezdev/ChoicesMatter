@@ -508,6 +508,7 @@ class Display:
             self.console.print(f"  [cyan]8.[/cyan]  Stories per page [bold]{page_size}[/bold]")
             player_name_val = draft.get("player_name", "Felix")
             self.console.print(f"  [cyan]9.[/cyan]  Player name      [bold]{player_name_val}[/bold]")
+            self.console.print(f"  [cyan]10.[/cyan] Corruption        →")
             self.console.print()
             self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
             raw = self.console.input("  › ").strip().lower()
@@ -531,6 +532,8 @@ class Display:
                 self._settings_edit_page_size(picker)
             elif raw == "9":
                 self._settings_edit_player_name(draft)
+            elif raw == "10":
+                self._settings_corruption(draft)
 
     def _settings_edit_speed(self, tw: dict) -> None:
         self.clear_screen()
@@ -604,6 +607,102 @@ class Display:
                 return
             draft["player_name"] = raw
             return
+
+    def _settings_corruption(self, draft: dict) -> None:
+        _CHARSET_LABELS = {
+            "blocks":     "blocks  (█ ▓ ▒ ░)",
+            "symbols":    "symbols  (# @ ! ? &)",
+            "diacritics": "diacritics  (⚠ screen reader unfriendly)",
+            "custom":     "custom",
+        }
+        _CHARSETS_ORDER = ["blocks", "symbols", "diacritics", "custom"]
+
+        while True:
+            self.clear_screen()
+            c = draft.setdefault("corruption", {})
+            enabled      = c.get("enabled", True)
+            intensity    = c.get("intensity", 1.0)
+            mode         = c.get("mode", "consistent")
+            charset      = c.get("charset", "blocks")
+            custom_chars = c.get("custom_chars", "█▓▒░")
+            animate      = c.get("animate", True)
+            frames       = c.get("scramble_frames", 8)
+            delay        = c.get("scramble_delay_ms", 60)
+
+            en_state  = "[green]on[/green]"  if enabled else "[dim]off[/dim]"
+            an_state  = "[green]on[/green]"  if animate  else "[dim]off[/dim]"
+            mode_disp = f"[bold]{mode}[/bold]"
+            cs_label  = _CHARSET_LABELS.get(charset, charset)
+            cc_style  = "" if charset == "custom" else "dim"
+
+            self.console.print()
+            self.console.print(Rule("[bold cyan]Settings — Corruption[/bold cyan]"))
+            self.console.print()
+            self.console.print(f"  [cyan]1.[/cyan]  Enabled           {en_state}")
+            self.console.print(f"  [cyan]2.[/cyan]  Intensity         [bold]{intensity:.1f}×[/bold]")
+            self.console.print(f"  [cyan]3.[/cyan]  Mode              {mode_disp}")
+            self.console.print(f"  [cyan]4.[/cyan]  Character set     {cs_label}")
+            self.console.print(f"  [{cc_style}][cyan]5.[/cyan]  Custom chars      {custom_chars}[/{cc_style}]")
+            self.console.print(f"  [cyan]6.[/cyan]  Animate           {an_state}")
+            self.console.print(f"  [cyan]7.[/cyan]  Scramble frames   [bold]{frames}[/bold]")
+            self.console.print(f"  [cyan]8.[/cyan]  Scramble delay    [bold]{delay} ms[/bold]")
+            self.console.print()
+            self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
+            raw = self.console.input("  › ").strip().lower()
+
+            if raw == "s":
+                self.console.print("\n  [dim green]✓ Saved.[/dim green]")
+                self.console.input("\n  [dim]Press Enter to return.[/dim] ")
+                return
+            if raw == "x":
+                return
+            if raw == "1":
+                c["enabled"] = not enabled
+            elif raw == "2":
+                while True:
+                    v = self.console.input("  Enter multiplier (0.0–1.0, or Enter to keep): ").strip()
+                    if v == "":
+                        break
+                    try:
+                        fv = float(v)
+                        if 0.0 <= fv <= 1.0:
+                            c["intensity"] = fv
+                            break
+                    except ValueError:
+                        pass
+                    self.console.print("  [red]Enter a number between 0.0 and 1.0.[/red]")
+            elif raw == "3":
+                c["mode"] = "random" if mode == "consistent" else "consistent"
+            elif raw == "4":
+                cur_idx = _CHARSETS_ORDER.index(charset) if charset in _CHARSETS_ORDER else 0
+                c["charset"] = _CHARSETS_ORDER[(cur_idx + 1) % len(_CHARSETS_ORDER)]
+            elif raw == "5":
+                if charset != "custom":
+                    self.console.print("  [dim]Set character set to 'custom' first.[/dim]")
+                    continue
+                v = self.console.input("  Enter custom characters (or Enter to keep): ").strip()
+                if v:
+                    c["custom_chars"] = v
+            elif raw == "6":
+                c["animate"] = not animate
+            elif raw == "7":
+                while True:
+                    v = self.console.input("  Enter frames (1–50, or Enter to keep): ").strip()
+                    if v == "":
+                        break
+                    if v.isdigit() and 1 <= int(v) <= 50:
+                        c["scramble_frames"] = int(v)
+                        break
+                    self.console.print("  [red]Enter a number between 1 and 50.[/red]")
+            elif raw == "8":
+                while True:
+                    v = self.console.input("  Enter delay ms (0–1000, or Enter to keep): ").strip()
+                    if v == "":
+                        break
+                    if v.isdigit() and 0 <= int(v) <= 1000:
+                        c["scramble_delay_ms"] = int(v)
+                        break
+                    self.console.print("  [red]Enter a number between 0 and 1000.[/red]")
 
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})
