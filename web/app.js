@@ -204,16 +204,23 @@ var SPEED_PRESETS = [
 ];
 
 var SETTINGS_ROWS = [
-  { key: 'enabled',         label: 'Enabled',           type: 'boolean',            section: 'Typewriter' },
-  { key: 'delay_ms',        label: 'Speed',             type: 'number',  unit: 'ms', section: null },
-  { key: 'pauses..',        label: 'Pause after  .',    type: 'number',  unit: 'ms', section: null },
-  { key: 'pauses.!',        label: 'Pause after  !',    type: 'number',  unit: 'ms', section: null },
-  { key: 'pauses.?',        label: 'Pause after  ?',    type: 'number',  unit: 'ms', section: null },
-  { key: 'pauses.…',   label: 'Pause after  …', type: 'number', unit: 'ms', section: null },
-  { key: 'pauses.—',   label: 'Pause after  —', type: 'number', unit: 'ms', section: null },
-  { key: 'page_size',       label: 'Stories per page',  type: 'number',  unit: '',   section: 'Display' },
-  { key: 'accessible_mode', label: 'Accessible mode',   type: 'a11y',               section: 'Accessibility' },
-  { key: 'player_name',     label: 'Player name',       type: 'text',               section: 'Player' },
+  { key: 'enabled',                    label: 'Enabled',           type: 'boolean',                                                   section: 'Typewriter' },
+  { key: 'delay_ms',                   label: 'Speed',             type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'pauses..',                   label: 'Pause after  .',    type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'pauses.!',                   label: 'Pause after  !',    type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'pauses.?',                   label: 'Pause after  ?',    type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'pauses.…',                   label: 'Pause after  …',    type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'pauses.—',                   label: 'Pause after  —',    type: 'number',  unit: 'ms',                                       section: null },
+  { key: 'page_size',                  label: 'Stories per page',  type: 'number',  unit: '',                                         section: 'Display' },
+  { key: 'accessible_mode',            label: 'Accessible mode',   type: 'a11y',                                                      section: 'Accessibility' },
+  { key: 'player_name',                label: 'Player name',       type: 'text',                                                      section: 'Player' },
+  { key: 'corruption.enabled',         label: 'Enabled',           type: 'boolean',                                                   section: 'Corruption' },
+  { key: 'corruption.intensity',       label: 'Intensity',         type: 'float',   unit: '×',                                        section: null },
+  { key: 'corruption.mode',            label: 'Mode',              type: 'cycle',   values: ['consistent', 'random'],                  section: null },
+  { key: 'corruption.charset',         label: 'Character set',     type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], section: null },
+  { key: 'corruption.animate',         label: 'Animate',           type: 'boolean',                                                   section: null },
+  { key: 'corruption.scramble_frames', label: 'Scramble frames',   type: 'number',  unit: '',                                         section: null },
+  { key: 'corruption.scramble_delay_ms', label: 'Scramble delay',  type: 'number',  unit: 'ms',                                       section: null },
 ];
 
 function getPageSize() { return loadTypewriterSettings().page_size || 5; }
@@ -229,12 +236,18 @@ function changePage(delta) {
 
 function getSettingValue(draft, key) {
   if (key.indexOf('pauses.') === 0) return draft.pauses[key.slice('pauses.'.length)];
+  if (key.indexOf('corruption.') === 0) return (draft.corruption || {})[key.slice('corruption.'.length)];
   return draft[key];
 }
 
 function setSettingValue(draft, key, value) {
   if (key.indexOf('pauses.') === 0) draft.pauses[key.slice('pauses.'.length)] = value;
-  else draft[key] = value;
+  else if (key.indexOf('corruption.') === 0) {
+    if (!draft.corruption) draft.corruption = {};
+    draft.corruption[key.slice('corruption.'.length)] = value;
+  } else {
+    draft[key] = value;
+  }
 }
 
 // --- Prompt ---
@@ -632,6 +645,7 @@ function renderSettings() {
       page_size: s.page_size,
       accessible_mode: s.accessible_mode,
       player_name: s.player_name,
+      corruption: Object.assign({}, s.corruption),
     };
   }
   settingsEditRow = null;
@@ -653,6 +667,8 @@ function renderSettings() {
       } else {
         display = val ? 'On' : 'Off';
       }
+    } else if (row.type === 'cycle') {
+      display = val;
     } else {
       display = val + (row.unit ? ' ' + row.unit : '');
     }
@@ -1166,6 +1182,7 @@ function renderAccessibleSettings() {
       pauses: Object.assign({}, s.pauses),
       page_size: s.page_size, accessible_mode: s.accessible_mode,
       player_name: s.player_name,
+      corruption: Object.assign({}, s.corruption),
     };
   }
   settingsEditRow = null;
@@ -1184,6 +1201,8 @@ function renderAccessibleSettings() {
       } else {
         display = val ? 'On' : 'Off';
       }
+    } else if (row.type === 'cycle') {
+      display = val;
     } else {
       display = val + (row.unit ? ' ' + row.unit : '');
     }
@@ -1282,12 +1301,21 @@ function startSettingsEdit(rowIndex) {
     renderSettings();
     return;
   }
-  if (isAccessibleMode() && (row.type === 'number' || row.type === 'text')) {
+  if (row.type === 'cycle') {
+    var cycleIdx = row.values ? row.values.indexOf(val) : -1;
+    setSettingValue(settingsDraft, row.key, row.values[(cycleIdx < 0 ? 0 : cycleIdx + 1) % row.values.length]);
+    renderSettings();
+    return;
+  }
+  if (isAccessibleMode() && (row.type === 'number' || row.type === 'float' || row.type === 'text')) {
     var currentVal = getSettingValue(settingsDraft, row.key);
     var entered = window.prompt(row.label + ':', String(currentVal || ''));
     if (entered !== null) {
       if (row.type === 'text') {
         if (entered.trim() !== '') setSettingValue(settingsDraft, row.key, entered.trim());
+      } else if (row.type === 'float') {
+        var fnum = parseFloat(entered);
+        if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
       } else {
         var num = parseInt(entered, 10);
         if (!isNaN(num)) {
@@ -1329,6 +1357,9 @@ function confirmSettingsEdit() {
     if (valueStr.trim() !== '') {
       setSettingValue(settingsDraft, row.key, valueStr.trim());
     }
+  } else if (row.type === 'float') {
+    var fnum = parseFloat(valueStr);
+    if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
   } else {
     var num = parseInt(valueStr, 10);
     if (!isNaN(num)) {

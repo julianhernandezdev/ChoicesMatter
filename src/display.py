@@ -633,7 +633,6 @@ class Display:
             an_state  = "[green]on[/green]"  if animate  else "[dim]off[/dim]"
             mode_disp = f"[bold]{mode}[/bold]"
             cs_label  = _CHARSET_LABELS.get(charset, charset)
-            cc_style  = "" if charset == "custom" else "dim"
 
             self.console.print()
             self.console.print(Rule("[bold cyan]Settings — Corruption[/bold cyan]"))
@@ -642,7 +641,10 @@ class Display:
             self.console.print(f"  [cyan]2.[/cyan]  Intensity         [bold]{intensity:.1f}×[/bold]")
             self.console.print(f"  [cyan]3.[/cyan]  Mode              {mode_disp}")
             self.console.print(f"  [cyan]4.[/cyan]  Character set     {cs_label}")
-            self.console.print(f"  [{cc_style}][cyan]5.[/cyan]  Custom chars      {custom_chars}[/{cc_style}]")
+            if charset == "custom":
+                self.console.print(f"  [cyan]5.[/cyan]  Custom chars      {custom_chars}")
+            else:
+                self.console.print(f"  [dim][cyan]5.[/cyan]  Custom chars      {custom_chars}[/dim]")
             self.console.print(f"  [cyan]6.[/cyan]  Animate           {an_state}")
             self.console.print(f"  [cyan]7.[/cyan]  Scramble frames   [bold]{frames}[/bold]")
             self.console.print(f"  [cyan]8.[/cyan]  Scramble delay    [bold]{delay} ms[/bold]")
@@ -651,7 +653,9 @@ class Display:
             raw = self.console.input("  › ").strip().lower()
 
             if raw == "s":
-                self.console.print("\n  [dim green]✓ Saved.[/dim green]")
+                save_settings(draft)
+                self._cfg = copy.deepcopy(draft)
+                self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
                 self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                 return
             if raw == "x":
