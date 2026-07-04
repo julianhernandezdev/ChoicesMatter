@@ -31,7 +31,7 @@ All four span forms work in node `text`, inset `text`, and overlay `text`:
 | `{corrupt:random}text{/corrupt}` | Sets mode for this span; intensity inherited |
 | `{corrupt:0.8:random}text{/corrupt}` | Sets both intensity and mode explicitly |
 
-**Parameter order:** intensity first, then mode. `{corrupt:0.8:random}` is valid; `{corrupt:random:0.8}` is not recognised and raises a validation error.
+**Parameter order:** intensity first, then mode. `{corrupt:0.8:random}` is valid; `{corrupt:random:0.8}` is not validated and renders as literal text in the output (the player sees `{corrupt:random:0.8}` and `{/corrupt}` as visible characters). Use the correct order `{corrupt:0.8:random}` instead.
 
 A span with `{corrupt:0.0}…{/corrupt}` renders completely clean. This is valid and can be used to shelter a phrase from a node-level baseline.
 

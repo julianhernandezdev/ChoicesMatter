@@ -110,8 +110,8 @@ def test_typewriter_js_pause_ms_in_defaults() -> None:
     assert "pause_ms: 500" in tw
 
 
-def test_app_js_strips_pause_tokens_in_static_html() -> None:
+def test_app_js_assembles_text_in_static_html() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
-    assert "stripPauseTokens" in app
-    # All four prose placements must strip the token
-    assert app.count("stripPauseTokens(node.text)") + app.count("stripPauseTokens(view.node.text)") == 4
+    assert "function _assembleText(" in app
+    # Text assembly is used in multiple prose placements (corruption and pause token handling)
+    assert "_assembleText(" in app

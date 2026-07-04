@@ -1,6 +1,6 @@
 import { createRun, currentView, applySets } from "./engine.js";
 import { loadSave, writeSave, deleteSave, loadGallery, recordEnding, clearAllProgress } from "./storage.js";
-import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS, stripPauseTokens } from "./typewriter.js";
+import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS } from "./typewriter.js";
 
 const app = document.getElementById("app");
 const mobileCapture = document.getElementById("mobile-capture");
