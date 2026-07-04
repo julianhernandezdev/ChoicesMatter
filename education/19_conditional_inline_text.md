@@ -73,7 +73,13 @@ Original `Node`, `Inset`, and `Overlay` objects are never mutated — `dataclass
 
 ## Coexistence with Variable Text Substitution
 
-Variable Text Substitution (future feature) uses `{key}` — no `?`. The conditional regex will not match those patterns. When both features are active, variable substitution runs first; conditional inline runs second.
+Variable Text Substitution (example 21) uses `{key}` — no `?`. The conditional regex will not match those patterns. Variable substitution runs first; conditional inline runs second. This means substituted values can appear inside conditional branches:
+
+```json
+"text": "{known?Hello, {player_name}!|Hello, stranger!}"
+```
+
+`{player_name}` is substituted first, then the conditional is resolved on the result.
 
 ## Key references
 

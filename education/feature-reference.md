@@ -26,6 +26,8 @@ All 20 engine features in one place — each illustrated by a numbered example s
 | 18 | Multi-Condition Gating | `stories/examples/18_multi_condition_gating.json` | One choice gated on two simultaneous conditions (AND + OR) |
 | 19 | Conditional Inline Text | `stories/examples/19_conditional_inline_text.json` | Flag-conditional spans in text fields, resolved at runtime |
 | 20 | Pause Token | `stories/examples/20_pause_token.json` | Inject a configurable delay mid-stream during typewriter playback |
+| 21 | Variable Text Substitution | `stories/examples/21_variable_text_substitution.json` | `{key}` placeholders replaced at runtime with flag values; missing keys preserved intact |
+| 22 | Protagonist Name Prompt | `stories/examples/22_protagonist_name_prompt.json` | `meta.name_prompt` triggers a pre-game name input; `{player_name}` available in all text fields |
 
 ---
 
@@ -1005,7 +1007,7 @@ Original `Node`, `Inset`, and `Overlay` objects are never mutated — `dataclass
 
 ### Coexistence with Variable Text Substitution
 
-Variable Text Substitution (future feature) uses `{key}` — no `?`. The conditional regex will not match those patterns. When both features are active, variable substitution runs first; conditional inline runs second.
+Variable Text Substitution (example 21) uses `{key}` — no `?`. The conditional regex will not match those patterns. Variable substitution runs first; conditional inline runs second. This means substituted values can appear inside conditional branches — e.g. `{known?Hello, {player_name}!|Hello, stranger!}` resolves correctly.
 
 ### Key references
 
@@ -1097,3 +1099,120 @@ self.console.print(make(_strip_pause_tokens(node_text)))
 | `_typewrite()` | `src/display.py` |
 | `"pause_ms"` default | `src/config.py`, `_DEFAULTS["typewriter"]` |
 | Unit tests | `tests/test_display.py`, section `_strip_pause_tokens` and `_typewrite: {pause} token` |
+
+---
+
+## 21 — Variable Text Substitution
+
+**Story:** `stories/examples/21_variable_text_substitution.json`
+**Feature:** `{key}` placeholders in any text field replaced at runtime with the current value of that flag.
+
+### What the story does
+
+The player picks a route (Northern, Southern, or Eastern). All three choices converge on `assigned`. `{route}` is substituted into the node text, an inset header, an overlay, and both ending texts — three different stories from one node.
+
+### Syntax
+
+```
+"text": "You sign for the {route} assignment."
+```
+
+`{key}` without `?` is variable substitution. `{flag?true|false}` with `?` is conditional inline text (example 19). The two syntaxes coexist without interference.
+
+### Behaviour
+
+| Condition | Result |
+|---|---|
+| Key present in state | Replaced with `str(value)` |
+| Key present, value is `""` | Replaced with empty string |
+| Key absent from state | Placeholder left intact |
+
+### Engine code path
+
+**`_SUBST_RE`** (`src/engine.py:13`): `re.compile(r"\{(\w+)\}")` — matches any `{word}` without `?`.
+
+**`Engine._substitute_vars()`** (`src/engine.py`):
+
+```python
+@staticmethod
+def _substitute_vars(text: str, state: dict) -> str:
+    def _replace(m: re.Match) -> str:
+        val = state.get(m.group(1))
+        return str(val) if val is not None else m.group(0)
+    return _SUBST_RE.sub(_replace, text)
+```
+
+Missing key → `m.group(0)` (original placeholder preserved). Present key → `str(val)`.
+
+**`_pt` closure in `Engine.run()`** — chains substitution before inline resolution:
+
+```python
+def _pt(text: str) -> str:
+    return self._resolve_inline(self._substitute_vars(text, self._state), self._state)
+```
+
+Applied to node text, all insets, and all overlays via `dataclasses.replace()` copies.
+
+### Key references
+
+| Symbol | Location |
+|---|---|
+| `_SUBST_RE` | `src/engine.py:13` |
+| `Engine._substitute_vars()` | `src/engine.py` |
+| `_pt` closure in `Engine.run()` | `src/engine.py`, after visibility filtering |
+| `substituteVars` (JS) | `web/engine.js` |
+| Unit tests | `tests/test_engine.py`, section "Variable text substitution" |
+| JS unit tests | `tests/test_web_engine.py`, section "substituteVars" |
+
+---
+
+## 22 — Protagonist Name Prompt
+
+**Story:** `stories/examples/22_protagonist_name_prompt.json`
+**Feature:** `meta.name_prompt` triggers a pre-game name input screen. The name is stored as the reserved `player_name` flag and available via `{player_name}` in all text fields.
+
+### What the story does
+
+The innkeeper greets the player by name on the first node. The room inset shows their name on the reservation. The key is engraved with it. Both endings reference the name — one in prose, one as a standalone overlay before the ending panel.
+
+### Meta fields
+
+```json
+{
+  "meta": {
+    "name_prompt": "What is your name?",
+    "name_default": "the stranger"
+  }
+}
+```
+
+`name_prompt` triggers the feature. `name_default` is the fallback when the player submits empty input and no settings name is available. `name_default` requires `name_prompt` to also be set.
+
+### Launch flow
+
+Fires after content warnings, before the first node. Skipped on save resume — the saved `player_name` is used directly. The input is pre-filled with the settings `player_name` value (default `"Felix"`).
+
+**Fallback priority:** entered name → `meta.name_default` → settings name → reject (show error).
+
+### Using `{player_name}` without `name_prompt`
+
+`player_name` is always seeded from settings before the engine starts, regardless of whether the story declares `name_prompt`. A story using `{player_name}` with no prompt will show the player's globally saved name automatically.
+
+### Engine code path
+
+`main.py` `_launch_story()` reads `settings_name` and builds `initial_state = {"player_name": settings_name}` unconditionally. If `story.name_prompt` is set and no save exists, it fires the prompt and overwrites `initial_state["player_name"]` with the entered name.
+
+`Engine.__init__` stores `initial_state` and seeds `_state` from it in both `_resolve_start()` (new game) and `_reset()` (play-again). `player_name` is present from the first node of every run.
+
+### Key references
+
+| Symbol | Location |
+|---|---|
+| `Story.name_prompt` / `name_default` | `src/story.py:74–75` |
+| `StoryLoader` validation | `src/story.py:243–280` |
+| `_launch_story()` wiring | `main.py` |
+| `Engine.__init__` `initial_state` param | `src/engine.py:23` |
+| `Display.prompt_protagonist_name()` | `src/display.py` |
+| `renderNamePrompt()` / `renderAccessibleNamePrompt()` | `web/app.js` |
+| Unit tests | `tests/test_story.py`, `tests/test_engine.py`, `tests/test_display.py` |
+| JS parity tests | `tests/test_web_engine.py` |
