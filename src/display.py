@@ -275,32 +275,72 @@ class Display:
             return list(cfg.get("custom_chars", "█▓▒░"))
         return CHARSETS.get(key, CHARSETS["blocks"])
 
-    def _typewrite(self, make_panel, text: str, delay_s: float) -> None:
-        raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
-        pauses = {k: v / 1000 for k, v in raw_pauses.items()}
+    def _typewrite(self, make_panel, segments: TextSegments, delay_s: float) -> None:
+        charset = self._get_charset()
+        cfg_corruption = self._cfg.get("corruption", {})
+        animate = cfg_corruption.get("animate", True)
+        scramble_frames = max(1, cfg_corruption.get("scramble_frames", 8))
+        scramble_delay = max(0, cfg_corruption.get("scramble_delay_ms", 60)) / 1000
         pause_s = self._cfg.get("typewriter", {}).get("pause_ms", 500) / 1000
-        clean_text = _strip_pause_tokens(text)
-        segments = text.split("{pause}")
+        raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
+        char_pauses = {k: v / 1000 for k, v in raw_pauses.items()}
+        full_assembled = _assemble_text(segments, charset, cfg_corruption)
+
         with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
             displayed = ""
-            for seg_idx, segment in enumerate(segments):
-                for char in segment:
-                    if _key_pending():
-                        _consume_key()
-                        live.update(make_panel(clean_text))
+            for segment in segments:
+                if isinstance(segment, str):
+                    sub_segs = segment.split("{pause}")
+                    for seg_idx, sub_seg in enumerate(sub_segs):
+                        for char in sub_seg:
+                            if _key_pending():
+                                _consume_key()
+                                live.update(make_panel(full_assembled))
+                                live.refresh()
+                                return
+                            displayed += char
+                            live.update(make_panel(displayed))
+                            live.refresh()
+                            time.sleep(delay_s + char_pauses.get(char, 0.0))
+                        if seg_idx < len(sub_segs) - 1:
+                            if _key_pending():
+                                _consume_key()
+                                live.update(make_panel(full_assembled))
+                                live.refresh()
+                                return
+                            time.sleep(pause_s)
+                else:
+                    enabled = cfg_corruption.get("enabled", True)
+                    effective = min(segment.intensity * cfg_corruption.get("intensity", 1.0), 1.0)
+                    if enabled:
+                        final = corrupt_string(
+                            segment.text, effective, segment.mode, segment.seed, charset
+                        )
+                    else:
+                        final = segment.text
+
+                    if animate and enabled:
+                        for _ in range(scramble_frames):
+                            if _key_pending():
+                                _consume_key()
+                                live.update(make_panel(full_assembled))
+                                live.refresh()
+                                return
+                            frame = corrupt_string(segment.text, 1.0, "random", 0, charset)
+                            live.update(make_panel(displayed + frame))
+                            live.refresh()
+                            time.sleep(scramble_delay)
+
+                    for char in final:
+                        if _key_pending():
+                            _consume_key()
+                            live.update(make_panel(full_assembled))
+                            live.refresh()
+                            return
+                        displayed += char
+                        live.update(make_panel(displayed))
                         live.refresh()
-                        return
-                    displayed += char
-                    live.update(make_panel(displayed))
-                    live.refresh()
-                    time.sleep(delay_s + pauses.get(char, 0.0))
-                if seg_idx < len(segments) - 1:
-                    if _key_pending():
-                        _consume_key()
-                        live.update(make_panel(clean_text))
-                        live.refresh()
-                        return
-                    time.sleep(pause_s)
+                        time.sleep(delay_s)
 
     def _node_panel(
         self,

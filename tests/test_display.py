@@ -142,7 +142,7 @@ def test_typewrite_pause_token_sleeps_pause_ms():
     with patch("src.display.time.sleep", side_effect=lambda s: sleep_calls.append(s)), \
          patch("src.display._key_pending", return_value=False), \
          patch("src.display.Live", return_value=mock_live):
-        d._typewrite(lambda t: t, "A{pause}B", 0.0)
+        d._typewrite(lambda t: t, ["A{pause}B"], 0.0)
 
     assert pytest.approx(0.4) in sleep_calls
 
@@ -162,7 +162,7 @@ def test_typewrite_no_pause_token_no_extra_sleep():
     with patch("src.display.time.sleep", side_effect=lambda s: sleep_calls.append(s)), \
          patch("src.display._key_pending", return_value=False), \
          patch("src.display.Live", return_value=mock_live):
-        d._typewrite(lambda t: t, "Hello", 0.0)
+        d._typewrite(lambda t: t, ["Hello"], 0.0)
 
     assert pytest.approx(0.4) not in sleep_calls
 
@@ -185,7 +185,7 @@ def test_typewrite_skip_during_pause_shows_clean_text():
          patch("src.display._consume_key"), \
          patch("src.display.time.sleep"), \
          patch("src.display.Live", return_value=mock_live):
-        d._typewrite(lambda t: t, "A{pause}B", 0.0)
+        d._typewrite(lambda t: t, ["A{pause}B"], 0.0)
 
     assert all("{pause}" not in str(p) for p in shown), \
         f"'{'{pause}'}' appeared in shown text: {shown}"
@@ -745,3 +745,53 @@ def test_assemble_text_global_multiplier() -> None:
     span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=0)
     result = _assemble_text([span], charset, cfg)
     assert result == "hello"   # multiplied to zero
+
+
+# ------------------------------------------------------------------
+# _typewrite: TextSegments
+# ------------------------------------------------------------------
+
+def test_typewrite_plain_segments_streams_chars(tmp_path) -> None:
+    """_typewrite assembles and renders all chars from plain TextSegments."""
+    from src.display import Display
+    from unittest.mock import patch, MagicMock
+    import io
+    d = _make_display_obj({"typewriter": {"enabled": True, "delay_ms": 0,
+                                           "pause_ms": 0, "punctuation_pauses": {}}})
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time") as mock_time, \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, ["abc"], 0.0)
+    # make was called with progressively longer strings ending in "abc"
+    assert "abc" in panels
+
+
+def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
+    """After scramble, settle phase streams the final corrupted form."""
+    from src.display import Display, _assemble_text
+    from src.corruption import CorruptedSpan
+    from unittest.mock import patch, MagicMock
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42)
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 2, "scramble_delay_ms": 0},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time") as mock_time, \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    final = panels[-1]
+    assert final != "hello"    # corrupted
+    assert len(final) == len("hello")  # same length
