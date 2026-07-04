@@ -8,6 +8,13 @@ export const TYPEWRITER_DEFAULTS = {
   page_size: 5,
   accessible_mode: null,
   player_name: "Felix",
+  corruption: {
+    enabled: true,
+    charset: "blocks",
+    intensity: 1.0,
+    animate: false,
+    scramble_frames: 5,
+  },
 };
 
 export function loadTypewriterSettings() {
@@ -24,6 +31,9 @@ export function loadTypewriterSettings() {
         ? stored.accessible_mode
         : TYPEWRITER_DEFAULTS.accessible_mode,
       player_name: typeof stored.player_name === 'string' ? stored.player_name : TYPEWRITER_DEFAULTS.player_name,
+      corruption: stored.corruption && typeof stored.corruption === 'object'
+        ? Object.assign({}, TYPEWRITER_DEFAULTS.corruption, stored.corruption)
+        : Object.assign({}, TYPEWRITER_DEFAULTS.corruption),
     };
   } catch {
     return {
@@ -34,6 +44,7 @@ export function loadTypewriterSettings() {
       page_size: TYPEWRITER_DEFAULTS.page_size,
       accessible_mode: TYPEWRITER_DEFAULTS.accessible_mode,
       player_name: TYPEWRITER_DEFAULTS.player_name,
+      corruption: Object.assign({}, TYPEWRITER_DEFAULTS.corruption),
     };
   }
 }
@@ -56,23 +67,101 @@ export function stripPauseTokens(text) {
   return text.split('{pause}').join('');
 }
 
+// --- Corruption helpers for typewriter ---
+
+var _TW_CHARSET_MAP = {
+  blocks:    ["█", "▓", "▒", "░"],
+  symbols:   ["#", "@", "!", "?", "&", "*", "~"],
+  diacritics: ["̈", "̊", "̃", "̂", "̄"],
+};
+var _TW_PUNCT = new Set([...".,!?…—;:'\"()-\n "]);
+
+function _twLcgSelect(nTotal, nSelect, seed) {
+  var a = 1664525, c = 1013904223, m = 4294967296;
+  var state = seed % m;
+  var indices = Array.from({ length: nTotal }, function(_, i) { return i; });
+  for (var i = nTotal - 1; i >= nTotal - nSelect; i--) {
+    state = (a * state + c) % m;
+    var j = state % (i + 1);
+    var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+  }
+  return new Set(indices.slice(nTotal - nSelect));
+}
+
+function _twCorruptString(span, corruption) {
+  var charset = corruption.charset === "custom"
+    ? [...(corruption.custom_chars || "█▓▒░")]
+    : (_TW_CHARSET_MAP[corruption.charset] || _TW_CHARSET_MAP.blocks);
+  if (!charset.length) return span.text;
+  var corruptible = [...span.text].map(function(c, i) { return _TW_PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
+  var count = Math.floor(corruptible.length * Math.min(span.intensity * (corruption.intensity != null ? corruption.intensity : 1.0), 1.0));
+  if (count === 0) return span.text;
+  var positions = span.mode === "consistent"
+    ? _twLcgSelect(corruptible.length, count, span.seed)
+    : new Set([...Array(corruptible.length).keys()].sort(function() { return Math.random() - 0.5; }).slice(0, count));
+  var a = 1664525, c = 1013904223, m = 4294967296;
+  var state = span.seed % m;
+  var chars = [...span.text];
+  corruptible.forEach(function(charIdx, posIdx) {
+    if (positions.has(posIdx)) {
+      if (span.mode === "consistent") {
+        state = (a * state + c) % m;
+        chars[charIdx] = charset[state % charset.length];
+      } else {
+        chars[charIdx] = charset[Math.floor(Math.random() * charset.length)];
+      }
+    }
+  });
+  return chars.join("");
+}
+
+// ---
+
 var twAnimation = null;
 
 export function isTwAnimating() {
   return twAnimation !== null;
 }
 
-export function startTypewriter(element, text) {
-  var segments = text.split('{pause}');
-  var cleanText = segments.join('');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    element.textContent = cleanText;
-    return;
-  }
+export function startTypewriter(element, textOrSegments) {
   var settings = loadTypewriterSettings();
+  var corruption = settings.corruption || {};
   var pauses = settings.pauses || {};
   var delay = settings.delay_ms || 20;
   var pauseMs = settings.pause_ms || 500;
+
+  // Normalize input: plain string → single-element array
+  var inputSegments = typeof textOrSegments === 'string' ? [textOrSegments]
+    : Array.isArray(textOrSegments) ? textOrSegments
+    : [String(textOrSegments || '')];
+
+  // Build full assembled text for skip-to-end
+  var fullText = inputSegments.map(function(seg) {
+    if (typeof seg === 'string') return seg.replace(/\{pause\}/g, '');
+    if (!corruption.enabled) return seg.text;
+    return _twCorruptString(seg, corruption);
+  }).join('');
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.textContent = fullText;
+    return;
+  }
+
+  // Build play queue: flat list of { type: 'text'|'pause', text? }
+  var playQueue = [];
+  inputSegments.forEach(function(seg) {
+    if (typeof seg === 'string') {
+      var parts = seg.split('{pause}');
+      parts.forEach(function(part, i) {
+        if (part.length > 0) playQueue.push({ type: 'text', text: part });
+        if (i < parts.length - 1) playQueue.push({ type: 'pause' });
+      });
+    } else {
+      // CorruptedSpan — render to settled form and stream as text
+      var rendered = corruption.enabled ? _twCorruptString(seg, corruption) : seg.text;
+      if (rendered.length > 0) playQueue.push({ type: 'text', text: rendered });
+    }
+  });
 
   element.textContent = '';
   var toReveal = Array.from(
@@ -80,28 +169,36 @@ export function startTypewriter(element, text) {
   );
   toReveal.forEach(function(el) { el.classList.add('tw-hidden'); });
 
-  var segIdx = 0;
+  var queueIdx = 0;
   var charIdx = 0;
+
   function step() {
-    while (segIdx < segments.length && charIdx >= segments[segIdx].length) {
-      segIdx++;
+    // Advance past exhausted text items
+    while (queueIdx < playQueue.length
+        && playQueue[queueIdx].type === 'text'
+        && charIdx >= playQueue[queueIdx].text.length) {
+      queueIdx++;
       charIdx = 0;
-      if (segIdx < segments.length) {
-        twAnimation = { id: setTimeout(step, pauseMs), text: cleanText, element: element, toReveal: toReveal };
-        return;
-      }
     }
-    if (segIdx >= segments.length) {
+    if (queueIdx >= playQueue.length) {
       twAnimation = null;
       revealChoices(toReveal);
       return;
     }
-    var ch = segments[segIdx][charIdx++];
+    var item = playQueue[queueIdx];
+    if (item.type === 'pause') {
+      queueIdx++;
+      twAnimation = { id: setTimeout(step, pauseMs), text: fullText, element: element, toReveal: toReveal };
+      return;
+    }
+    // type === 'text'
+    var ch = item.text[charIdx++];
     element.textContent += ch;
     var extra = pauses[ch] || 0;
-    twAnimation = { id: setTimeout(step, delay + extra), text: cleanText, element: element, toReveal: toReveal };
+    twAnimation = { id: setTimeout(step, delay + extra), text: fullText, element: element, toReveal: toReveal };
   }
-  twAnimation = { id: setTimeout(step, 0), text: cleanText, element: element, toReveal: toReveal };
+
+  twAnimation = { id: setTimeout(step, 0), text: fullText, element: element, toReveal: toReveal };
 }
 
 export function skipTypewriter() {

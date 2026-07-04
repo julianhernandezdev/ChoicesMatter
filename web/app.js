@@ -110,6 +110,64 @@ function debugTag(style) {
   return '<span class="debug-tag">[' + escapeHtml(label) + ']</span>';
 }
 
+// --- Corruption rendering ---
+
+var _CHARSET_MAP = {
+  blocks:    ["█", "▓", "▒", "░"],
+  symbols:   ["#", "@", "!", "?", "&", "*", "~"],
+  diacritics: ["̈", "̊", "̃", "̂", "̄"],
+};
+var _PUNCT = new Set([...".,!?…—;:'\"()-\n "]);
+
+function _lcgSelect(nTotal, nSelect, seed) {
+  var a = 1664525, c = 1013904223, m = 4294967296;
+  var state = seed % m;
+  var indices = Array.from({ length: nTotal }, function(_, i) { return i; });
+  for (var i = nTotal - 1; i >= nTotal - nSelect; i--) {
+    state = (a * state + c) % m;
+    var j = state % (i + 1);
+    var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+  }
+  return new Set(indices.slice(nTotal - nSelect));
+}
+
+function _corruptString(span, cfg) {
+  var charset = cfg.charset === "custom"
+    ? [...(cfg.custom_chars || "█▓▒░")]
+    : (_CHARSET_MAP[cfg.charset] || _CHARSET_MAP.blocks);
+  if (!charset.length) return span.text;
+  var corruptible = [...span.text].map(function(c, i) { return _PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
+  var count = Math.floor(corruptible.length * Math.min(span.intensity * (cfg.intensity != null ? cfg.intensity : 1.0), 1.0));
+  if (count === 0) return span.text;
+  var positions = span.mode === "consistent"
+    ? _lcgSelect(corruptible.length, count, span.seed)
+    : new Set([...Array(corruptible.length).keys()].sort(function() { return Math.random() - 0.5; }).slice(0, count));
+  var a = 1664525, c = 1013904223, m = 4294967296;
+  var state = span.seed % m;
+  var chars = [...span.text];
+  corruptible.forEach(function(charIdx, posIdx) {
+    if (positions.has(posIdx)) {
+      if (span.mode === "consistent") {
+        state = (a * state + c) % m;
+        chars[charIdx] = charset[state % charset.length];
+      } else {
+        chars[charIdx] = charset[Math.floor(Math.random() * charset.length)];
+      }
+    }
+  });
+  return chars.join("");
+}
+
+function _assembleText(segments, cfg) {
+  if (!Array.isArray(segments)) return segments; // plain string fallback
+  var corruption = (cfg && cfg.corruption) || {};
+  return segments.map(function(seg) {
+    if (typeof seg === "string") return seg.replace(/\{pause\}/g, "");
+    if (!corruption.enabled) return seg.text;
+    return _corruptString(seg, corruption);
+  }).join("");
+}
+
 // --- Story metadata helpers ---
 
 function nodeList(story) {
@@ -445,13 +503,16 @@ function renderGame() {
   var sceneRule = currentRun.currentScene ? renderRule(currentRun.currentScene, 'green') : '';
   var sep = '<span class="terminal-separator">' + '─'.repeat(PANEL_RULE_WIDTH) + '</span>';
 
-  var beforeInsets = view.insets.before.map(function(i) {
-    var tag = debugMode ? debugTag(i.style) : '';
-    return '<span class="terminal-inset">' + renderStyledLine(i, '') + tag + '</span>';
+  var cfg = loadTypewriterSettings();
+  var beforeInsets = view.insets.before.map(function(inset) {
+    var tag = debugMode ? debugTag(inset.style) : '';
+    var item = Object.assign({}, inset, { text: _assembleText(inset.text, cfg) });
+    return '<span class="terminal-inset">' + renderStyledLine(item, '') + tag + '</span>';
   }).join('');
-  var afterInsets = view.insets.after.map(function(i) {
-    var tag = debugMode ? debugTag(i.style) : '';
-    return '<span class="terminal-inset">' + renderStyledLine(i, '') + tag + '</span>';
+  var afterInsets = view.insets.after.map(function(inset) {
+    var tag = debugMode ? debugTag(inset.style) : '';
+    var item = Object.assign({}, inset, { text: _assembleText(inset.text, cfg) });
+    return '<span class="terminal-inset">' + renderStyledLine(item, '') + tag + '</span>';
   }).join('');
 
   var fallbackColor = node.choice_number_color || 'cyan';
@@ -466,11 +527,13 @@ function renderGame() {
 
   var beforeOverlays = view.overlays.before.map(function(o) {
     var tag = debugMode ? debugTag(o.style) : '';
-    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + tag + '</span>';
+    var ov = Object.assign({}, o, { text: _assembleText(o.text, cfg) });
+    return '<span class="terminal-overlay">' + renderStyledLine(ov, '') + tag + '</span>';
   }).join('');
   var afterOverlays = view.overlays.after.map(function(o) {
     var tag = debugMode ? debugTag(o.style) : '';
-    return '<span class="terminal-overlay">' + renderStyledLine(o, '') + tag + '</span>';
+    var ov = Object.assign({}, o, { text: _assembleText(o.text, cfg) });
+    return '<span class="terminal-overlay">' + renderStyledLine(ov, '') + tag + '</span>';
   }).join('');
 
   var debugPanel = '';
@@ -505,7 +568,7 @@ function renderGame() {
     '<span class="terminal-panel-title">' + escapeHtml(makeRule(storyTitle(currentRun.entry), PANEL_RULE_WIDTH)) + '</span>' +
     beforeInsets +
     (view.insets.before.length ? sep : '') +
-    '<div class="terminal-prose" id="prose-text">' + escapeHtml(stripPauseTokens(node.text)) + '</div>' +
+    '<div class="terminal-prose" id="prose-text">' + escapeHtml(_assembleText(node.text, cfg)) + '</div>' +
     (view.insets.after.length ? sep : '') +
     afterInsets +
     '</div>' +
@@ -530,9 +593,13 @@ function renderEnding(view) {
   recordEnding(currentRun.story, currentRun.nodeId);
   deleteSave(currentRun.story.meta.id);
 
+  var cfg = loadTypewriterSettings();
   var type = view.node.ending_type || 'neutral';
   var overlays = [].concat(view.overlays.before, view.overlays.after)
-    .map(function(o) { return '<span class="terminal-overlay">' + renderStyledLine(o, '') + '</span>'; })
+    .map(function(o) {
+      var ov = Object.assign({}, o, { text: _assembleText(o.text, cfg) });
+      return '<span class="terminal-overlay">' + renderStyledLine(ov, '') + '</span>';
+    })
     .join('');
 
   app.innerHTML =
@@ -540,7 +607,7 @@ function renderEnding(view) {
     overlays +
     '<div class="terminal-panel ' + escapeHtml(type) + '">' +
     '<span class="terminal-ending-label ' + escapeHtml(type) + '">' + escapeHtml(makeRule(type.toUpperCase() + ' ENDING', PANEL_RULE_WIDTH)) + '</span>' +
-    '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(stripPauseTokens(view.node.text)) + '</div>' +
+    '<div class="terminal-prose ending-prose" id="prose-text">' + escapeHtml(_assembleText(view.node.text, cfg)) + '</div>' +
     '</div>' +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
@@ -935,17 +1002,19 @@ function renderAccessibleGame() {
 
   function renderInset(it) {
     var kindLabel = insetKindMap[it.style] || 'Note';
-    return '<p class="r-inset" role="note" aria-label="' + escapeHtml(kindLabel + ': ' + it.text) + '">' +
+    var cleanText = _assembleText(it.text, { corruption: { enabled: false } });
+    return '<p class="r-inset" role="note" aria-label="' + escapeHtml(kindLabel + ': ' + cleanText) + '">' +
       '<span class="r-inset-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
-      '<span>' + escapeHtml(it.text) + '</span>' +
+      '<span>' + escapeHtml(cleanText) + '</span>' +
       '</p>';
   }
 
   function renderOverlay(o) {
     var kindLabel = overlayKindMap[o.style] || 'Note';
-    return '<p class="r-overlay ' + escapeHtml(o.style || '') + '" aria-label="' + escapeHtml(kindLabel + ': ' + o.text) + '">' +
+    var cleanText = _assembleText(o.text, { corruption: { enabled: false } });
+    return '<p class="r-overlay ' + escapeHtml(o.style || '') + '" aria-label="' + escapeHtml(kindLabel + ': ' + cleanText) + '">' +
       '<span class="r-overlay-kind" aria-hidden="true">' + escapeHtml(kindLabel) + '</span>' +
-      '<span>' + escapeHtml(o.text) + '</span>' +
+      '<span>' + escapeHtml(cleanText) + '</span>' +
       '</p>';
   }
 
@@ -1011,7 +1080,7 @@ function renderAccessibleGame() {
     '<article class="r-panel" aria-label="Story: ' + escapeHtml(titleStr) + '">' +
     '<h1 class="r-story-title"><span>' + escapeHtml(titleStr) + '</span>' +
     '<span class="r-time">~' + escapeHtml(timeStr) + '</span></h1>' +
-    '<p class="r-prose">' + escapeHtml(stripPauseTokens(node.text)) + '</p>' +
+    '<p class="r-prose">' + escapeHtml(_assembleText(node.text, { corruption: { enabled: false } })) + '</p>' +
     '</article>' +
     afterInsetsHtml +
     beforeOverlaysHtml +
@@ -1060,7 +1129,7 @@ function renderAccessibleEnding(view) {
   var typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + ' Ending';
 
   var overlaysHtml = [].concat(view.overlays.before, view.overlays.after).map(function(o) {
-    return '<p class="r-overlay">' + escapeHtml(o.text) + '</p>';
+    return '<p class="r-overlay">' + escapeHtml(_assembleText(o.text, { corruption: { enabled: false } })) + '</p>';
   }).join('');
 
   app.innerHTML =
@@ -1068,7 +1137,7 @@ function renderAccessibleEnding(view) {
     overlaysHtml +
     '<article class="r-panel r-ending ' + escapeHtml(type) + '" aria-label="' + escapeHtml(typeLabel) + ' — story complete">' +
     '<span class="r-ending-label ' + escapeHtml(type) + '" aria-hidden="true">' + escapeHtml(typeLabel) + '</span>' +
-    '<p class="r-prose">' + escapeHtml(stripPauseTokens(view.node.text)) + '</p>' +
+    '<p class="r-prose">' + escapeHtml(_assembleText(view.node.text, { corruption: { enabled: false } })) + '</p>' +
     '</article>' +
     '<div class="r-nav">' +
     '<button class="r-btn primary r-play-again-btn">Play again</button>' +
