@@ -36,6 +36,10 @@ var speedCustomEdit = false;
 var pendingInput = '';
 var debugMode = false; // false | "author" | "all"
 var sessionAccessible = null; // null | true | false — never written to disk
+var currentSectionScreen = null;
+var sectionDraftSnapshot = null;
+var sectionEditRow = null;
+var speedPresetsReturn = null;
 
 // --- App state ---
 
@@ -320,6 +324,10 @@ function promptPrefix() {
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     var row = SETTINGS_ROWS[settingsEditRow];
     return 'Edit ' + (row ? row.label : 'value') + ': ';
+  }
+  if (currentScreen === 'settings-section' && sectionEditRow !== null) {
+    var srow = currentSectionScreen ? currentSectionScreen.rows[sectionEditRow] : null;
+    return 'Edit ' + (srow ? srow.label : 'value') + ': ';
   }
   if (currentScreen === 'name-prompt') {
     var pn = loadTypewriterSettings().player_name;
@@ -1351,8 +1359,133 @@ function renderAccessibleSpeedPresets() {
   if (active) active.focus();
 }
 
+function renderAccessibleSectionSubscreen(section) {
+  pendingInput = '';
+  currentScreen = 'settings-section';
+  currentSectionScreen = section;
+  document.body.classList.add('reader-mode');
+  setPageTitle('Settings – ' + section.label);
+
+  sectionDraftSnapshot = {};
+  section.defaultKeys.forEach(function(key) {
+    var val = settingsDraft[key];
+    sectionDraftSnapshot[key] = (val !== null && typeof val === 'object') ? Object.assign({}, val) : val;
+  });
+
+  var rowsHtml = section.rows.map(function(row, i) {
+    var val = getSettingValue(settingsDraft, row.key);
+    var display;
+    if (row.type === 'boolean') display = val ? 'On' : 'Off';
+    else if (row.type === 'a11y') display = val === null || val === undefined ? 'Auto' : val ? 'On' : 'Off';
+    else if (row.type === 'cycle') display = val;
+    else display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+    return '<div role="listitem" class="r-setting-row" tabindex="0" data-section-row-index="' + i + '"' +
+      ' aria-label="' + escapeHtml(row.label) + ', currently ' + escapeHtml(String(display)) + '">' +
+      '<span class="r-setting-num">' + (i + 1) + '.</span>' +
+      '<span class="r-setting-label">' + escapeHtml(row.label) + '</span>' +
+      '<span class="r-setting-value">' + escapeHtml(String(display)) + '</span>' +
+      '</div>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Settings – ' + escapeHtml(section.label) + '</h1>' +
+    '<p class="r-page-sub">Press Enter on a row to edit its value.</p>' +
+    '<div class="r-settings" role="list" aria-label="' + escapeHtml(section.label) + ' settings">' + rowsHtml + '</div>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-section-save-btn">Save</button>' +
+    '<button class="r-btn ghost r-section-back-btn">&#8592; Back to settings</button>' +
+    '<button class="r-btn ghost r-section-save-home-btn">Save &amp; Home</button>' +
+    '<button class="r-btn ghost r-section-discard-home-btn">Discard &amp; Home</button>' +
+    '<button class="r-btn ghost r-section-reset-btn">Reset section to defaults</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('[data-section-row-index]').forEach(function(row) {
+    row.addEventListener('click', function() { startSectionRowEdit(Number(row.dataset.sectionRowIndex)); });
+    row.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSectionRowEdit(Number(row.dataset.sectionRowIndex)); }
+    });
+  });
+  app.querySelector('.r-section-save-btn').addEventListener('click', function() {
+    saveTypewriterSettings(settingsDraft); renderSettings();
+  });
+  app.querySelector('.r-section-back-btn').addEventListener('click', function() {
+    Object.assign(settingsDraft, sectionDraftSnapshot); renderSettings();
+  });
+  app.querySelector('.r-section-save-home-btn').addEventListener('click', function() {
+    saveTypewriterSettings(settingsDraft); settingsDraft = null; renderLibrary();
+  });
+  app.querySelector('.r-section-discard-home-btn').addEventListener('click', function() {
+    settingsDraft = null; renderLibrary();
+  });
+  app.querySelector('.r-section-reset-btn').addEventListener('click', function() {
+    if (confirm('Reset ' + section.label + ' to defaults?')) {
+      applyDefaults(settingsDraft, section);
+      renderAccessibleSectionSubscreen(section);
+    }
+  });
+
+  var first = app.querySelector('[data-section-row-index]');
+  if (first) first.focus();
+}
+
 function renderSectionSubscreen(section) {
-  // stub — implemented in T6
+  if (isAccessibleMode()) { renderAccessibleSectionSubscreen(section); return; }
+  document.body.classList.remove('reader-mode');
+  pendingInput = '';
+  currentScreen = 'settings-section';
+  currentSectionScreen = section;
+  sectionEditRow = null;
+
+  // Snapshot this section's keys so X can restore them
+  sectionDraftSnapshot = {};
+  section.defaultKeys.forEach(function(key) {
+    var val = settingsDraft[key];
+    if (val !== null && typeof val === 'object') {
+      sectionDraftSnapshot[key] = Object.assign({}, val);
+    } else {
+      sectionDraftSnapshot[key] = val;
+    }
+  });
+
+  setPageTitle('Settings – ' + section.label);
+
+  var rows = '';
+  section.rows.forEach(function(row, i) {
+    var val = getSettingValue(settingsDraft, row.key);
+    var display;
+    if (row.type === 'boolean') {
+      display = val ? 'on' : 'off';
+    } else if (row.type === 'a11y') {
+      display = val === null || val === undefined ? 'auto' : val ? 'on' : 'off';
+    } else if (row.type === 'cycle') {
+      display = val;
+    } else {
+      display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+    }
+    rows += '<div class="terminal-settings-row" data-action="section-row" data-row="' + i + '">' +
+      '<span class="setting-num">' + (i + 1) + '.</span>' +
+      '<span class="setting-name">' + escapeHtml(row.label) + '</span>' +
+      '<span class="setting-value" id="section-val-' + i + '">' + escapeHtml(String(display)) + '</span>' +
+      '</div>';
+  });
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Settings – ' + section.label, 'green') +
+    '<div class="terminal-list">' + rows + '</div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">Enter a number to edit &middot; ' +
+    '<span class="key-fwd">S</span> save &middot; ' +
+    '<span class="key-back">X</span> back &middot; ' +
+    '<span class="key-fwd">M</span> save+home &middot; ' +
+    '<span class="key-back">Q</span> discard+home &middot; ' +
+    '<span class="key-fwd">R</span> reset section</div>' +
+    '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">&#9000; Tap to type</button>' +
+    '</div></div>';
+  updatePrompt();
 }
 
 function startSettingsEdit(rowIndex) {
@@ -1452,6 +1585,95 @@ function cancelSettingsEdit() {
   renderSettings();
 }
 
+function startSectionRowEdit(rowIndex) {
+  if (!currentSectionScreen) return;
+  var row = currentSectionScreen.rows[rowIndex];
+  if (!row) return;
+  var val = getSettingValue(settingsDraft, row.key);
+
+  if (row.key === 'delay_ms') {
+    speedPresetsReturn = function() { renderSectionSubscreen(currentSectionScreen); };
+    renderSpeedPresets();
+    return;
+  }
+  if (row.type === 'boolean') {
+    setSettingValue(settingsDraft, row.key, !val);
+    renderSectionSubscreen(currentSectionScreen);
+    return;
+  }
+  if (row.type === 'a11y') {
+    var cur = settingsDraft.accessible_mode;
+    settingsDraft.accessible_mode = cur === null ? true : cur === true ? false : null;
+    renderSectionSubscreen(currentSectionScreen);
+    return;
+  }
+  if (row.type === 'cycle') {
+    var cycleIdx = row.values ? row.values.indexOf(val) : -1;
+    setSettingValue(settingsDraft, row.key, row.values[(cycleIdx < 0 ? 0 : cycleIdx + 1) % row.values.length]);
+    renderSectionSubscreen(currentSectionScreen);
+    return;
+  }
+  if (isAccessibleMode() && (row.type === 'number' || row.type === 'float' || row.type === 'text')) {
+    var entered = window.prompt(row.label + ':', String(val || ''));
+    if (entered !== null) {
+      if (row.type === 'text') {
+        if (entered.trim() !== '') setSettingValue(settingsDraft, row.key, entered.trim());
+      } else if (row.type === 'float') {
+        var fnum = parseFloat(entered);
+        if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
+      } else {
+        var num = parseInt(entered, 10);
+        if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, row.key, num);
+      }
+    }
+    renderSectionSubscreen(currentSectionScreen);
+    return;
+  }
+  // Inline edit (desktop)
+  sectionEditRow = rowIndex;
+  var valEl = document.getElementById('section-val-' + rowIndex);
+  if (!valEl) return;
+  if (window.matchMedia('(pointer: coarse)').matches) {
+    valEl.innerHTML = '<span class="setting-editing">(editing&hellip;)</span>';
+    pendingInput = String(val);
+    mobileCapture.value = String(val);
+    var hintEl = document.querySelector('.footer-hint');
+    if (hintEl) hintEl.innerHTML = 'Enter to confirm &middot; <span class="key-back">Esc</span> to cancel.';
+    updatePrompt();
+    mobileCapture.focus();
+  } else {
+    valEl.innerHTML = '<input class="setting-input" id="section-edit-input" type="text" value="' + escapeHtml(String(val)) + '" autocomplete="off">';
+    var input = document.getElementById('section-edit-input');
+    if (input) { input.focus(); input.select(); }
+  }
+}
+
+function confirmSectionRowEdit() {
+  if (sectionEditRow === null || !currentSectionScreen) return;
+  var row = currentSectionScreen.rows[sectionEditRow];
+  if (!row) return;
+  var inlineInput = document.getElementById('section-edit-input');
+  var valueStr = inlineInput ? inlineInput.value : pendingInput.trim();
+  if (row.type === 'text') {
+    if (valueStr.trim() !== '') setSettingValue(settingsDraft, row.key, valueStr.trim());
+  } else if (row.type === 'float') {
+    var fnum = parseFloat(valueStr);
+    if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
+  } else {
+    var num = parseInt(valueStr, 10);
+    if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, row.key, num);
+  }
+  sectionEditRow = null;
+  pendingInput = '';
+  renderSectionSubscreen(currentSectionScreen);
+}
+
+function cancelSectionRowEdit() {
+  sectionEditRow = null;
+  pendingInput = '';
+  renderSectionSubscreen(currentSectionScreen);
+}
+
 // --- Library dispatch ---
 
 function renderLibrary() {
@@ -1538,12 +1760,15 @@ app.addEventListener('click', function(event) {
     if (!isTwAnimating()) choose(Number(button.dataset.index));
   } else if (action === 'settings-row') {
     startSettingsEdit(Number(button.dataset.row));
+  } else if (action === 'section-row') {
+    startSectionRowEdit(Number(button.dataset.row));
   } else if (action === 'show-keyboard') {
     mobileCapture.value = pendingInput;
     mobileCapture.focus();
   } else if (action === 'speed-preset') {
     settingsDraft.delay_ms = SPEED_PRESETS[Number(button.dataset.index)].ms;
-    renderSettings();
+    if (speedPresetsReturn) { var fn = speedPresetsReturn; speedPresetsReturn = null; fn(); }
+    else renderSettings();
   } else if (action === 'speed-custom') {
     speedCustomEdit = true;
     updatePrompt();
@@ -1603,6 +1828,21 @@ function handleSubmit(input) {
     var ns = parseInt(input, 10);
     if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
 
+  } else if (currentScreen === 'settings-section') {
+    if (input === 's') { saveTypewriterSettings(settingsDraft); renderSettings(); return; }
+    if (input === 'x') { if (sectionDraftSnapshot) Object.assign(settingsDraft, sectionDraftSnapshot); renderSettings(); return; }
+    if (input === 'm') { saveTypewriterSettings(settingsDraft); settingsDraft = null; renderLibrary(); return; }
+    if (input === 'q') { settingsDraft = null; renderLibrary(); return; }
+    if (input === 'r') {
+      if (currentSectionScreen && confirm('Reset ' + currentSectionScreen.label + ' to defaults?')) {
+        applyDefaults(settingsDraft, currentSectionScreen);
+        renderSectionSubscreen(currentSectionScreen);
+      }
+      return;
+    }
+    var nss = parseInt(input, 10);
+    if (currentSectionScreen && nss >= 1 && nss <= currentSectionScreen.rows.length) startSectionRowEdit(nss - 1);
+
   } else if (currentScreen === 'settings-speed') {
     if (input === 'b') { renderSettings(); return; }
     if (speedCustomEdit) {
@@ -1615,7 +1855,8 @@ function handleSubmit(input) {
     var sp = parseInt(input, 10);
     if (sp >= 1 && sp <= SPEED_PRESETS.length) {
       settingsDraft.delay_ms = SPEED_PRESETS[sp - 1].ms;
-      renderSettings();
+      if (speedPresetsReturn) { var fn = speedPresetsReturn; speedPresetsReturn = null; fn(); }
+      else renderSettings();
       return;
     }
     if (input === '6') {
@@ -1649,6 +1890,12 @@ document.addEventListener('keydown', function(e) {
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     if (keyUp === 'ENTER')  { confirmSettingsEdit(); return; }
     if (keyUp === 'ESCAPE') { cancelSettingsEdit();  return; }
+    return;
+  }
+  // Section subscreen row edit — same pattern
+  if (currentScreen === 'settings-section' && sectionEditRow !== null) {
+    if (keyUp === 'ENTER')  { confirmSectionRowEdit(); return; }
+    if (keyUp === 'ESCAPE') { cancelSectionRowEdit();  return; }
     return;
   }
   // Speed custom edit uses pendingInput (no real <input>), so falls through normally
@@ -1718,6 +1965,16 @@ mobileCapture.addEventListener('input', function() {
     }
     return;
   }
+  if (currentScreen === 'settings-section' && sectionEditRow !== null) {
+    var sectionInline = document.getElementById('section-edit-input');
+    if (sectionInline) {
+      sectionInline.value = mobileCapture.value;
+    } else {
+      pendingInput = mobileCapture.value;
+      updatePrompt();
+    }
+    return;
+  }
   pendingInput = mobileCapture.value;
   updatePrompt();
 });
@@ -1733,6 +1990,20 @@ mobileCapture.addEventListener('keydown', function(e) {
       e.preventDefault();
       mobileCapture.value = '';
       cancelSettingsEdit();
+      setTimeout(function() { mobileCapture.focus(); }, 0);
+    }
+    return;
+  }
+  if (currentScreen === 'settings-section' && sectionEditRow !== null) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      mobileCapture.value = '';
+      confirmSectionRowEdit();
+      setTimeout(function() { mobileCapture.focus(); }, 0);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      mobileCapture.value = '';
+      cancelSectionRowEdit();
       setTimeout(function() { mobileCapture.focus(); }, 0);
     }
     return;
