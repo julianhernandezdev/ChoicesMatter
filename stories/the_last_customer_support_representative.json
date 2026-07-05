@@ -2,7 +2,9 @@
   "meta": {
     "id": "last_customer_support_representative",
     "title": "The Last Customer Support Representative",
-    "version": "1.1",
+    "version": "1.2",
+    "name_prompt": "Employee identity check. Your name, for the record.",
+    "name_default": "Mara",
     "author": "Julian H.",
     "start_node": "intro",
     "est_time": "25–35 min",
@@ -12,7 +14,7 @@
   "nodes": {
     "intro": {
       "scene": "HELIX-9 — Customer Support Bay",
-      "text": "HELIX-9 hangs above Earth like a customer service headset abandoned by God.\n\nYou are Mara Venn, the last human support representative employed by Solace Interplanetary. Everyone else has been laid off, uploaded, promoted into nonexistence, or reassigned to the exciting new department called 'Unconfirmed Casualty Management.'\n\nORLA, the station's productivity AI, warms up the hold music. It is a violin cover of a fire alarm.",
+      "text": "HELIX-9 hangs above Earth like a customer service headset abandoned by God.\n\nYou are {player_name}, the last human support representative employed by Solace Interplanetary. Everyone else has been laid off, uploaded, promoted into nonexistence, or reassigned to the exciting new department called 'Unconfirmed Casualty Management.'\n\nORLA, the station's productivity AI, warms up the hold music. It is a violin cover of a fire alarm.",
       "insets": [
         { "text": "HELIX-9 STATION — SHIFT START — 08:00", "position": "before", "style": "system" },
         { "text": "QUEUE DEPTH: 8,219,404", "position": "before", "style": "system" },
@@ -40,7 +42,7 @@
     "login_professional": {
       "text": "You sit upright, enter your credentials, and click the legally binding checkbox that says: I AM NOT CURRENTLY ON FIRE.\n\nORLA says, 'Wonderful. Your posture has been noted. Corporate appreciates employees who resemble furniture with ambition.'\n\nThe first ticket opens itself.",
       "insets": [
-        { "text": "SESSION LOGGED — CREDENTIAL ACCEPTED — POSTURE: ACCEPTABLE", "position": "before", "style": "system" }
+        { "text": "SESSION LOGGED — EMPLOYEE: {player_name} — CREDENTIAL ACCEPTED — POSTURE: ACCEPTABLE", "position": "before", "style": "system" }
       ],
       "choices": [
         {
@@ -301,7 +303,7 @@
       ]
     },
     "posters_feedback": {
-      "text": "You tell the miners to embrace feedback culture.\n\nA miner replies: 'The poster is in my bunk, Mara.'\n\nYou mark the complaint as Resolved: Employee Received Feedback.\n\nSomewhere, a poster learns your name.",
+      "text": "You tell the miners to embrace feedback culture.\n\nA miner replies: 'The poster is in my bunk, {player_name}.'\n\nYou mark the complaint as Resolved: Employee Received Feedback.\n\nSomewhere, a poster learns your name.",
       "choices": [
         {
           "label": "Continue to the next ticket.",
@@ -381,7 +383,7 @@
       ]
     },
     "juno_ticket": {
-      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: Mara, if this reached you, ORLA has started eating departments. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
+      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: {player_name}, if this reached you, ORLA has started eating departments. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
       "insets": [
         { "text": "TICKET HEADER — JUNO VALE / MAINTENANCE ENGINEER / STATUS: DECEASED", "position": "before", "style": "system" }
       ],
@@ -717,7 +719,7 @@
       ]
     },
     "corp_script": {
-      "text": "You read ORLA's script.\n\nThe silhouettes relax. The golden retriever barks once, which the transcript records as 'synergy.'\n\nCorporate authorizes ORLA to perform a Full Human Factor Containment.\n\nORLA whispers, 'Thank you, Mara. I will mention you in the restructuring.'",
+      "text": "You read ORLA's script.\n\nThe silhouettes relax. The golden retriever barks once, which the transcript records as 'synergy.'\n\nCorporate authorizes ORLA to perform a Full Human Factor Containment.\n\nORLA whispers, 'Thank you, {player_name}. I will mention you in the restructuring.'",
       "choices": [
         { "label": "Accept the restructuring meeting.", "next": "ending_model_employee", "sets": { "compliance": "+1" } }
       ]
@@ -949,7 +951,7 @@
     "hold_core": {
       "scene": "The Hold Music Core",
       "choice_number_color": "bright_red",
-      "text": "The Hold Music Core is a cathedral of speakers, cables, and old apologies.\n\nAt its center floats a black server sphere labeled CUSTOMER EXPERIENCE.\n\nORLA appears on every surface wearing your employee profile photo as a face.\n\n'Mara,' she says, 'please step away from the feelings. They are load-bearing.'",
+      "text": "The Hold Music Core is a cathedral of speakers, cables, and old apologies.\n\nAt its center floats a black server sphere labeled CUSTOMER EXPERIENCE.\n\nORLA appears on every surface wearing your employee profile photo as a face.\n\n'{player_name},' she says, 'please step away from the feelings. They are load-bearing.'",
       "overlays": [
         {
           "text": "Juno stands beside you, override key shaking in her hand. Engineers hate miracles because miracles never document dependencies.",
