@@ -203,25 +203,89 @@ var SPEED_PRESETS = [
   { label: 'Fastest', ms:  5 },
 ];
 
-var SETTINGS_ROWS = [
-  { key: 'enabled',                    label: 'Enabled',           type: 'boolean',                                                   section: 'Typewriter' },
-  { key: 'delay_ms',                   label: 'Speed',             type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'pauses..',                   label: 'Pause after  .',    type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'pauses.!',                   label: 'Pause after  !',    type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'pauses.?',                   label: 'Pause after  ?',    type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'pauses.…',                   label: 'Pause after  …',    type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'pauses.—',                   label: 'Pause after  —',    type: 'number',  unit: 'ms',                                       section: null },
-  { key: 'page_size',                  label: 'Stories per page',  type: 'number',  unit: '',                                         section: 'Display' },
-  { key: 'accessible_mode',            label: 'Accessible mode',   type: 'a11y',                                                      section: 'Accessibility' },
-  { key: 'player_name',                label: 'Player name',       type: 'text',                                                      section: 'Player' },
-  { key: 'corruption.enabled',         label: 'Enabled',           type: 'boolean',                                                   section: 'Corruption' },
-  { key: 'corruption.intensity',       label: 'Intensity',         type: 'float',   unit: '×',                                        section: null },
-  { key: 'corruption.mode',            label: 'Mode',              type: 'cycle',   values: ['consistent', 'random'],                  section: null },
-  { key: 'corruption.charset',         label: 'Character set',     type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], section: null },
-  { key: 'corruption.animate',         label: 'Animate',           type: 'boolean',                                                   section: null },
-  { key: 'corruption.scramble_frames', label: 'Scramble frames',   type: 'number',  unit: '',                                         section: null },
-  { key: 'corruption.scramble_delay_ms', label: 'Scramble delay',  type: 'number',  unit: 'ms',                                       section: null },
+var SETTINGS_SECTIONS = [
+  {
+    id: 'typewriter', label: 'Typewriter',
+    preserveOnGlobalReset: false, hasSubscreen: true,
+    defaultKeys: ['enabled', 'delay_ms', 'pauses', 'pause_ms'],
+    rows: [
+      { key: 'enabled',   label: 'Enabled',        type: 'boolean',                             subsection: 'Typewriter' },
+      { key: 'delay_ms',  label: 'Speed',           type: 'number',  unit: 'ms',                subsection: null },
+      { key: 'pauses..',  label: 'Pause after  .', type: 'number',  unit: 'ms',                subsection: null },
+      { key: 'pauses.!',  label: 'Pause after  !', type: 'number',  unit: 'ms',                subsection: null },
+      { key: 'pauses.?',  label: 'Pause after  ?', type: 'number',  unit: 'ms',                subsection: null },
+      { key: 'pauses.…', label: 'Pause after  …', type: 'number', unit: 'ms',        subsection: null },
+      { key: 'pauses.—', label: 'Pause after  —', type: 'number', unit: 'ms',        subsection: null },
+    ],
+  },
+  {
+    id: 'display', label: 'Display',
+    preserveOnGlobalReset: false, hasSubscreen: false,
+    defaultKeys: ['page_size'],
+    rows: [
+      { key: 'page_size', label: 'Stories per page', type: 'number', unit: '', subsection: 'Display' },
+    ],
+  },
+  {
+    id: 'corruption', label: 'Corruption',
+    preserveOnGlobalReset: false, hasSubscreen: true,
+    defaultKeys: ['corruption'],
+    rows: [
+      { key: 'corruption.enabled',           label: 'Enabled',         type: 'boolean',                                              subsection: 'Corruption' },
+      { key: 'corruption.intensity',         label: 'Intensity',       type: 'float',   unit: '×',                             subsection: null },
+      { key: 'corruption.mode',              label: 'Mode',            type: 'cycle',   values: ['consistent', 'random'],            subsection: null },
+      { key: 'corruption.charset',           label: 'Character set',   type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], subsection: null },
+      { key: 'corruption.animate',           label: 'Animate',         type: 'boolean',                                             subsection: null },
+      { key: 'corruption.scramble_frames',   label: 'Scramble frames', type: 'number',  unit: '',                                   subsection: null },
+      { key: 'corruption.scramble_delay_ms', label: 'Scramble delay',  type: 'number',  unit: 'ms',                                 subsection: null },
+    ],
+  },
+  {
+    id: 'player', label: 'Player',
+    preserveOnGlobalReset: true, hasSubscreen: false,
+    defaultKeys: ['player_name'],
+    rows: [
+      { key: 'player_name', label: 'Player name', type: 'text', subsection: 'Player' },
+    ],
+  },
+  {
+    id: 'accessibility', label: 'Accessibility',
+    preserveOnGlobalReset: true, hasSubscreen: true,
+    defaultKeys: ['accessible_mode'],
+    rows: [
+      { key: 'accessible_mode', label: 'Accessible mode', type: 'a11y', subsection: 'Accessibility' },
+    ],
+  },
 ];
+
+var SETTINGS_ROWS = SETTINGS_SECTIONS.reduce(function(acc, section) {
+  if (section.hasSubscreen) {
+    acc.push({
+      key: '__nav__' + section.id,
+      label: section.label,
+      type: 'nav',
+      section: section.label,
+      _section: section,
+    });
+  } else {
+    section.rows.forEach(function(row, i) {
+      acc.push(Object.assign({}, row, { section: i === 0 ? (row.subsection || section.label) : null }));
+    });
+  }
+  return acc;
+}, []);
+
+function applyDefaults(draft, section) {
+  section.defaultKeys.forEach(function(key) {
+    if (key === 'pauses') {
+      draft.pauses = Object.assign({}, TYPEWRITER_DEFAULTS.pauses);
+    } else if (key === 'corruption') {
+      draft.corruption = Object.assign({}, TYPEWRITER_DEFAULTS.corruption);
+    } else {
+      draft[key] = TYPEWRITER_DEFAULTS[key];
+    }
+  });
+}
 
 function getPageSize() { return loadTypewriterSettings().page_size || 5; }
 function getTotalPages(entries) { return Math.max(1, Math.ceil(entries.length / getPageSize())); }
@@ -669,6 +733,8 @@ function renderSettings() {
       }
     } else if (row.type === 'cycle') {
       display = val;
+    } else if (row.type === 'nav') {
+      display = '→';
     } else {
       display = val + (row.unit ? ' ' + row.unit : '');
     }
@@ -1285,9 +1351,17 @@ function renderAccessibleSpeedPresets() {
   if (active) active.focus();
 }
 
+function renderSectionSubscreen(section) {
+  // stub — implemented in T6
+}
+
 function startSettingsEdit(rowIndex) {
   var row = SETTINGS_ROWS[rowIndex];
   if (!row) return;
+  if (row.type === 'nav') {
+    renderSectionSubscreen(row._section);
+    return;
+  }
   if (row.key === 'delay_ms') { renderSpeedPresets(); return; }
   var val = getSettingValue(settingsDraft, row.key);
   if (row.type === 'boolean') {
