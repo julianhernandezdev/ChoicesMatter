@@ -6,6 +6,10 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Story Picker (Web Player Folder Parity)
+- **Fixed** `scripts/sync_stories.py` — root-level stories (no subfolder) previously got a literal `"category": "uncategorized"` in `web/stories.json`, which made the web player bucket them into an `uncategorized/` folder instead of listing them flat like the CLI does. Root stories now get no `category` key at all, matching `StoryLoader.discover_with_folders()`'s root/folder split; `web/app.js`'s existing `entry.category || null` check already routes uncategorized entries to the flat top-level list, so no JS changes were needed
+- **Synced** `web/stories.json` — `awaiting_response.json`, `the_last_customer_support_representative.json`, `the_last_train.json`, `the_one_eyed_guest.json` lost their `"uncategorized"` category and now render as flat top-level entries in both terminal and reader mode
+
 ### Story Picker
 - **Added** Author/version byline row to the story picker — `by {author} · v{version}` printed dim beneath the title/status line, above the nodes/endings/time stats line (`Display.show_story_picker()`, `src/display.py`)
 - **Added** `MAX_AUTHOR_LEN` (20) and `_truncate_author()` in `src/display.py` — author names longer than 20 chars truncate with `...` appended

@@ -3,7 +3,9 @@ Regenerate web/stories.json from the stories/ directory.
 
 Walks stories/ recursively, skips examples/ and showcase/ (WIP stubs),
 uses the immediate parent folder name as the category, sorts by story title,
-and writes web/stories.json.
+and writes web/stories.json. Stories directly in stories/ (no subfolder)
+get no category — the web player lists them flat at the top level,
+matching the CLI picker's root/folder split.
 
 Usage:
     python scripts/sync_stories.py
@@ -34,11 +36,14 @@ def main() -> int:
         parts = json_file.relative_to(STORIES_DIR).parts
         if not parts:
             continue
-        category = parts[0] if len(parts) > 1 else "uncategorized"
+        category = parts[0] if len(parts) > 1 else None
         if category in SKIP_DIRS:
             continue
         rel = json_file.relative_to(ROOT).as_posix()
-        entries.append({"path": rel, "category": category, "_title": story_title(json_file)})
+        entry = {"path": rel, "_title": story_title(json_file)}
+        if category is not None:
+            entry["category"] = category
+        entries.append(entry)
 
     entries.sort(key=lambda e: e["_title"].lower())
     for e in entries:

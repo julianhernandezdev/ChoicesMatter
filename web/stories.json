@@ -5,8 +5,7 @@
       "category": "ChoicesMatterGPT"
     },
     {
-      "path": "stories/awaiting_response.json",
-      "category": "uncategorized"
+      "path": "stories/awaiting_response.json"
     },
     {
       "path": "stories/horror/dead_air.json",
@@ -25,12 +24,10 @@
       "category": "ChoicesMatterGPT"
     },
     {
-      "path": "stories/the_last_customer_support_representative.json",
-      "category": "uncategorized"
+      "path": "stories/the_last_customer_support_representative.json"
     },
     {
-      "path": "stories/the_last_train.json",
-      "category": "uncategorized"
+      "path": "stories/the_last_train.json"
     },
     {
       "path": "stories/horror/the_locked_room.json",
@@ -41,8 +38,7 @@
       "category": "ChoicesMatterGPT"
     },
     {
-      "path": "stories/the_one_eyed_guest.json",
-      "category": "uncategorized"
+      "path": "stories/the_one_eyed_guest.json"
     },
     {
       "path": "stories/horror/the_vulture_corridor_v2_1_demo.json",
