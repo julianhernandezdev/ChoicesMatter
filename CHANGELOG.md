@@ -6,6 +6,15 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Default Settings & Section Registry
+- **Added** `SETTINGS_SECTIONS` registry (Python `src/config.py`, web `web/app.js`) as single source of truth for all settings — each entry declares id, label, preserve flag, subscreen flag, config keys, and row descriptors
+- **Changed** Settings screen rendering is now fully registry-driven on both platforms; web `SETTINGS_ROWS` is now a derived constant
+- **Added** Generic section sub-screens (`_section_subscreen` / `renderSectionSubscreen` / `renderAccessibleSectionSubscreen`) — any `has_subscreen` section rendered from its row descriptors with no section-specific code
+- **Added** Sub-screen nav keys: S (save+back), X (discard section+back), M (save+home), Q (discard all+home), R (reset section)
+- **Added** `R` on main settings screen — checkbox selector to reset any combination of sections to defaults; `player_name` and `accessible_mode` are always preserved
+- **Added** `apply_section_defaults` (Python) / `applyDefaults` (web) — deep-copy section keys from platform defaults
+- **Fixed** `mode: "consistent"` added to `TYPEWRITER_DEFAULTS.corruption` in `web/typewriter.js` — corruption reset no longer produces `undefined` mode
+
 ---
 
 ## [v0.11.0] — 2026-07-04
