@@ -325,3 +325,58 @@ def test_settings_sections_rows_have_required_fields() -> None:
             assert "key" in row
             assert "label" in row
             assert "type" in row
+
+
+# ------------------------------------------------------------------
+# Task 5: New corruption keys and relabeled rows
+# ------------------------------------------------------------------
+
+def test_corruption_defaults_include_new_keys(tmp_path: Path) -> None:
+    cfg = load_settings(tmp_path / "nonexistent.json")
+    assert cfg["corruption"]["intensity_multiplier"] == 1.0
+    assert cfg["corruption"]["resolve_frames"] is None
+    assert cfg["corruption"]["resolve_delay_ms"] is None
+    assert cfg["corruption"]["cascade_stagger_ms"] is None
+
+
+def test_corruption_section_mode_row_relabeled() -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    mode_row = next(r for r in section["rows"] if r["key"] == "corruption.mode")
+    assert mode_row["label"] == "Mode Default"
+
+
+def test_corruption_section_intensity_row_relabeled() -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    intensity_row = next(r for r in section["rows"] if r["key"] == "corruption.intensity")
+    assert intensity_row["label"] == "Intensity Default"
+
+
+def test_corruption_section_has_intensity_multiplier_row() -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    row = next(r for r in section["rows"] if r["key"] == "corruption.intensity_multiplier")
+    assert row["label"] == "Intensity Multiplier"
+    assert row["type"] == "float"
+
+
+def test_corruption_section_has_resolve_timing_rows() -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    keys = {r["key"] for r in section["rows"]}
+    assert "corruption.resolve_frames" in keys
+    assert "corruption.resolve_delay_ms" in keys
+    assert "corruption.cascade_stagger_ms" in keys
+
+
+def test_player_name_row_relabeled() -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "player")
+    row = next(r for r in section["rows"] if r["key"] == "player_name")
+    assert row["label"] == "Player name Default"
+
+
+def test_apply_section_defaults_resets_new_corruption_keys(tmp_path: Path) -> None:
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = load_settings(tmp_path / "nonexistent.json")
+    draft["corruption"]["intensity_multiplier"] = 0.2
+    draft["corruption"]["resolve_frames"] = 20
+    apply_section_defaults(draft, section)
+    assert draft["corruption"]["intensity_multiplier"] == 1.0
+    assert draft["corruption"]["resolve_frames"] is None

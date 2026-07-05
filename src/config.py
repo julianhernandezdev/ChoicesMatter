@@ -41,12 +41,16 @@ _DEFAULTS: dict = {
     "corruption": {
         "enabled": True,
         "intensity": 0.6,
+        "intensity_multiplier": 1.0,
         "mode": "consistent",
         "charset": "blocks",
         "custom_chars": "█▓▒░",
         "animate": True,
         "scramble_frames": 85,
         "scramble_delay_ms": 40,
+        "resolve_frames": None,
+        "resolve_delay_ms": None,
+        "cascade_stagger_ms": None,
     },
 }
 
@@ -133,14 +137,18 @@ SETTINGS_SECTIONS: list[dict] = [
         "has_subscreen": True,
         "config_keys": ["corruption"],
         "rows": [
-            {"key": "corruption.enabled",           "label": "Enabled",         "type": "boolean"},
-            {"key": "corruption.intensity",         "label": "Intensity",       "type": "float",  "unit": "×", "range": (0.0, 1.0)},
-            {"key": "corruption.mode",              "label": "Mode",            "type": "cycle",  "values": ["consistent", "random"]},
-            {"key": "corruption.charset",           "label": "Character set",   "type": "cycle",  "values": ["blocks", "symbols", "diacritics", "custom"]},
-            {"key": "corruption.custom_chars",      "label": "Custom chars",    "type": "custom_chars"},
-            {"key": "corruption.animate",           "label": "Animate",         "type": "boolean"},
-            {"key": "corruption.scramble_frames",   "label": "Scramble frames", "type": "number", "unit": "",   "range": (1, 50)},
-            {"key": "corruption.scramble_delay_ms", "label": "Scramble delay",  "type": "number", "unit": "ms", "range": (0, 1000)},
+            {"key": "corruption.enabled",              "label": "Enabled",              "type": "boolean"},
+            {"key": "corruption.intensity",             "label": "Intensity Default",    "type": "float",  "unit": "×", "range": (0.0, 1.0)},
+            {"key": "corruption.intensity_multiplier",  "label": "Intensity Multiplier", "type": "float",  "unit": "×", "range": (0.0, 1.0)},
+            {"key": "corruption.mode",                  "label": "Mode Default",         "type": "cycle",  "values": ["consistent", "random"]},
+            {"key": "corruption.charset",                "label": "Character set",        "type": "cycle",  "values": ["blocks", "symbols", "diacritics", "custom"]},
+            {"key": "corruption.custom_chars",           "label": "Custom chars",         "type": "custom_chars"},
+            {"key": "corruption.animate",                "label": "Animate",              "type": "boolean"},
+            {"key": "corruption.scramble_frames",        "label": "Scramble frames",      "type": "number", "unit": "",   "range": (1, 50)},
+            {"key": "corruption.scramble_delay_ms",      "label": "Scramble delay",       "type": "number", "unit": "ms", "range": (0, 1000)},
+            {"key": "corruption.resolve_frames",         "label": "Resolve frames",       "type": "number", "unit": "",   "range": (1, 50)},
+            {"key": "corruption.resolve_delay_ms",       "label": "Resolve delay",        "type": "number", "unit": "ms", "range": (0, 1000)},
+            {"key": "corruption.cascade_stagger_ms",     "label": "Cascade stagger",      "type": "number", "unit": "ms", "range": (0, 1000)},
         ],
     },
     {
@@ -150,7 +158,7 @@ SETTINGS_SECTIONS: list[dict] = [
         "has_subscreen": False,
         "config_keys": ["player_name"],
         "rows": [
-            {"key": "player_name", "label": "Player name", "type": "text"},
+            {"key": "player_name", "label": "Player name Default", "type": "text"},
         ],
     },
 ]
