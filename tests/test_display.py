@@ -791,6 +791,59 @@ def test_typewrite_plain_segments_streams_chars(tmp_path) -> None:
     assert "abc" in panels
 
 
+# ------------------------------------------------------------------
+# _section_subscreen
+# ------------------------------------------------------------------
+
+def _make_draft():
+    from src.config import load_settings
+    return load_settings()
+
+
+def test_section_subscreen_x_returns_back(display):
+    display.console.input = MagicMock(side_effect=["x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    result = display._section_subscreen(section, draft)
+    assert result == "back"
+
+
+def test_section_subscreen_m_returns_save_exit(display):
+    display.console.input = MagicMock(side_effect=["m"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    with patch("src.display.save_settings"):
+        result = display._section_subscreen(section, draft)
+    assert result == "save_exit"
+
+
+def test_section_subscreen_q_returns_discard_exit(display):
+    display.console.input = MagicMock(side_effect=["q"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    result = display._section_subscreen(section, draft)
+    assert result == "discard_exit"
+
+
+def test_section_subscreen_r_resets_section(display):
+    display.console.input = MagicMock(side_effect=["r", "y", "x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    display._section_subscreen(section, draft)
+    from src.config import _DEFAULTS
+    assert draft["corruption"]["intensity"] == _DEFAULTS["corruption"]["intensity"]
+
+
+def test_section_subscreen_r_cancel_no_change(display):
+    display.console.input = MagicMock(side_effect=["r", "n", "x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    display._section_subscreen(section, draft)
+    assert draft["corruption"]["intensity"] == 0.1
+
+
 def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
     """After scramble, settle phase streams the final corrupted form."""
     from src.display import Display, _assemble_text

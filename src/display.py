@@ -12,7 +12,7 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
-from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value
+from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults
 from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string
 from .story import Choice, Inset, Overlay
 
@@ -603,6 +603,78 @@ class Display:
             values = row.get("values", [])
             idx = values.index(val) if val in values else 0
             _set_draft_value(draft, key, values[(idx + 1) % len(values)])
+
+    def _section_subscreen(self, section: dict, draft: dict) -> str:
+        """Generic section sub-screen.
+
+        Returns one of: "back" | "save_exit" | "discard_exit"
+
+        Nav keys:
+          S  — save draft to disk, update self._cfg, return "back"
+          X  — return "back" (discard; snapshot/restore is caller's job)
+          M  — save draft to disk, update self._cfg, return "save_exit"
+          Q  — return "discard_exit"
+          R  — inline reset-to-defaults confirmation, then continue loop
+          N  — dispatch to _edit_row (or hint if custom_chars gated)
+        """
+        while True:
+            self.clear_screen()
+            self.console.print()
+            self.console.print(Rule(f"[bold cyan]Settings — {section['label']}[/bold cyan]"))
+            self.console.print()
+
+            charset = _get_draft_value(draft, "corruption.charset") if section["id"] == "corruption" else None
+
+            for i, row in enumerate(section["rows"], start=1):
+                val = _get_draft_value(draft, row["key"])
+                display_val = self._format_row_value(row, val)
+                if row["type"] == "custom_chars" and charset != "custom":
+                    self.console.print(f"  [dim][cyan]{i}.[/cyan]  {row['label']:<18} {display_val}[/dim]")
+                else:
+                    self.console.print(f"  [cyan]{i}.[/cyan]  {row['label']:<18} {display_val}")
+
+            self.console.print()
+            self.console.print(
+                "  [dim][green]S[/green] save · [red]X[/red] back · [blue]M[/blue] save+home · "
+                "[yellow]Q[/yellow] discard+home · [yellow]R[/yellow] reset section[/dim]"
+            )
+            raw = self.console.input("  › ").strip().lower()
+
+            if raw == "s":
+                save_settings(draft)
+                self._cfg = copy.deepcopy(draft)
+                self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
+                self.console.input("\n  [dim]Press Enter to return.[/dim] ")
+                return "back"
+            if raw == "x":
+                return "back"
+            if raw == "m":
+                save_settings(draft)
+                self._cfg = copy.deepcopy(draft)
+                return "save_exit"
+            if raw == "q":
+                return "discard_exit"
+            if raw == "r":
+                confirm = self.console.input(
+                    f"  Reset {section['label']} to defaults? ([green]Y[/green] to confirm, any other key to cancel): "
+                ).strip().lower()
+                if confirm in ("y", "yes"):
+                    apply_section_defaults(draft, section)
+                    self.console.print(f"  [dim green]✓ {section['label']} reset to defaults.[/dim green]")
+                continue
+            if raw.isdigit():
+                n = int(raw)
+                if 1 <= n <= len(section["rows"]):
+                    row = section["rows"][n - 1]
+                    if row["type"] == "custom_chars":
+                        if charset != "custom":
+                            self.console.print("  [dim]Set character set to 'custom' first.[/dim]")
+                            continue
+                        v = self.console.input("  Enter custom characters (or Enter to keep): ").strip()
+                        if v:
+                            _set_draft_value(draft, row["key"], v)
+                    else:
+                        self._edit_row(draft, row)
 
     def _settings_edit_speed(self, tw: dict) -> None:
         self.clear_screen()
