@@ -195,6 +195,22 @@ function storyTitle(entry) {
   return entry.story.meta?.title || entry.path.split("/").pop()?.replace(".json", "") || "Untitled Story";
 }
 
+var MAX_AUTHOR_LEN = 20;
+
+function truncateAuthor(author) {
+  if (author.length <= MAX_AUTHOR_LEN) return author;
+  return author.slice(0, MAX_AUTHOR_LEN).replace(/\s+$/, '') + '...';
+}
+
+function storyByline(story) {
+  var author = story.meta?.author || '';
+  var version = story.meta?.version || '';
+  var parts = [];
+  if (author) parts.push('by ' + truncateAuthor(author));
+  if (version) parts.push('v' + version);
+  return parts.join(' · ');
+}
+
 function findEntry(path) {
   return library.find((entry) => entry.path === path);
 }
@@ -363,9 +379,12 @@ function renderPickerEntry(entry, num) {
   var resumeBadge = save ? ' <span class="badge-resume">● RESUME</span>' : '';
   var warnBadge = story.meta.warnings && story.meta.warnings.length ? ' <span class="badge-warning">[!]</span>' : '';
   var meta = nodeList(story).length + ' nodes · ' + found + '/' + (endings || '?') + ' endings · ' + escapeHtml(estimateTime(story));
+  var byline = storyByline(story);
+  var bylineHtml = byline ? '<div class="item-meta">' + escapeHtml(byline) + '</div>' : '';
   return '<div class="terminal-list-item" data-action="pick-story" data-path="' + escapeHtml(entry.path) + '">' +
     '<span class="item-num">' + num + '.</span>' +
     '<div><div class="item-name">' + escapeHtml(storyTitle(entry)) + warnBadge + resumeBadge + '</div>' +
+    bylineHtml +
     '<div class="item-meta">' + meta + '</div></div>' +
     '</div>';
 }
@@ -864,8 +883,10 @@ function renderAccessiblePicker() {
     var nodeCount = nodeList(story).length;
     var hasWarn = !!(story.meta.warnings && story.meta.warnings.length);
     var title = storyTitle(entry);
+    var byline = storyByline(story);
     var ariaLabel = title +
       (hasWarn ? ', contains content warnings' : '') +
+      (byline ? '. ' + byline : '') +
       '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
       ' endings found. About ' + time + '.' +
       (save ? ' Save found.' : '');
@@ -874,6 +895,7 @@ function renderAccessiblePicker() {
       (hasWarn ? ' <span class="r-badge warning" aria-hidden="true">! Warnings</span>' : '') +
       (save ? ' <span class="r-badge resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
       '</span>' +
+      (byline ? '<span class="r-story-meta">' + escapeHtml(byline) + '</span>' : '') +
       '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
       '</button></li>';
   }).join('');
@@ -959,10 +981,12 @@ function renderAccessibleFolder(folderName) {
     var time = estimateTime(story);
     var nodeCount = nodeList(story).length;
     var title = storyTitle(entry);
-    var ariaLabel = title + '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
+    var byline = storyByline(story);
+    var ariaLabel = title + (byline ? '. ' + byline : '') + '. ' + nodeCount + ' nodes. ' + found + ' of ' + (endings || '?') +
       ' endings found. About ' + time + '.' + (save ? ' Save found.' : '');
     return '<li><button class="r-story-btn" aria-label="' + escapeHtml(ariaLabel) + '">' +
       '<span class="r-story-name">' + escapeHtml(title) + '</span>' +
+      (byline ? '<span class="r-story-meta">' + escapeHtml(byline) + '</span>' : '') +
       '<span class="r-story-meta">' + nodeCount + ' nodes \xB7 ' + found + '/' + (endings || '?') + ' endings \xB7 ' + escapeHtml(time) + '</span>' +
       (save ? '<span class="r-badge-resume" aria-hidden="true">&#x25CF; Resume</span>' : '') +
       '</button></li>';

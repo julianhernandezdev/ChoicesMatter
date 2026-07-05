@@ -10,12 +10,14 @@ All notable changes to Choices Matter, most recent first.
 - **Added** Author/version byline row to the story picker — `by {author} · v{version}` printed dim beneath the title/status line, above the nodes/endings/time stats line (`Display.show_story_picker()`, `src/display.py`)
 - **Added** `MAX_AUTHOR_LEN` (20) and `_truncate_author()` in `src/display.py` — author names longer than 20 chars truncate with `...` appended
 - **Changed** `main.py`: `_load_story_info()` and `_build_entries()` now also return/carry `author` and `version` from `Story` (previously loaded but unused in the picker)
+- **Fixed** Web player was missing the byline entirely (terminal mode and reader/accessible mode both) — the CLI-only feature above never got ported. Added `storyByline()` / `truncateAuthor()` helpers in `web/app.js`; wired into `renderPickerEntry()` (terminal, shared by library + folder screens), `renderAccessiblePicker()`, and `renderAccessibleFolder()` (including the `aria-label`)
 
 ### Story Metadata Cleanup
 - **Normalized** `meta.author` across all 40 public stories to 3 canonical values: `"Choices Matter"` (35 stories), `"ChoicesMatterGPT"` (4 stories, all in `stories/ChoicesMatterGPT/`), and `"Fable"` (*The One-Eyed Guest*, unchanged by request)
 - **Moved** `stories/ChoicesMatterGPT/awaiting_response.json` → `stories/awaiting_response.json`
 - **Moved** `stories/the_cartographers_confession.json` → `stories/horror/the_cartographers_confession.json`
 - **Synced** `web/stories.json` via `scripts/sync_stories.py` to reflect both moves
+- **Normalized** `stories/horror/the_locked_room.json` `meta.author` from `"Choices Matter Dev"` to `"Choices Matter"` — missed by the pass above because the story was restored to the repo afterward
 
 ### Stories
 - **Added** *The One-Eyed Guest* (`stories/the_one_eyed_guest.json`) — Nordic folk-horror one-shot: a homestead keeper faces a one-eyed wanderer's three guest-right tests across a single night; inside/outside staging split after the first test, diegetic vocabulary-glossing insets (`memory`/`warning` styles), `{corrupt}` spans tied to forbidden knowledge landing, an obfuscated final choice with its blindness narrated in-fiction, and three endings (good/neutral/bad). First story authored end-to-end by a Claude Fable 5 subagent from a brainstormed spec

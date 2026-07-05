@@ -3,7 +3,7 @@
     "id": "the_locked_room",
     "title": "The Locked Room",
     "version": "1.3",
-    "author": "Choices Matter Dev",
+    "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "5–10 min",
     "warnings": ["confinement", "brief violence"]
