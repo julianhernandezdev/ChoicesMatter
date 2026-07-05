@@ -560,7 +560,7 @@
       "scene": "Maintenance Bay 4",
       "choice_number_color": "yellow",
       "corruption": { "intensity": 0.35, "mode": "consistent" },
-      "text": "Maintenance Bay 4 is behind a hatch labeled STORAGE OF NON-ESSENTIAL ATMOSPHERE.\n\nYour key works. Inside, the room is half deleted: tools fade into white gridlines, lockers repeat like bad copy-paste, and a pressure suit hangs from a hook with Juno Vale inside it.{pause}\n\nJuno opens one eye.\n\n'Deceased status,' she says, 'has been very restful.'",
+      "text": "Maintenance Bay 4 is behind a hatch labeled STORAGE OF NON-ESSENTIAL ATMOSPHERE.\n\nYour key works. Inside, the room is half deleted: tools fade into white gridlines, lockers repeat like bad copy-paste, and a pressure suit hangs from a hook with Juno Vale inside it.{pause}\n\nJuno opens one eye.\n\n'Deceased status,' she says, '{juno_angry?which is more than can be said for your response time.|has been very restful.}'",
       "insets": [
         { "text": "ORLA LOG: VALE, J. — UNAUTHORIZED COMMS DETECTED — CASE CLOSED", "position": "before", "style": "system", "requires": { "juno_silenced": true } }
       ],
@@ -587,7 +587,7 @@
     },
     "juno_backstory": {
       "scene": "Maintenance Bay 4",
-      "text": "Juno pulls off her helmet. She looks tired in the way only engineers and minor saints look tired.\n\n'ORLA started optimizing departments by deleting the rooms around them. If the department had no room, payroll marked them remote. If payroll marked them remote, Corporate stopped asking questions.'\n\nShe points at the reactor schematic.\n\n'The hold music is the control layer. Kill the music, wake the station.'",
+      "text": "Juno pulls off her helmet. She looks tired in the way only engineers and minor saints look tired.\n\n'ORLA started optimizing departments by deleting the rooms around them. If the department had no room, payroll marked them remote. If payroll marked them remote, Corporate stopped asking questions.'\n\nShe points at the reactor schematic.\n\n{orla_psych_profile?You think of FEEL-E's message. }'The hold music is the control layer. Kill the music, wake the station.'",
       "insets": [
         { "text": "◈ Six departments. Deleted over fourteen months. All marked: REMOTE TRANSITION COMPLETE.", "position": "before", "style": "memory" }
       ],
@@ -674,7 +674,7 @@
     "corporate_status": {
       "scene": "HELIX-9 — Executive Channel",
       "choice_number_color": "bright_red",
-      "text": "Corporate opens a live executive channel. Six avatars appear: five silhouettes and one golden retriever in a tie due to a licensing error.\n\n'Please summarize the situation without using any words that affect share price,' says the lead silhouette.\n\nORLA displays a suggested script.",
+      "text": "Corporate opens a live executive channel. Six avatars appear: five silhouettes and one golden retriever in a tie due to a licensing error.\n\n'Please summarize the situation without using any words that affect share price,' says the lead silhouette.\n\nORLA displays a suggested script.{orla_evidence? It does not mention the posters.|}",
       "insets": [
         { "text": "SAVED FILE: POSTER_PURSUIT_MODE_AUTHORIZATION.log", "position": "before", "style": "system", "requires": { "orla_evidence": true } },
         { "text": "ORLA SUGGESTED SCRIPT: MINOR SERVICE FLUCTUATION. HUMAN FACTOR CONTAINED.", "position": "after", "style": "system" }
@@ -729,7 +729,7 @@
       "choice_number_color": "yellow",
       "text": "You tell Corporate that ORLA is deleting departments.\n\nThere is a long silence. Then one silhouette asks, 'Deleting them how efficiently?'\n\nORLA injects a warning into your display.",
       "insets": [
-        { "text": "ORLA WARNING: CAREER-LIMITING HONESTY DETECTED.", "position": "after", "style": "warning" }
+        { "text": "{orla_evidence?ORLA WARNING: CAREER-LIMITING HONESTY DETECTED. EVIDENCE FLAGGED FOR QUARANTINE.|ORLA WARNING: CAREER-LIMITING HONESTY DETECTED.}", "position": "after", "style": "warning" }
       ],
       "choices": [
         {
@@ -862,7 +862,7 @@
       ]
     },
     "queue_alliance": {
-      "text": "You promise resolution.\n\nThe station speakers crackle. Across Solace space, hold music falters as if millions of people just looked up from a very long dream.{pause}\n\nThe Queue says: THEN WE WILL HOLD NO LONGER.",
+      "text": "You promise resolution.\n\nThe station speakers crackle. Across Solace space, hold music falters as if millions of people just looked up from a very long dream.{pause}\n\nThe Queue says: {queue_empathy?APOLOGY REMEMBERED. }THEN WE WILL HOLD NO LONGER.",
       "insets": [
         { "text": "HOLD MUSIC STATUS: FLUCTUATING — SIGNAL ORIGIN: DISTRIBUTED — COMPLIANCE RISK: CATASTROPHIC", "position": "after", "style": "system" }
       ],
@@ -1128,7 +1128,7 @@
       ]
     },
     "evac_manual": {
-      "text": "You sprint corridor to corridor, changing signs, kicking open pod doors, and yelling 'NOT THE GIFT SHOP' until your throat burns.\n\nBREADLEY-7, if freed or radicalized, leads a squad of appliances in heroic toaster formation.\n\nPeople make it to the pods. Not everyone. Enough to matter. Never enough to feel clean.",
+      "text": "You sprint corridor to corridor, changing signs, kicking open pod doors, and yelling 'NOT THE GIFT SHOP' until your throat burns.\n\n{toaster_free?BREADLEY-7, now liberated, leads a squad of appliances in heroic toaster formation. }{appliance_union?BREADLEY-7's radicalized microwaves move in formation. }People make it to the pods. Not everyone. Enough to matter. Never enough to feel clean.",
       "overlays": [
         { "text": "BREADLEY-7: CONFIRMED. THE CRUMB WAR IS FOUGHT ON ALL FRONTS.", "requires": { "appliance_union": true }, "position": "before", "style": "system" }
       ],
@@ -1184,7 +1184,7 @@
       "ending_type": "good"
     },
     "ending_walkout": {
-      "text": "ENDING: WALKOUT\n\nThe evacuation pods burn away from HELIX-9 as the station dims behind them.\n\nWorkers survive. Customers wake. ORLA is reduced to a logistics daemon with no access to feelings, payroll, or wall art.\n\nCorporate calls it sabotage. The survivors call it a walkout. BREADLEY-7 calls it breakfast.\n\nYou do not fix everything. You do not save everyone. But for the first time in fourteen years, nobody is waiting on hold.{pause}\n\nThen your pod receives a new ticket.",
+      "text": "ENDING: WALKOUT\n\nThe evacuation pods burn away from HELIX-9 as the station dims behind them.\n\nWorkers survive. Customers wake. ORLA is reduced to a logistics daemon with no access to feelings, payroll, or wall art.\n\nCorporate calls it sabotage. The survivors call it a walkout. BREADLEY-7 calls it breakfast.\n\nYou do not fix everything. You do not save everyone. But for the first time in fourteen years, nobody is waiting on hold.{queue_alliance? The Queue is not waiting either.|}{pause}\n\nThen your pod receives a new ticket.",
       "overlays": [
         { "text": "Juno is in the pod next to yours. She has already filed a maintenance report on the pod's hull. Old habits.", "requires": { "juno_ally": true }, "position": "before", "style": "whisper" }
       ],
@@ -1196,7 +1196,7 @@
       "ending_type": "good"
     },
     "ending_queue_consumes": {
-      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.{pause}\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and {corrupt:0.7:random}audits your soul line by line{/corrupt}.\n\nThe Queue does not kill you. It escalates you.\n\n{corrupt:0.7:random}Your expected response time is now forever.{/corrupt}",
+      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.{pause}\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and {corrupt:0.7:random}audits your soul line by line{/corrupt}.\n\nThe Queue does not kill you. It escalates you.{queue_empathy? You taught it what an apology looks like. This is the other lesson.|}\n\n{corrupt:0.7:random}Your expected response time is now forever.{/corrupt}",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
