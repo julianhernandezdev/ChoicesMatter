@@ -5,8 +5,8 @@
       "category": "ChoicesMatterGPT"
     },
     {
-      "path": "stories/ChoicesMatterGPT/awaiting_response.json",
-      "category": "ChoicesMatterGPT"
+      "path": "stories/awaiting_response.json",
+      "category": "uncategorized"
     },
     {
       "path": "stories/horror/dead_air.json",
@@ -17,8 +17,8 @@
       "category": "horror"
     },
     {
-      "path": "stories/the_cartographers_confession.json",
-      "category": "uncategorized"
+      "path": "stories/horror/the_cartographers_confession.json",
+      "category": "horror"
     },
     {
       "path": "stories/ChoicesMatterGPT/the_lantern_rounds.json",
