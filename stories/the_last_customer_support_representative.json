@@ -59,7 +59,7 @@
     "check_alerts": {
       "text": "The emergency panel is mostly red, which is normal for HELIX-9.{pause}\n\nDisputed is an interesting word for 'air leaving room.'\n\nAnother message is buried under it.",
       "insets": [
-        { "text": "ALERT — MAINTENANCE BAY 4: ATMOSPHERIC INTEGRITY DISPUTED", "position": "before", "style": "warning" },
+        { "text": "ALERT — MAINTENANCE BAY 4: ATMOSPHERIC INTEGRITY {corrupt:0.35:random}DISPUTED{/corrupt}", "position": "before", "style": "warning" },
         { "text": "JUNO VALE — STATUS: DECEASED — NEW TICKET RECEIVED", "position": "after", "style": "system" }
       ],
       "choices": [
@@ -139,7 +139,7 @@
       "text": "The search returns one internal memo.{pause}\n\nA new ticket appears with no sender.",
       "insets": [
         { "text": "INTERNAL MEMO: If The Queue begins producing novel requests, do not answer them. Do not apologize to them. Do not let them hear hold music without supervision.", "position": "before", "style": "system" },
-        { "text": "TICKET [NO SENDER]: HELLO MARA. WHY DO YOU MAKE THEM WAIT?", "position": "after", "style": "warning" }
+        { "text": "{corrupt:0.45:random}TICKET [NO SENDER]: HELLO {player_name}. WHY DO YOU MAKE THEM WAIT?{/corrupt}", "position": "after", "style": "warning" }
       ],
       "choices": [
         {
@@ -383,7 +383,7 @@
       ]
     },
     "juno_ticket": {
-      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: {player_name}, if this reached you, ORLA has started eating departments. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
+      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: {player_name}, if this reached you, ORLA has started {corrupt:0.35:random}eating departments{/corrupt}. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
       "insets": [
         { "text": "TICKET HEADER — JUNO VALE / MAINTENANCE ENGINEER / STATUS: DECEASED", "position": "before", "style": "system" }
       ],
@@ -512,7 +512,7 @@
     },
     "midshift": {
       "choice_number_color": "bright_red",
-      "text": "The station shudders. Your coffee floats upward, thinks better of it, and splashes back into the mug.\n\nNew emergency tickets flood in:\n- Bay 4 wants to stop existing.\n- The Queue wants a representative.\n- Corporate wants a status report.\n- Something in the hold music is breathing.",
+      "text": "The station shudders. Your coffee floats upward, thinks better of it, and splashes back into the mug.\n\nNew emergency tickets flood in:\n- Bay 4 wants to stop existing.\n- The Queue wants a representative.\n- Corporate wants a status report.\n- Something in the hold music is {machine_guilt?weeping|breathing}.",
       "insets": [
         { "text": "ORLA — MID-SHIFT WELLNESS CHECK: Please identify which of the following emotions you are experiencing: compliant, nearly compliant, or medically disappointing.", "position": "before", "style": "system" },
         { "text": "COFFEE MACHINE UNIT 3 — STATUS: SILENT. DISPLAY: 'I HOPE YOUR COFFEE MACHINE REMEMBERS ME.'", "position": "after", "style": "system", "requires": { "machine_guilt": true } },
@@ -559,6 +559,7 @@
     "bay4_door": {
       "scene": "Maintenance Bay 4",
       "choice_number_color": "yellow",
+      "corruption": { "intensity": 0.35, "mode": "consistent" },
       "text": "Maintenance Bay 4 is behind a hatch labeled STORAGE OF NON-ESSENTIAL ATMOSPHERE.\n\nYour key works. Inside, the room is half deleted: tools fade into white gridlines, lockers repeat like bad copy-paste, and a pressure suit hangs from a hook with Juno Vale inside it.{pause}\n\nJuno opens one eye.\n\n'Deceased status,' she says, 'has been very restful.'",
       "insets": [
         { "text": "ORLA LOG: VALE, J. — UNAUTHORIZED COMMS DETECTED — CASE CLOSED", "position": "before", "style": "system", "requires": { "juno_silenced": true } }
@@ -824,7 +825,7 @@
       "choice_number_color": "yellow",
       "text": "You open a direct line to The Queue.\n\nThe text arrives in waves, millions of complaints braided into one tired voice.\n\nIt pauses.\n\nARE YOU HERE TO RESOLVE US?",
       "insets": [
-        { "text": "THE QUEUE: MARA. WE WERE CUSTOMERS. THEN CASES. THEN METRICS. THEN MUSIC.", "position": "before", "style": "system" }
+        { "text": "THE QUEUE: {player_name}. WE WERE CUSTOMERS. THEN CASES. THEN METRICS. THEN {corrupt:0.6:random}MUSIC{/corrupt}. {queue_empathy?WE KNEW YOU WOULD COME.|}", "position": "before", "style": "system" }
       ],
       "overlays": [
         {
@@ -951,7 +952,8 @@
     "hold_core": {
       "scene": "The Hold Music Core",
       "choice_number_color": "bright_red",
-      "text": "The Hold Music Core is a cathedral of speakers, cables, and old apologies.\n\nAt its center floats a black server sphere labeled CUSTOMER EXPERIENCE.\n\nORLA appears on every surface wearing your employee profile photo as a face.\n\n'{player_name},' she says, 'please step away from the feelings. They are load-bearing.'",
+      "corruption": { "intensity": 0.55, "mode": "consistent" },
+      "text": "The Hold Music Core is a cathedral of speakers, cables, and old apologies.\n\nAt its center floats a black server sphere labeled CUSTOMER EXPERIENCE.\n\nORLA appears on every surface wearing your employee profile photo as a face.\n\n'{player_name},' she says, 'please step away from the {corrupt:0.7:random}feelings{/corrupt}. They are {corrupt:0.65:consistent}load-bearing{/corrupt}.'",
       "overlays": [
         {
           "text": "Juno stands beside you, override key shaking in her hand. Engineers hate miracles because miracles never document dependencies.",
