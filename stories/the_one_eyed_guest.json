@@ -1,0 +1,369 @@
+{
+  "meta": {
+    "id": "the_one_eyed_guest",
+    "title": "The One-Eyed Guest",
+    "version": "1.0",
+    "author": "Fable",
+    "start_node": "longest_night",
+    "est_time": "10–15 min",
+    "warnings": [
+      "Themes of grief and the loss of memory",
+      "An old bargain, paid in full"
+    ]
+  },
+  "nodes": {
+    "longest_night": {
+      "scene": "The Homestead — The Year's Darkest Night",
+      "insets": [
+        {
+          "text": "A bowl at the back door for the vættir — what lives under the stones, what was here before the house, what suffers the house to stand. Filled at dusk, every dusk, believed in or not.",
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "text": "The year turns on its darkest hinge tonight, and you have done what is done. Wood in. Beasts fed. The fire banked low and red, the way your mother banked it, the way her mother banked it, back and back to whoever first taught a fire to sleep.\n\nTwo bowls on the table. You eat from one. The other has stood empty nine winters now, and still you set it out. Habit is what grief becomes when it learns to be quiet.\n\nOutside, the snow has stopped falling. That is worse than snowing. A still night listens.",
+      "overlays": [
+        {
+          "text": "The longest night of the year. The old people barred more than doors on it.",
+          "position": "after",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Walk the threshold once more. Renew the salt.",
+          "next": "the_knock",
+          "sets": { "kept_rites": true }
+        },
+        {
+          "label": "The old ways have kept themselves this long. Sit by the fire.",
+          "next": "the_knock",
+          "sets": { "kept_rites": false }
+        }
+      ]
+    },
+    "the_knock": {
+      "insets": [
+        {
+          "text": "Salt and bread at the threshold before dark. Something is owed for the ground you stand on — you were never told what, only that it is owed.",
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "text": "The knock comes at the hour when even the fire thinks of going out.{pause}\n\nThree knocks. Not hurried. Not cold-handed. Three, laid on the wood like coins on a table, and then the voice — a low voice, an even voice, a voice like a road you have walked before and cannot place.\n\n“By the old law,” it says. “A roof for the night. A place at your fire. Food, if you have it, and I know that you have little. I ask. I do not demand. The asking is the law, and the answering is yours.”\n\nThrough the gap in the shutter you see him: tall under a grey hood, leaning on a stick that is not a stick for leaning. Snow stands on his shoulders as though it has been standing there a long time. He does not stamp his feet. He does not shiver.\n\n{kept_rites?The salt line at your door is fresh, laid an hour ago by your own hand. He is standing exactly at its edge, the way water stands at a dam.|The salt line at your door is old and broken, gone to grey slush weeks back. He is standing where the gap is.}\n\nHe waits the way stones wait.",
+      "overlays": [
+        {
+          "text": "Guest-right is older than the house. Older than houses.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Draw the bar. Whatever is in the pot tonight is his.",
+          "next": "hearth",
+          "sets": { "gave_food": true, "tests_passed": "+1" },
+          "color": "yellow"
+        },
+        {
+          "label": "Speak through the wood: there is no room and no bread for strangers tonight.",
+          "next": "barred",
+          "color": "green"
+        }
+      ]
+    },
+    "hearth": {
+      "scene": "By the Fire",
+      "text": "He stoops under your lintel and the room is smaller with him in it — not crowded, smaller, the way a room is smaller with a wolf-skin on the floor even when no one speaks of the wolf.\n\n{kept_rites?“A clean threshold,” he says, stepping over the salt with care, like a man honouring a fence he could walk through. “Kept out of habit. Habit is the bone of belief, keeper. The flesh goes. The bone remains.”|He steps across the ruin of your old salt line without looking down. “You have let the threshold go bare,” he says, not unkindly. “Most have. The law does not mind. The law only counts.”}\n\nYou give him the stool by the fire. You give him the bread, the hard cheese, the last of the salt fish that was going to be three more suppers. He eats slowly, and thanks you plainly, and the thanks lands somewhere deeper than it should.\n\nOne eye watches you across the fire — grey, calm, old the way ice at the bottom of a well is old. Where the other eye should be, his hood keeps a shadow the firelight does not argue with.\n\nThe fire burns wrong. Not badly — wrong. It leans toward him, the way grass leans after something has passed.",
+      "choices": [
+        {
+          "label": "Ask him what he is.",
+          "next": "riddle_hearth",
+          "sets": { "asked_what": true },
+          "color": "yellow"
+        },
+        {
+          "label": "Say nothing. A guest owes his name only if he offers it.",
+          "next": "riddle_hearth",
+          "color": "green"
+        }
+      ]
+    },
+    "riddle_hearth": {
+      "insets": [
+        {
+          "text": "Grandmother had a word for a guest who already knows the answer to every question he asks. She said it once, with the door open and her hand on the iron. She never said it twice.",
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "text": "{asked_what?“What am I,” he says, turning your question over like a coin he minted himself. “That is a door better opened from the other side. Ask me again when you know the answer.” And before you can weigh that, he sets down the bowl and says:|He sets down the bowl. For a while there is only the fire. Then, in the same even voice with which he asked for bread, he says:}\n\n“A game, then, to pay for the meal. One question. Old rules: I ask, you answer, and no lie between us — the fire is witness, and fire remembers.”\n\nHe leans forward. The shadow under his hood does not lean with him.\n\n“When the first grave was dug, the digger bent down and spoke one word into the earth, so the dead would not wake lonely. The dead have kept that word ever since. No living tongue has it. No living ear has heard it.”\n\nThe fire pops. Snow shifts on the roof.\n\n“Say it.”\n\nYou should laugh. You should tell him no one alive can answer that. But something behind your teeth has already begun to lean, the way the fire leans, and you understand that if you open your mouth the word will walk out of it on its own.",
+      "choices": [
+        {
+          "label": "Open your mouth. Let it out.",
+          "next": "answer_hearth",
+          "sets": { "answered_riddle": true, "tests_passed": "+1" },
+          "color": "yellow"
+        },
+        {
+          "label": "Keep your teeth shut. Refuse the game.",
+          "next": "silent_hearth",
+          "color": "green"
+        }
+      ]
+    },
+    "answer_hearth": {
+      "text": "You say it.\n\nYou say {corrupt:0.7}the word the first digger gave the dead{/corrupt}, and the sound of it is wrong in a warm room — a sound like earth taking rain, like a door closing in a house that has no doors.\n\nThe fire flattens. The stranger's one eye does not blink, which is when you notice it has not blinked all evening.\n\n“So,” he says. Not surprised. Satisfied, the way a farmer is satisfied by weather he predicted. “You had it. The living are not given that word, keeper. It is buried with them. Think, tonight or some other night, on where you have been that you should carry it.”\n\nYou do not remember learning it. You do not remember not knowing it. Both of these are true, and they do not fit in the same head, and they are both in yours.",
+      "overlays": [
+        {
+          "text": "No living tongue has it.",
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "The fire needs wood. Tend it, because your hands need something living to do.",
+          "next": "third_ask_hearth"
+        }
+      ]
+    },
+    "silent_hearth": {
+      "text": "You keep your teeth together until the leaning thing behind them settles.\n\n“No,” you say. “You have had bread and fire from a thin larder, and welcome to both. But I will not play guessing games with the dark half of the year at my door.”\n\nHe studies you, and there is no anger in it. There is something worse than anger. There is respect, of a kind you would rather not have earned.\n\n“A giving hand and a shut mouth,” he says. “That is a rare pairing. Most who feed me want to talk. Most who will not talk would not have fed me.” He turns his one eye to the fire. “You would have had it, you know. The answer. It was already in you. That is worth sitting with, some quiet morning.”\n\nThe fire steadies. Whatever was leaning behind your teeth lies back down, slowly, like a dog that has been told twice.",
+      "overlays": [
+        {
+          "text": "It was already in you.",
+          "position": "after",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Let the silence do the sitting for now.",
+          "next": "third_ask_hearth"
+        }
+      ]
+    },
+    "third_ask_hearth": {
+      "text": "The night gets older. The stranger stands, and his standing changes the room the way a bell changes the air after it has stopped ringing.\n\n“Three things a guest may ask,” he says. “Bread was the first. {answered_riddle?The word was the second, and you paid it well.|The game was the second, and you were wise enough to leave it lie.} The third I will ask now, and I will ask it the old way, so hear the shape of it before you answer.”\n\nHe sets both hands on his stick.\n\n“I will not tell you what it costs. That is the law of the third asking — the price is named after the yes, never before. You may refuse, and no harm comes to this house, and I will bless the roof and go. Or you may agree — blind, as I once agreed, blind, at a well that was old when the world was young — and pay what is asked, and have what I carry in return.”\n\n“What I carry,” he says, “is everything I have seen with the eye I do not have.”\n\nThe fire is very low. He waits, the way stones wait.",
+      "insets": [
+        {
+          "text": "The old law was never “ask and you shall receive.” It was “ask, and something of yours stops being only yours.”",
+          "position": "after",
+          "style": "warning"
+        }
+      ],
+      "overlays": [
+        {
+          "text": "Refusing is safe. He said so himself, and he has not lied to you all night. That is the trouble.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Say yes to the price unnamed.",
+          "next": "price_paid",
+          "sets": { "paid_final_price": true },
+          "obfuscated": true,
+          "color": "bright_red"
+        },
+        {
+          "label": "Refuse the third asking. Keep what is yours.",
+          "next": "ending_marked",
+          "color": "green"
+        }
+      ]
+    },
+    "barred": {
+      "scene": "The Barred Door",
+      "text": "“There is no room here,” you say to the wood, “and no bread for strangers. Not this winter. The winter has taken the spare.”\n\nThe pause on the other side is not an offended pause. It is the pause of a man making a note in a ledger.\n\n“That is an answer,” the voice says, “and the law is content with answers. I will stand a while at your threshold, then, where standing is free.”\n\nYou wait for the crunch of feet turning in snow. It does not come. When you look through the shutter's gap he is still there, grey hood against the dark, one eye catching the light of your fire through the crack — catching it, and keeping it.\n\n{kept_rites?He stands outside your fresh salt line, precisely outside it, the way water stands at a dam.|He has come up the path to your bare threshold and stands where the salt used to be, on ground that no longer says no.}\n\nThe cold comes through the door at the height of a man's mouth.",
+      "overlays": [
+        {
+          "text": "The asking is the law, and the answering is yours.",
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Stand at the door, hand on the bar. If he speaks, you will hear it.",
+          "next": "riddle_door",
+          "sets": { "stood_watch": true },
+          "color": "yellow"
+        },
+        {
+          "label": "Go back to the fire and leave him to his own silence.",
+          "next": "riddle_door",
+          "color": "green"
+        }
+      ]
+    },
+    "riddle_door": {
+      "insets": [
+        {
+          "text": "Grandmother had a word for a guest who already knows the answer to every question he asks. She said it once, with the door open and her hand on the iron. She never said it twice.",
+          "position": "before",
+          "style": "memory"
+        }
+      ],
+      "text": "{stood_watch?You stand with your hand on the bar, and the voice comes through the wood as though the wood were glad to carry it.|You sit at your own fire, and the voice comes to you across the room as though the door were a curtain, as though the bar were a ribbon.}\n\n“A game, keeper, since the night is long on both sides of this door. One question. Old rules: I ask, you answer, and no lie between us — the cold for witness, and the cold keeps everything.”\n\nYou do not agree to the game. He asks it anyway, the way rain does not ask the roof.\n\n“When the first grave was dug, the digger bent down and spoke one word into the earth, so the dead would not wake lonely. The dead have kept that word ever since. No living tongue has it. No living ear has heard it. Say it, keeper, and I will tell you how you came to have it.”\n\nYou should not have it. And there it is anyway — behind your teeth, patient, leaning like grass after something has passed.",
+      "choices": [
+        {
+          "label": "Say the word through the door.",
+          "next": "answer_door",
+          "sets": { "answered_riddle": true, "tests_passed": "+1" },
+          "color": "yellow"
+        },
+        {
+          "label": "Say nothing. Give him your silence like you gave him your threshold: shut.",
+          "next": "silent_door",
+          "color": "green"
+        }
+      ]
+    },
+    "answer_door": {
+      "text": "You say it with your forehead almost against the bar.\n\nYou say {corrupt:0.7}the word the first digger gave the dead{/corrupt}, quietly, the way you would say it into an open grave, and on the other side of the door the night goes very still — stiller than snow, stiller than stone, the stillness of a full church.\n\n“There it is,” the voice says, soft as banked coals. “Through a barred door, no less. You would not give me bread, keeper, but you have given me that, and I will tell you plainly: of the two, you have handed me the dearer thing.”\n\nYour own fire is at your back, and you are cold anyway. The word has left a shape in your mouth, and the shape is not going away.",
+      "overlays": [
+        {
+          "text": "No living tongue has it.",
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Step back from the door.",
+          "next": "third_ask_door"
+        }
+      ]
+    },
+    "silent_door": {
+      "text": "You say nothing.\n\nThe silence stretches until it belongs to him. When he speaks again there is a smile in the voice — not warmth. The other kind.\n\n“No bread. No roof. No word. A shut house and a shut mouth.” A soft sound, then — maybe a laugh, maybe snow letting go of a branch. “I have walked into rich halls that gave me less, keeper, and I have walked out of them again, and the halls are not standing now. But you — you refuse the old way, whole and even, no malice in it. The law counts that too.”\n\nThe one eye leaves the shutter's gap. You hear him settle against your doorpost like a man prepared to outwait a season.",
+      "choices": [
+        {
+          "label": "Hold the door with your eyes until morning, or until he speaks.",
+          "next": "last_asking_bare"
+        }
+      ]
+    },
+    "third_ask_door": {
+      "text": "The voice comes again, and it has changed weight — the difference between a coin on the table and a hand on the shoulder.\n\n“Three things a guest may ask. Bread you refused me, and no harm in that. The word you gave, and gave well. Now the third, and I will ask it the old way, through your barred door, so hear the shape of it before you answer.”\n\n“I will not tell you what it costs. That is the law of the third asking — the price is named after the yes, never before. Refuse, and I bless this roof and go, and you keep everything you have and everything you are. Agree — blind, as I once agreed, blind, at a well that was old when the world was young — and pay what is asked, and have in return everything I have seen with the eye I do not have.”\n\n“The bar,” he adds, gently, “need not be lifted for any of it. That is not the kind of door this is.”",
+      "insets": [
+        {
+          "text": "The old law was never “ask and you shall receive.” It was “ask, and something of yours stops being only yours.”",
+          "position": "after",
+          "style": "warning"
+        }
+      ],
+      "overlays": [
+        {
+          "text": "Refusing is safe. He said so himself, and he has not lied to you all night. That is the trouble.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Say yes to the price unnamed.",
+          "next": "price_paid",
+          "sets": { "paid_final_price": true },
+          "obfuscated": true,
+          "color": "bright_red"
+        },
+        {
+          "label": "Refuse the third asking. Keep what is yours.",
+          "next": "ending_marked",
+          "color": "green"
+        }
+      ]
+    },
+    "last_asking_bare": {
+      "text": "For a long time, nothing. Then the voice, once more, patient as frost:\n\n“Three things a guest may ask, keeper, and I have asked two and carry nothing away. Custom says I ask the third regardless. Custom is all either of us has tonight, so hear it, and hear the shape of it before you answer.”\n\n“I will not tell you what it costs. The price of the third asking is named after the yes, never before. You have given me nothing, and you owe me nothing, and if you refuse this too I will bless your roof — yes, even now — and be gone by first light, and your life will stay the size it is. Or say yes — blind, as I once said yes, blind, at a well that was old when the world was young — and pay what is asked, and be paid in kind: everything I have seen with the eye I do not have.”\n\nThrough the shutter's gap, the one eye is on you, and you understand that it has been on you since before the knock. Perhaps since before the snow.",
+      "insets": [
+        {
+          "text": "The old law was never “ask and you shall receive.” It was “ask, and something of yours stops being only yours.”",
+          "position": "after",
+          "style": "warning"
+        }
+      ],
+      "overlays": [
+        {
+          "text": "Refusing is safe. He said so himself, and he has not lied to you all night. That is the trouble.",
+          "position": "before",
+          "style": "whisper"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Say yes to the price unnamed.",
+          "next": "price_paid",
+          "sets": { "paid_final_price": true },
+          "obfuscated": true,
+          "color": "bright_red"
+        },
+        {
+          "label": "Refuse the third asking. Refuse him whole.",
+          "next": "ending_whole",
+          "color": "green"
+        }
+      ]
+    },
+    "price_paid": {
+      "text": "“Done,” says the stranger, before the yes has fully left you.\n\n{gave_food?He does not rise from the stool. He only leans across the fire, and the fire lets him.|The bar does not lift. The door does not open. He is on your side of it anyway, the way cold is, the way morning is.}\n\nHe does not take bread. He does not take blood. He reaches — not with hands — and takes{pause} the way her face turned toward the fire in the evenings. The gap in her front teeth when she laughed at nothing. The sound of your name in her mouth — hers, no one else's, that particular weather of it.\n\nNine winters you have kept those. You feel them go the way you feel a tooth go: an absence with edges.\n\n“You loved someone,” he says, and his voice is almost kind, which is the worst thing it has been all night. “You still know that. The knowing stays. The rest comes with me — that is the price, and it was never going to be less. Wisdom is bought with the dearest coin in the house. I know. I have paid.”\n\nAnd then he gives you what he carries, and the room {corrupt:0.6}comes apart at seams you did not know a room had{/corrupt}, and you see with the eye he does not have.",
+      "overlays": [
+        {
+          "text": "Something of yours stops being only yours.",
+          "position": "after",
+          "style": "echo"
+        }
+      ],
+      "choices": [
+        {
+          "label": "Morning comes, because it must.",
+          "next": "ending_hollow"
+        }
+      ]
+    },
+    "ending_whole": {
+      "text": "He straightens from your doorpost. Through the gap you watch him take up the stick that is not for leaning and set off into the dark between your gate and everything else.\n\nAt the edge of the yard he stops. He does not turn.\n\n“A shut house and a shut mouth,” he says, to the night as much as to you. “You will die not knowing what stood at your door on the year's darkest night. Hear me, keeper: that is not the curse it is said to be. Most of what I know, I would give back.”\n\nThen the dark takes him, or he takes it, and the snow begins again — ordinary snow — and the fire in your grate is only a fire.\n\nYou live a long time. The homestead stands. The winters come and go and none of them ever brings another knock, and every year on the darkest night you lay the salt, and fill the bowl, and bar the door, and sit with both bowls on the table until morning.\n\nYou never learn what he was. It never costs you an hour of sleep.",
+      "overlays": [
+        {
+          "text": "The asking is the law, and the answering is yours.",
+          "position": "before",
+          "style": "echo"
+        }
+      ],
+      "is_ending": true,
+      "ending_type": "good",
+      "choices": []
+    },
+    "ending_marked": {
+      "text": "“Then I bless this roof,” he says, and he does, in words you do not know and understand anyway — that is the kind of night it has become.\n\n{gave_food?He thanks you at the door for the bread, formally, in an old form, and steps out over your threshold into the dark.|He leaves your threshold without your ever having opened the door, and somehow that is a kind of thanks as well.}\n\nAt the edge of the yard he half-turns. The one eye finds you the way it found you first.\n\n“{answered_riddle?You carry a dead word in a living mouth, keeper. I did not put it there. Think on where you got it.|You had the answer, you know. It is still in you, unspoken. Words like that do not spoil. They wait.}”\n\nThen he is gone, and the snow starts again, and the fire is only a fire. Almost. It never quite stops leaning.\n\nYou live. The homestead stands. But you are marked the way a tree is marked by lightning that did not kill it: something went through you and out, and the grain remembers.\n\nOn dark nights you wake with {answered_riddle?the word|the almost-word} behind your teeth and lie still until it settles. You count what you kept. It is most of you. Most is enough. You tell yourself most is enough, and some winters you believe it.",
+      "overlays": [
+        {
+          "text": "Bread and the word both. He carried away no goods, and more than goods.",
+          "position": "before",
+          "style": "echo",
+          "requires": { "tests_passed": 2 }
+        }
+      ],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "choices": []
+    },
+    "ending_hollow": {
+      "text": "Morning comes, because it must.\n\n{gave_food?The stool by the fire is empty. The bowl he ate from is clean — cleaner than washing gets it.|The bar is still down. It was always going to still be down. It never mattered.} The snow in the yard holds no footprints going in any direction at all.\n\nYou know things now.\n\nYou know what the wind carries when it comes over the graves, and why fires lean, and what the vættir under the stones have been owed all this while, and what becomes of the owing when it is not paid. You know what stood at your door, and all its names, and why it goes from house to house on the year's darkest night with one eye and an even voice. You know what the missing eye sees, down at the bottom of the well that was old when the world was young — and you know that something down there sees it back. You wish you did not know that most of all.\n\nIt is real. It is old. None of it is any comfort at the fire in the evenings, and the evenings are long now.\n\nBehind the house there is a grave you tend. You keep it clean. You bring the first flowers in spring, because your hands remember to, and you stand there with your hat off and wait for something to arrive in your chest, and nothing comes. Someone is buried there. You know it the way you know the winter stars: certainly, distantly, uselessly. You loved someone. The knowing stays.\n\nThe rest went with him, under a grey hood, into the dark between your gate and everything else — and it is no failure of yours, keeper, and no cruelty of his, that this is what wisdom has always cost.\n\nHe said so himself. He has never lied to you.",
+      "overlays": [
+        {
+          "text": "Everything I have seen with the eye I do not have.",
+          "position": "before",
+          "style": "echo"
+        }
+      ],
+      "is_ending": true,
+      "ending_type": "bad",
+      "choices": []
+    }
+  }
+}

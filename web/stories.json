@@ -37,6 +37,10 @@
       "category": "ChoicesMatterGPT"
     },
     {
+      "path": "stories/the_one_eyed_guest.json",
+      "category": "uncategorized"
+    },
+    {
       "path": "stories/horror/the_vulture_corridor_v2_1_demo.json",
       "category": "horror"
     },
