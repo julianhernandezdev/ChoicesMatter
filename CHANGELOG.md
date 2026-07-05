@@ -6,6 +6,11 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Protagonist Name Prompt — Priority Bug Fix
+- **Fixed** Blank name-prompt submission resolved the story's `name_default` before the settings-saved `player_name`, in both `main.py` (`_launch_story`) and `web/app.js` (`_resolvePlayerName`) — the opposite of the documented contract ("`name_default` is a fallback for when no saved `player_name` exists"). Since `settings.json` always resolves to at least `"Felix"`, this made `name_default` win unconditionally whenever a story declared one, silently shadowing the player's saved name
+- **Added** `_resolve_player_name(entered, name_default, settings_name)` pure helper in `main.py` (mirrors the existing `_resolvePlayerName` shape in `web/app.js`); priority is now typed name > saved settings name > story `name_default`
+- **Added** 4 regression tests in `tests/test_main.py` covering all four resolution branches
+
 ### Story Picker (Web Player Folder Parity)
 - **Fixed** `scripts/sync_stories.py` — root-level stories (no subfolder) previously got a literal `"category": "uncategorized"` in `web/stories.json`, which made the web player bucket them into an `uncategorized/` folder instead of listing them flat like the CLI does. Root stories now get no `category` key at all, matching `StoryLoader.discover_with_folders()`'s root/folder split; `web/app.js`'s existing `entry.category || null` check already routes uncategorized entries to the flat top-level list, so no JS changes were needed
 - **Synced** `web/stories.json` — `awaiting_response.json`, `the_last_customer_support_representative.json`, `the_last_train.json`, `the_one_eyed_guest.json` lost their `"uncategorized"` category and now render as flat top-level entries in both terminal and reader mode
