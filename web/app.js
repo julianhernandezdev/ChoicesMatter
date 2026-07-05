@@ -1350,7 +1350,8 @@ function renderAccessibleSpeedPresets() {
   app.querySelectorAll('.r-preset-btn').forEach(function(btn, i) {
     btn.addEventListener('click', function() {
       settingsDraft.delay_ms = SPEED_PRESETS[i].ms;
-      renderSettings();
+      if (speedPresetsReturn) { var fn = speedPresetsReturn; speedPresetsReturn = null; fn(); }
+      else renderSettings();
     });
   });
   app.querySelector('.r-back-btn').addEventListener('click', renderSettings);
