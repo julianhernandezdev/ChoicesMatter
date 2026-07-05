@@ -437,14 +437,15 @@ def test_show_settings_screen_save_on_s(display):
         mock_save.assert_called_once()
 
 
-def test_show_settings_screen_toggle_enabled_then_discard(display):
-    display.console.input.side_effect = ["1", "x"]
+def test_show_settings_screen_edit_number_row_then_discard(display):
+    # "2" edits Stories per page (number row), "5" sets value, "x" discards
+    display.console.input.side_effect = ["2", "5", "x"]
     display.show_settings_screen()  # must not raise
 
 
-def test_show_settings_screen_edit_pause_then_discard(display):
-    # "3" enters pause edit for '.', "" keeps current, "x" discards from main menu
-    display.console.input.side_effect = ["3", "", "x"]
+def test_show_settings_screen_edit_text_row_then_discard(display):
+    # "4" edits Player name (text row), "" keeps current, "x" discards
+    display.console.input.side_effect = ["4", "", "x"]
     display.show_settings_screen()
 
 
@@ -482,25 +483,44 @@ def test_settings_edit_speed_custom_invalid_then_valid(display):
     assert tw["delay_ms"] == 10
 
 
-def test_settings_edit_pause_sets_value(display):
-    pauses = {".": 550}
-    display.console.input.return_value = "300"
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 300
+from src.config import SETTINGS_SECTIONS
 
 
-def test_settings_edit_pause_keep_on_empty(display):
-    pauses = {".": 550}
-    display.console.input.return_value = ""
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 550
+def test_format_row_value_boolean_true(display):
+    row = {"type": "boolean"}
+    result = display._format_row_value(row, True)
+    assert "on" in result
 
 
-def test_settings_edit_pause_invalid_then_valid(display):
-    pauses = {".": 550}
-    display.console.input.side_effect = ["abc", "200"]
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 200
+def test_format_row_value_boolean_false(display):
+    row = {"type": "boolean"}
+    result = display._format_row_value(row, False)
+    assert "off" in result
+
+
+def test_format_row_value_number_with_unit(display):
+    row = {"type": "number", "unit": "ms"}
+    result = display._format_row_value(row, 35)
+    assert "35" in result
+    assert "ms" in result
+
+
+def test_format_row_value_number_no_unit(display):
+    row = {"type": "number", "unit": ""}
+    result = display._format_row_value(row, 5)
+    assert "5" in result
+
+
+def test_format_row_value_cycle(display):
+    row = {"type": "cycle", "values": ["consistent", "random"]}
+    result = display._format_row_value(row, "consistent")
+    assert "consistent" in result
+
+
+def test_format_row_value_text(display):
+    row = {"type": "text"}
+    result = display._format_row_value(row, "Felix")
+    assert "Felix" in result
 
 
 # ------------------------------------------------------------------
