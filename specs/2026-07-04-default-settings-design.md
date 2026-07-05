@@ -155,6 +155,8 @@ Reset: Typewriter, Display. Player name and accessible mode were preserved.
 ```
 Reset to Defaults
 
+  Note: Player name and accessible mode will always be preserved.
+
 Select sections to reset:
 
   1. [ ] Typewriter
@@ -178,11 +180,17 @@ Select sections to reset:
 
 ## Preserved-field feedback
 
-When a global reset is applied (at least one section checked), always append the preservation note to the feedback line if `player_name` or `accessible_mode` differs from defaults:
+The preservation note is shown **upfront** in the checkbox selector, not as post-reset feedback:
 
-> "Player name and accessible mode were preserved."
+```
+  Note: Player name and accessible mode will always be preserved.
+```
 
-If both are already at their defaults, omit the note — it adds noise without value.
+This line is shown unconditionally at the top of the checkbox selector — before the user makes any selection. Post-reset feedback shows only which sections were reset:
+
+> "Reset: Typewriter, Display."
+
+No preservation note after the fact — the user was already informed before confirming.
 
 ---
 
