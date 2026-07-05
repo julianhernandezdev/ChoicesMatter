@@ -40,6 +40,8 @@ var currentSectionScreen = null;
 var sectionDraftSnapshot = null;
 var sectionEditRow = null;
 var speedPresetsReturn = null;
+var resetChecked = {};
+var resetFeedback = '';
 
 // --- App state ---
 
@@ -760,10 +762,12 @@ function renderSettings() {
     renderRule('Settings', 'green') +
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
-    '<div class="footer-hint">Enter a number to edit · <span class="key-fwd">S</span> save · <span class="key-back">X</span> discard. Press Enter to confirm.</div>' +
+    '<div class="footer-hint">Enter a number to edit &middot; <span class="key-fwd">S</span> save &middot; <span class="key-back">X</span> discard &middot; <span class="key-fwd">R</span> reset. Press Enter to confirm.' +
+    (resetFeedback ? '<div class="reset-feedback" style="color:#6af;margin-top:4px">✓ ' + escapeHtml(resetFeedback) + '</div>' : '') + '</div>' +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
+  resetFeedback = '';
   updatePrompt();
 }
 
@@ -1512,6 +1516,86 @@ function renderSectionResetConfirm() {
   updatePrompt();
 }
 
+function renderResetSelector() {
+  if (isAccessibleMode()) { renderAccessibleResetSelector(); return; }
+  document.body.classList.remove('reader-mode');
+  pendingInput = '';
+  currentScreen = 'settings-reset';
+  resetChecked = {};
+  setPageTitle('Settings – Reset');
+  renderResetSelectorView();
+}
+
+function renderResetSelectorView() {
+  var resettable = SETTINGS_SECTIONS.filter(function(s) { return !s.preserveOnGlobalReset; });
+  var rows = resettable.map(function(section, i) {
+    var checked = !!resetChecked[section.id];
+    var mark = checked ? '<span class="key-fwd">✓</span>' : ' ';
+    return '<div class="terminal-settings-row" data-action="reset-toggle" data-index="' + i + '">' +
+      '<span class="setting-num">' + (i + 1) + '.</span>' +
+      '<span class="setting-name">[' + mark + '] ' + escapeHtml(section.label) + '</span>' +
+      '</div>';
+  }).join('');
+
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Reset to Defaults', 'green') +
+    '<div class="terminal-hint" style="padding:0 1em 0.5em;opacity:0.6">Note: Player name and accessible mode will always be preserved.</div>' +
+    '<div class="terminal-list">' + rows + '</div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint">Number + Enter to toggle &middot; <span class="key-fwd">Y</span> confirm &middot; <span class="key-back">X</span> cancel</div>' +
+    '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
+    '</div></div>';
+  updatePrompt();
+}
+
+function renderAccessibleResetSelector() {
+  pendingInput = '';
+  currentScreen = 'settings-reset';
+  resetChecked = {};
+  document.body.classList.add('reader-mode');
+  setPageTitle('Settings – Reset to Defaults');
+
+  var resettable = SETTINGS_SECTIONS.filter(function(s) { return !s.preserveOnGlobalReset; });
+  var itemsHtml = resettable.map(function(section, i) {
+    return '<li><button class="r-btn ghost r-reset-section-btn" data-index="' + i + '"' +
+      ' aria-pressed="false">' + escapeHtml(section.label) + '</button></li>';
+  }).join('');
+
+  app.innerHTML =
+    '<main class="reader-screen">' +
+    '<h1 class="r-page-title">Reset to Defaults</h1>' +
+    '<p class="r-page-sub">Note: Player name and accessible mode will always be preserved.</p>' +
+    '<ul class="r-presets">' + itemsHtml + '</ul>' +
+    '<div class="r-nav">' +
+    '<button class="r-btn primary r-reset-confirm-btn">Reset selected</button>' +
+    '<button class="r-btn ghost r-reset-cancel-btn">Cancel</button>' +
+    '</div>' +
+    '</main>';
+
+  app.querySelectorAll('.r-reset-section-btn').forEach(function(btn, i) {
+    btn.addEventListener('click', function() {
+      var sid = resettable[i].id;
+      var checked = !!resetChecked[sid];
+      resetChecked[sid] = !checked;
+      btn.setAttribute('aria-pressed', String(!checked));
+      btn.classList.toggle('r-btn-active', !checked);
+    });
+  });
+  app.querySelector('.r-reset-confirm-btn').addEventListener('click', function() {
+    var selected = resettable.filter(function(s) { return !!resetChecked[s.id]; });
+    if (selected.length === 0) { alert('Nothing selected.'); return; }
+    selected.forEach(function(s) { applyDefaults(settingsDraft, s); });
+    resetFeedback = 'Reset: ' + selected.map(function(s) { return s.label; }).join(', ') + '.';
+    renderSettings();
+  });
+  app.querySelector('.r-reset-cancel-btn').addEventListener('click', renderSettings);
+
+  var first = app.querySelector('.r-reset-section-btn');
+  if (first) first.focus();
+}
+
 function startSettingsEdit(rowIndex) {
   var row = SETTINGS_ROWS[rowIndex];
   if (!row) return;
@@ -1793,6 +1877,14 @@ app.addEventListener('click', function(event) {
     settingsDraft.delay_ms = SPEED_PRESETS[Number(button.dataset.index)].ms;
     if (speedPresetsReturn) { var fn = speedPresetsReturn; speedPresetsReturn = null; fn(); }
     else renderSettings();
+  } else if (action === 'reset-toggle') {
+    var rtIdx = Number(button.dataset.index);
+    var resettableList = SETTINGS_SECTIONS.filter(function(s) { return !s.preserveOnGlobalReset; });
+    if (rtIdx >= 0 && rtIdx < resettableList.length) {
+      var rtSid = resettableList[rtIdx].id;
+      resetChecked[rtSid] = !resetChecked[rtSid];
+      renderResetSelectorView();
+    }
   } else if (action === 'speed-custom') {
     speedCustomEdit = true;
     updatePrompt();
@@ -1849,6 +1941,7 @@ function handleSubmit(input) {
   } else if (currentScreen === 'settings') {
     if (input === 'x') { renderLibrary(); return; }
     if (input === 's') { saveTypewriterSettings(settingsDraft); renderLibrary(); return; }
+    if (input === 'r') { renderResetSelector(); return; }
     var ns = parseInt(input, 10);
     if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
 
@@ -1869,6 +1962,27 @@ function handleSubmit(input) {
       applyDefaults(settingsDraft, currentSectionScreen);
     }
     renderSectionSubscreen(currentSectionScreen);
+
+  } else if (currentScreen === 'settings-reset') {
+    var resettable = SETTINGS_SECTIONS.filter(function(s) { return !s.preserveOnGlobalReset; });
+    if (input === 'x') { renderSettings(); return; }
+    if (input === 'y') {
+      var selected = resettable.filter(function(s) { return !!resetChecked[s.id]; });
+      if (selected.length === 0) {
+        renderResetSelectorView();
+        return;
+      }
+      selected.forEach(function(s) { applyDefaults(settingsDraft, s); });
+      resetFeedback = 'Reset: ' + selected.map(function(s) { return s.label; }).join(', ') + '.';
+      renderSettings();
+      return;
+    }
+    var rn = parseInt(input, 10);
+    if (rn >= 1 && rn <= resettable.length) {
+      var sid = resettable[rn - 1].id;
+      resetChecked[sid] = !resetChecked[sid];
+      renderResetSelectorView();
+    }
 
   } else if (currentScreen === 'settings-speed') {
     if (input === 'b') { renderSettings(); return; }
