@@ -5,7 +5,7 @@
     "version": "1.2",
     "name_prompt": "Employee identity check. Your name, for the record.",
     "name_default": "Mara",
-    "author": "Julian H.",
+    "author": "Choices Matter",
     "start_node": "intro",
     "est_time": "25–35 min",
     "warnings": ["death", "institutional harm"],

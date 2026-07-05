@@ -11,30 +11,34 @@ from src.save import SaveManager, SaveState
 
 
 def test_load_story_info_valid(valid_story_path: Path) -> None:
-    title, sid, node_count, ending_count, est_time, has_warnings = _load_story_info(valid_story_path)
+    title, sid, node_count, ending_count, est_time, has_warnings, author, version = _load_story_info(valid_story_path)
     assert title == "Test Story"
     assert sid == "test_story"
     assert node_count == 3
     assert ending_count == 1
     assert "min" in est_time
     assert has_warnings is False
+    assert author == "Tester"
+    assert version == "1.0"
 
 
 def test_load_story_info_invalid_json(tmp_path: Path) -> None:
     path = tmp_path / "broken.json"
     path.write_text("not json", encoding="utf-8")
-    title, sid, node_count, ending_count, est_time, has_warnings = _load_story_info(path)
+    title, sid, node_count, ending_count, est_time, has_warnings, author, version = _load_story_info(path)
     assert title == "broken"
     assert sid == ""
     assert node_count == 0
     assert has_warnings is False
+    assert author == ""
+    assert version == ""
 
 
 def test_load_story_info_with_warnings(tmp_path: Path, sample_story_dict: dict) -> None:
     sample_story_dict["meta"]["warnings"] = ["Violence"]
     path = tmp_path / "warned.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
-    *_, has_warnings = _load_story_info(path)
+    *_, has_warnings, _author, _version = _load_story_info(path)
     assert has_warnings is True
 
 
@@ -50,6 +54,8 @@ def test_build_entries_valid_story(valid_story_path: Path, saves_dir: Path) -> N
     assert entry["has_save"] is False
     assert entry["endings_found"] == 0
     assert entry["node_count"] == 3
+    assert entry["author"] == "Tester"
+    assert entry["version"] == "1.0"
 
 
 def test_build_entries_error_story(tmp_path: Path, saves_dir: Path) -> None:

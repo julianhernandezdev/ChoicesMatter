@@ -76,6 +76,14 @@ _TW_SPEED_PRESETS = [
     ("Fastest",  5),
 ]
 
+MAX_AUTHOR_LEN = 20
+
+
+def _truncate_author(author: str) -> str:
+    if len(author) <= MAX_AUTHOR_LEN:
+        return author
+    return author[:MAX_AUTHOR_LEN].rstrip() + "..."
+
 
 
 class Display:
@@ -144,6 +152,16 @@ class Display:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
                 warn = "  [yellow][!][/yellow]" if entry.get("has_warnings") else ""
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{warn}{resume}")
+                author = entry.get("author", "")
+                version = entry.get("version", "")
+                if author or version:
+                    byline = " · ".join(
+                        part for part in (
+                            f"by {_truncate_author(author)}" if author else "",
+                            f"v{version}" if version else "",
+                        ) if part
+                    )
+                    self.console.print(f"      [dim]{byline}[/dim]")
                 node_count = entry.get("node_count", 0)
                 ending_count = entry.get("ending_count", 0)
                 endings_found = entry.get("endings_found", 0)

@@ -6,6 +6,10 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Stories
+- **Added** *The One-Eyed Guest* (`stories/the_one_eyed_guest.json`) — Nordic folk-horror one-shot: a homestead keeper faces a one-eyed wanderer's three guest-right tests across a single night; inside/outside staging split after the first test, diegetic vocabulary-glossing insets (`memory`/`warning` styles), `{corrupt}` spans tied to forbidden knowledge landing, an obfuscated final choice with its blindness narrated in-fiction, and three endings (good/neutral/bad). First story authored end-to-end by a Claude Fable 5 subagent from a brainstormed spec
+- **Synced** `web/stories.json` — added *The One-Eyed Guest* via `scripts/sync_stories.py`
+
 ### Default Settings & Section Registry
 - **Added** `SETTINGS_SECTIONS` registry (Python `src/config.py`, web `web/app.js`) as single source of truth for all settings — each entry declares id, label, preserve flag, subscreen flag, config keys, and row descriptors
 - **Changed** Settings screen rendering is now fully registry-driven on both platforms; web `SETTINGS_ROWS` is now a derived constant

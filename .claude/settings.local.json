@@ -35,7 +35,16 @@
       "mcp__claude_ai_Miro__layout_read",
       "mcp__claude_ai_Miro__layout_update",
       "mcp__semble__search",
-      "mcp__semble__find_related"
+      "mcp__semble__find_related",
+      "Skill(artifact-design)",
+      "Artifact",
+      "PowerShell(python scripts/validate_story.py stories/the_one_eyed_guest.json; Write-Output \"EXIT=$LASTEXITCODE\")",
+      "Bash(python -m pytest tests/test_main.py tests/test_display.py -q)",
+      "Bash(python -m pytest -q)",
+      "Bash(python -c ' *)",
+      "Bash(python -m pytest tests/ -q --ignore=tests/test_web.py)",
+      "Bash(python scripts/sync_stories.py)",
+      "Bash(python3 -c ' *)"
     ]
   },
   "enabledMcpjsonServers": [

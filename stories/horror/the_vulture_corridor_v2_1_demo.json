@@ -3,7 +3,7 @@
     "id": "the_vulture_corridor_v2_1_demo",
     "title": "The Vulture Corridor - v2.1 Demo",
     "version": "2.1-demo",
-    "author": "Choices Matter / GPT-5.5 Thinking",
+    "author": "Choices Matter",
     "start_node": "mara_01_airlock",
     "est_time": "15–20 min",
     "warnings": [
