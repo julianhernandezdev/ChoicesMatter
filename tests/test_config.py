@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.config import load_settings, save_settings
+from src.config import load_settings, save_settings, _get_draft_value, _set_draft_value, apply_section_defaults, SETTINGS_SECTIONS
 
 
 def test_returns_defaults_when_file_missing(tmp_path: Path) -> None:
@@ -198,3 +198,130 @@ def test_corruption_enabled_false_override(tmp_path: Path) -> None:
     path.write_text(json.dumps({"corruption": {"enabled": False}}), encoding="utf-8")
     cfg = load_settings(path)
     assert cfg["corruption"]["enabled"] is False
+
+
+# ------------------------------------------------------------------
+# Draft value helpers
+# ------------------------------------------------------------------
+
+def test_get_draft_value_top_level() -> None:
+    draft = {"player_name": "Alice"}
+    assert _get_draft_value(draft, "player_name") == "Alice"
+
+
+def test_get_draft_value_nested() -> None:
+    draft = {"typewriter": {"enabled": True, "delay_ms": 35}}
+    assert _get_draft_value(draft, "typewriter.enabled") is True
+    assert _get_draft_value(draft, "typewriter.delay_ms") == 35
+
+
+def test_get_draft_value_punctuation_pause() -> None:
+    draft = {"typewriter": {"punctuation_pauses": {".": 550, "!": 250}}}
+    assert _get_draft_value(draft, "typewriter.punctuation_pauses..") == 550
+    assert _get_draft_value(draft, "typewriter.punctuation_pauses.!") == 250
+
+
+def test_get_draft_value_corruption() -> None:
+    draft = {"corruption": {"enabled": True, "intensity": 0.8}}
+    assert _get_draft_value(draft, "corruption.enabled") is True
+    assert _get_draft_value(draft, "corruption.intensity") == 0.8
+
+
+def test_get_draft_value_picker() -> None:
+    draft = {"picker": {"page_size": 10}}
+    assert _get_draft_value(draft, "picker.page_size") == 10
+
+
+def test_set_draft_value_top_level() -> None:
+    draft = {"player_name": "Felix"}
+    _set_draft_value(draft, "player_name", "Alice")
+    assert draft["player_name"] == "Alice"
+
+
+def test_set_draft_value_nested() -> None:
+    draft = {"typewriter": {"enabled": False}}
+    _set_draft_value(draft, "typewriter.enabled", True)
+    assert draft["typewriter"]["enabled"] is True
+
+
+def test_set_draft_value_punctuation_pause() -> None:
+    draft = {"typewriter": {"punctuation_pauses": {".": 550}}}
+    _set_draft_value(draft, "typewriter.punctuation_pauses..", 300)
+    assert draft["typewriter"]["punctuation_pauses"]["."] == 300
+
+
+def test_set_draft_value_corruption() -> None:
+    draft = {"corruption": {"intensity": 1.0}}
+    _set_draft_value(draft, "corruption.intensity", 0.5)
+    assert draft["corruption"]["intensity"] == 0.5
+
+
+# ------------------------------------------------------------------
+# Section defaults and registry
+# ------------------------------------------------------------------
+
+def test_apply_section_defaults_typewriter() -> None:
+    draft = {"typewriter": {"enabled": False, "delay_ms": 999}}
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "typewriter")
+    apply_section_defaults(draft, section)
+    assert draft["typewriter"]["enabled"] is True
+    assert draft["typewriter"]["delay_ms"] == 35
+
+
+def test_apply_section_defaults_corruption() -> None:
+    draft = {"corruption": {"intensity": 0.1, "animate": False}}
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    apply_section_defaults(draft, section)
+    assert draft["corruption"]["intensity"] == 0.6
+    assert draft["corruption"]["animate"] is True
+
+
+def test_apply_section_defaults_display() -> None:
+    draft = {"picker": {"page_size": 20}}
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "display")
+    apply_section_defaults(draft, section)
+    assert draft["picker"]["page_size"] == 5
+
+
+def test_apply_section_defaults_preserves_other_keys() -> None:
+    draft = {"typewriter": {"enabled": False}, "player_name": "Zara"}
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "typewriter")
+    apply_section_defaults(draft, section)
+    assert draft["player_name"] == "Zara"  # untouched
+
+
+def test_settings_sections_ids() -> None:
+    ids = [s["id"] for s in SETTINGS_SECTIONS]
+    assert "typewriter" in ids
+    assert "display" in ids
+    assert "corruption" in ids
+    assert "player" in ids
+
+
+def test_settings_sections_preserve_flags() -> None:
+    by_id = {s["id"]: s for s in SETTINGS_SECTIONS}
+    assert by_id["typewriter"]["preserve_on_global_reset"] is False
+    assert by_id["corruption"]["preserve_on_global_reset"] is False
+    assert by_id["display"]["preserve_on_global_reset"] is False
+    assert by_id["player"]["preserve_on_global_reset"] is True
+
+
+def test_settings_sections_subscreen_flags() -> None:
+    by_id = {s["id"]: s for s in SETTINGS_SECTIONS}
+    assert by_id["typewriter"]["has_subscreen"] is True
+    assert by_id["corruption"]["has_subscreen"] is True
+    assert by_id["display"]["has_subscreen"] is False
+    assert by_id["player"]["has_subscreen"] is False
+
+
+def test_settings_sections_all_have_rows() -> None:
+    for section in SETTINGS_SECTIONS:
+        assert len(section["rows"]) > 0, f"Section '{section['id']}' has no rows"
+
+
+def test_settings_sections_rows_have_required_fields() -> None:
+    for section in SETTINGS_SECTIONS:
+        for row in section["rows"]:
+            assert "key" in row
+            assert "label" in row
+            assert "type" in row

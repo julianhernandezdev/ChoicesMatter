@@ -12,7 +12,7 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
-from .config import load_settings, save_settings
+from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults
 from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string
 from .story import Choice, Inset, Overlay
 
@@ -484,33 +484,36 @@ class Display:
 
     def show_settings_screen(self) -> None:
         draft = copy.deepcopy(self._cfg)
+        reset_feedback = ""
 
         while True:
             self.clear_screen()
-            tw = draft.setdefault("typewriter", {})
-            picker = draft.setdefault("picker", {})
-            enabled = tw.get("enabled", True)
-            delay = tw.get("delay_ms", 35)
-            pauses = tw.setdefault("punctuation_pauses", {})
-            page_size = picker.get("page_size", 5)
-            tw_state = "[green]on[/green]" if enabled else "[dim]off[/dim]"
-
             self.console.print()
             self.console.print(Rule("[bold cyan]Settings[/bold cyan]"))
             self.console.print()
-            self.console.print(f"  [cyan]1.[/cyan]  Enabled          {tw_state}")
-            self.console.print(f"  [cyan]2.[/cyan]  Speed            [bold]{delay} ms[/bold]")
-            self.console.print(f"  [cyan]3.[/cyan]  Pause after  .   [bold]{pauses.get('.', 550)} ms[/bold]")
-            self.console.print(f"  [cyan]4.[/cyan]  Pause after  !   [bold]{pauses.get('!', 250)} ms[/bold]")
-            self.console.print(f"  [cyan]5.[/cyan]  Pause after  ?   [bold]{pauses.get('?', 350)} ms[/bold]")
-            self.console.print(f"  [cyan]6.[/cyan]  Pause after  …   [bold]{pauses.get('…', 700)} ms[/bold]")
-            self.console.print(f"  [cyan]7.[/cyan]  Pause after  —   [bold]{pauses.get('—', 600)} ms[/bold]")
-            self.console.print(f"  [cyan]8.[/cyan]  Stories per page [bold]{page_size}[/bold]")
-            player_name_val = draft.get("player_name", "Felix")
-            self.console.print(f"  [cyan]9.[/cyan]  Player name      [bold]{player_name_val}[/bold]")
-            self.console.print(f"  [cyan]10.[/cyan] Corruption        →")
+
+            row_num = 0
+            row_map: dict[int, tuple[dict, dict | None]] = {}
+
+            for section in SETTINGS_SECTIONS:
+                if section["has_subscreen"]:
+                    row_num += 1
+                    row_map[row_num] = (section, None)
+                    self.console.print(f"  [cyan]{row_num}.[/cyan]  {section['label']:<18} →")
+                else:
+                    for row in section["rows"]:
+                        row_num += 1
+                        row_map[row_num] = (section, row)
+                        val = _get_draft_value(draft, row["key"])
+                        display = self._format_row_value(row, val)
+                        self.console.print(f"  [cyan]{row_num}.[/cyan]  {row['label']:<18} {display}")
+
             self.console.print()
-            self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
+            self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard · [yellow]R[/yellow] reset[/dim]")
+            if reset_feedback:
+                self.console.print(f"  [dim green]✓ {reset_feedback}[/dim green]")
+                reset_feedback = ""
+
             raw = self.console.input("  › ").strip().lower()
 
             if raw == "s":
@@ -520,20 +523,161 @@ class Display:
                 return
             if raw == "x":
                 return
-            if raw == "1":
-                tw["enabled"] = not enabled
-            elif raw == "2":
-                self._settings_edit_speed(tw)
-            elif raw in ("3", "4", "5", "6", "7"):
-                punct_map = {3: (".", 550), 4: ("!", 250), 5: ("?", 350), 6: ("…", 700), 7: ("—", 600)}
-                key, default = punct_map[int(raw)]
-                self._settings_edit_pause(pauses, key, pauses.get(key, default))
-            elif raw == "8":
-                self._settings_edit_page_size(picker)
-            elif raw == "9":
-                self._settings_edit_player_name(draft)
-            elif raw == "10":
-                self._settings_corruption(draft)
+            if raw == "r":
+                reset_feedback = self._show_reset_selector(draft)
+                continue
+            if raw.isdigit():
+                n = int(raw)
+                if n in row_map:
+                    section, row = row_map[n]
+                    if row is None:
+                        result = self._section_subscreen(section, draft)
+                        if result == "save_exit":
+                            save_settings(draft)
+                            return
+                        if result == "discard_exit":
+                            return
+                    else:
+                        self._edit_row(draft, row)
+
+    def _format_row_value(self, row: dict, val) -> str:
+        t = row.get("type", "")
+        if t == "boolean":
+            return "[green]on[/green]" if val else "[dim]off[/dim]"
+        if t in ("number", "speed_presets"):
+            unit = row.get("unit", "")
+            suffix = f" {unit}" if unit else ""
+            return f"[bold]{val}{suffix}[/bold]"
+        if t == "float":
+            unit = row.get("unit", "")
+            suffix = f" {unit}" if unit else ""
+            return f"[bold]{val:.1f}{suffix}[/bold]"
+        if t in ("cycle", "text", "custom_chars"):
+            return f"[bold]{val}[/bold]"
+        return str(val) if val is not None else ""
+
+    def _edit_row(self, draft: dict, row: dict) -> None:
+        key = row["key"]
+        val = _get_draft_value(draft, key)
+        t = row.get("type", "")
+
+        if t == "boolean":
+            _set_draft_value(draft, key, not val)
+
+        elif t == "speed_presets":
+            self._settings_edit_speed(draft.setdefault("typewriter", {}))
+
+        elif t == "number":
+            lo, hi = row.get("range", (0, 9999))
+            unit = row.get("unit", "value")
+            while True:
+                v = self.console.input(f"  Enter {unit or 'value'} ({lo}–{hi}, or Enter to keep): ").strip()
+                if v == "":
+                    break
+                if v.isdigit() and lo <= int(v) <= hi:
+                    _set_draft_value(draft, key, int(v))
+                    break
+                self.console.print(f"  [red]Enter a number between {lo} and {hi}.[/red]")
+
+        elif t == "float":
+            lo, hi = row.get("range", (0.0, 1.0))
+            while True:
+                v = self.console.input(f"  Enter value ({lo}–{hi}, or Enter to keep): ").strip()
+                if v == "":
+                    break
+                try:
+                    fv = float(v)
+                    if lo <= fv <= hi:
+                        _set_draft_value(draft, key, fv)
+                        break
+                except ValueError:
+                    pass
+                self.console.print(f"  [red]Enter a number between {lo} and {hi}.[/red]")
+
+        elif t == "text":
+            v = self.console.input("  Enter value (or Enter to keep): ").strip()
+            if v:
+                _set_draft_value(draft, key, v)
+
+        elif t == "cycle":
+            values = row.get("values", [])
+            idx = values.index(val) if val in values else 0
+            _set_draft_value(draft, key, values[(idx + 1) % len(values)])
+
+    def _section_subscreen(self, section: dict, draft: dict) -> str:
+        """Generic section sub-screen.
+
+        Returns one of: "back" | "save_exit" | "discard_exit"
+
+        Nav keys:
+          S  — save draft to disk, update self._cfg, return "back"
+          X  — return "back" (discard; snapshot/restore is caller's job)
+          M  — save draft to disk, update self._cfg, return "save_exit"
+          Q  — return "discard_exit"
+          R  — inline reset-to-defaults confirmation, then continue loop
+          N  — dispatch to _edit_row (or hint if custom_chars gated)
+        """
+        snapshot = {k: copy.deepcopy(draft.get(k)) for k in section["config_keys"] if k in draft}
+        while True:
+            self.clear_screen()
+            self.console.print()
+            self.console.print(Rule(f"[bold cyan]Settings — {section['label']}[/bold cyan]"))
+            self.console.print()
+
+            charset = _get_draft_value(draft, "corruption.charset") if section["id"] == "corruption" else None
+
+            for i, row in enumerate(section["rows"], start=1):
+                val = _get_draft_value(draft, row["key"])
+                display_val = self._format_row_value(row, val)
+                if row["type"] == "custom_chars" and charset != "custom":
+                    self.console.print(f"  [dim][cyan]{i}.[/cyan]  {row['label']:<18} {display_val}[/dim]")
+                else:
+                    self.console.print(f"  [cyan]{i}.[/cyan]  {row['label']:<18} {display_val}")
+
+            self.console.print()
+            self.console.print(
+                "  [dim][green]S[/green] save · [red]X[/red] back · [blue]M[/blue] save+home · "
+                "[yellow]Q[/yellow] discard+home · [yellow]R[/yellow] reset section[/dim]"
+            )
+            raw = self.console.input("  › ").strip().lower()
+
+            if raw == "s":
+                save_settings(draft)
+                self._cfg = copy.deepcopy(draft)
+                self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
+                self.console.input("\n  [dim]Press Enter to return.[/dim] ")
+                return "back"
+            if raw == "x":
+                for k, v in snapshot.items():
+                    draft[k] = v
+                return "back"
+            if raw == "m":
+                save_settings(draft)
+                self._cfg = copy.deepcopy(draft)
+                return "save_exit"
+            if raw == "q":
+                return "discard_exit"
+            if raw == "r":
+                confirm = self.console.input(
+                    f"  Reset {section['label']} to defaults? ([green]Y[/green] to confirm, any other key to cancel): "
+                ).strip().lower()
+                if confirm in ("y", "yes"):
+                    apply_section_defaults(draft, section)
+                    self.console.print(f"  [dim green]✓ {section['label']} reset to defaults.[/dim green]")
+                continue
+            if raw.isdigit():
+                n = int(raw)
+                if 1 <= n <= len(section["rows"]):
+                    row = section["rows"][n - 1]
+                    if row["type"] == "custom_chars":
+                        if charset != "custom":
+                            self.console.print("  [dim]Set character set to 'custom' first.[/dim]")
+                            continue
+                        v = self.console.input("  Enter custom characters (or Enter to keep): ").strip()
+                        if v:
+                            _set_draft_value(draft, row["key"], v)
+                    else:
+                        self._edit_row(draft, row)
 
     def _settings_edit_speed(self, tw: dict) -> None:
         self.clear_screen()
@@ -560,153 +704,46 @@ class Display:
                     self.console.print("  [red]Enter a number between 5 and 200.[/red]")
             self.console.print("  [red]Enter 1–6.[/red]")
 
-    def _settings_edit_pause(self, pauses: dict, key: str, current: int) -> None:
-        self.clear_screen()
-        self.console.print()
-        self.console.print(Rule("[bold cyan]Settings — Typewriter[/bold cyan]"))
-        self.console.print()
-        self.console.print(f"  Pause after [bold]'{key}'[/bold]  —  current: [bold]{current} ms[/bold]")
-        self.console.print()
-        while True:
-            raw = self.console.input("  Enter ms (0–2000, or Enter to keep): ").strip()
-            if raw == "":
-                return
-            if raw.isdigit() and 0 <= int(raw) <= 2000:
-                pauses[key] = int(raw)
-                return
-            self.console.print("  [red]Enter a number between 0 and 2000.[/red]")
+    def _show_reset_selector(self, draft: dict) -> str:
+        """Show checkbox selector for resetting settings sections.
 
-    def _settings_edit_page_size(self, picker: dict) -> None:
-        self.clear_screen()
-        self.console.print()
-        self.console.print(Rule("[bold cyan]Settings — Stories Per Page[/bold cyan]"))
-        self.console.print()
-        current = picker.get("page_size", 5)
-        self.console.print(f"  Current: [bold]{current}[/bold]")
-        self.console.print()
-        while True:
-            raw = self.console.input("  Enter number (1–50, or Enter to keep): ").strip()
-            if raw == "":
-                return
-            if raw.isdigit() and 1 <= int(raw) <= 50:
-                picker["page_size"] = int(raw)
-                return
-            self.console.print("  [red]Enter a number between 1 and 50.[/red]")
-
-    def _settings_edit_player_name(self, draft: dict) -> None:
-        self.clear_screen()
-        self.console.print()
-        self.console.print(Rule("[bold cyan]Settings — Player Name[/bold cyan]"))
-        self.console.print()
-        current = draft.get("player_name", "Felix")
-        self.console.print(f"  Current: [bold]{current}[/bold]")
-        self.console.print()
-        while True:
-            raw = self.console.input("  Enter name (or Enter to keep): ").strip()
-            if raw == "":
-                return
-            draft["player_name"] = raw
-            return
-
-    def _settings_corruption(self, draft: dict) -> None:
-        _CHARSET_LABELS = {
-            "blocks":     "blocks  (█ ▓ ▒ ░)",
-            "symbols":    "symbols  (# @ ! ? &)",
-            "diacritics": "diacritics  (⚠ screen reader unfriendly)",
-            "custom":     "custom",
-        }
-        _CHARSETS_ORDER = ["blocks", "symbols", "diacritics", "custom"]
+        Only sections with ``preserve_on_global_reset=False`` appear
+        (currently: Typewriter, Display, Corruption).  Returns a feedback
+        string such as ``"Reset: Typewriter, Corruption."`` or ``""`` if cancelled.
+        """
+        resettable = [s for s in SETTINGS_SECTIONS if not s["preserve_on_global_reset"]]
+        checked = [False] * len(resettable)
 
         while True:
             self.clear_screen()
-            c = draft.setdefault("corruption", {})
-            enabled      = c.get("enabled", True)
-            intensity    = c.get("intensity", 1.0)
-            mode         = c.get("mode", "consistent")
-            charset      = c.get("charset", "blocks")
-            custom_chars = c.get("custom_chars", "█▓▒░")
-            animate      = c.get("animate", True)
-            frames       = c.get("scramble_frames", 8)
-            delay        = c.get("scramble_delay_ms", 60)
-
-            en_state  = "[green]on[/green]"  if enabled else "[dim]off[/dim]"
-            an_state  = "[green]on[/green]"  if animate  else "[dim]off[/dim]"
-            mode_disp = f"[bold]{mode}[/bold]"
-            cs_label  = _CHARSET_LABELS.get(charset, charset)
-
             self.console.print()
-            self.console.print(Rule("[bold cyan]Settings — Corruption[/bold cyan]"))
+            self.console.print(Rule("[bold cyan]Reset to Defaults[/bold cyan]"))
             self.console.print()
-            self.console.print(f"  [cyan]1.[/cyan]  Enabled           {en_state}")
-            self.console.print(f"  [cyan]2.[/cyan]  Intensity         [bold]{intensity:.1f}×[/bold]")
-            self.console.print(f"  [cyan]3.[/cyan]  Mode              {mode_disp}")
-            self.console.print(f"  [cyan]4.[/cyan]  Character set     {cs_label}")
-            if charset == "custom":
-                self.console.print(f"  [cyan]5.[/cyan]  Custom chars      {custom_chars}")
-            else:
-                self.console.print(f"  [dim][cyan]5.[/cyan]  Custom chars      {custom_chars}[/dim]")
-            self.console.print(f"  [cyan]6.[/cyan]  Animate           {an_state}")
-            self.console.print(f"  [cyan]7.[/cyan]  Scramble frames   [bold]{frames}[/bold]")
-            self.console.print(f"  [cyan]8.[/cyan]  Scramble delay    [bold]{delay} ms[/bold]")
+            self.console.print("  [dim]Note: Player name and accessible mode will always be preserved.[/dim]")
             self.console.print()
-            self.console.print("  [dim]Enter a number to edit · [green]S[/green] save · [red]X[/red] discard[/dim]")
+            self.console.print("  Select sections to reset:")
+            self.console.print()
+            for i, section in enumerate(resettable, start=1):
+                mark = "[bold green]✓[/bold green]" if checked[i - 1] else " "
+                self.console.print(f"  {i}. [{mark}] {section['label']}")
+            self.console.print()
+            self.console.print("  [dim]Number + Enter to toggle · [green]Y[/green] confirm · [red]X[/red] cancel[/dim]")
             raw = self.console.input("  › ").strip().lower()
 
-            if raw == "s":
-                save_settings(draft)
-                self._cfg = copy.deepcopy(draft)
-                self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
-                self.console.input("\n  [dim]Press Enter to return.[/dim] ")
-                return
             if raw == "x":
-                return
-            if raw == "1":
-                c["enabled"] = not enabled
-            elif raw == "2":
-                while True:
-                    v = self.console.input("  Enter multiplier (0.0–1.0, or Enter to keep): ").strip()
-                    if v == "":
-                        break
-                    try:
-                        fv = float(v)
-                        if 0.0 <= fv <= 1.0:
-                            c["intensity"] = fv
-                            break
-                    except ValueError:
-                        pass
-                    self.console.print("  [red]Enter a number between 0.0 and 1.0.[/red]")
-            elif raw == "3":
-                c["mode"] = "random" if mode == "consistent" else "consistent"
-            elif raw == "4":
-                cur_idx = _CHARSETS_ORDER.index(charset) if charset in _CHARSETS_ORDER else 0
-                c["charset"] = _CHARSETS_ORDER[(cur_idx + 1) % len(_CHARSETS_ORDER)]
-            elif raw == "5":
-                if charset != "custom":
-                    self.console.print("  [dim]Set character set to 'custom' first.[/dim]")
+                return ""
+            if raw == "y":
+                selected = [resettable[i] for i, c in enumerate(checked) if c]
+                if not selected:
+                    self.console.print("  [dim]Nothing selected.[/dim]")
                     continue
-                v = self.console.input("  Enter custom characters (or Enter to keep): ").strip()
-                if v:
-                    c["custom_chars"] = v
-            elif raw == "6":
-                c["animate"] = not animate
-            elif raw == "7":
-                while True:
-                    v = self.console.input("  Enter frames (1–50, or Enter to keep): ").strip()
-                    if v == "":
-                        break
-                    if v.isdigit() and 1 <= int(v) <= 50:
-                        c["scramble_frames"] = int(v)
-                        break
-                    self.console.print("  [red]Enter a number between 1 and 50.[/red]")
-            elif raw == "8":
-                while True:
-                    v = self.console.input("  Enter delay ms (0–1000, or Enter to keep): ").strip()
-                    if v == "":
-                        break
-                    if v.isdigit() and 0 <= int(v) <= 1000:
-                        c["scramble_delay_ms"] = int(v)
-                        break
-                    self.console.print("  [red]Enter a number between 0 and 1000.[/red]")
+                for section in selected:
+                    apply_section_defaults(draft, section)
+                return "Reset: " + ", ".join(s["label"] for s in selected) + "."
+            if raw.isdigit():
+                n = int(raw)
+                if 1 <= n <= len(resettable):
+                    checked[n - 1] = not checked[n - 1]
 
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})

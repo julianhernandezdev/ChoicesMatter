@@ -51,6 +51,111 @@ _DEFAULTS: dict = {
 }
 
 
+def _get_draft_value(draft: dict, key: str):
+    """Get a value from draft using dot-path notation.
+
+    Handles special cases for nested dicts like punctuation_pauses where
+    the character itself is part of the path (e.g., "typewriter.punctuation_pauses..").
+    """
+    if key.startswith("typewriter.punctuation_pauses."):
+        char = key[len("typewriter.punctuation_pauses."):]
+        return draft.get("typewriter", {}).get("punctuation_pauses", {}).get(char)
+    if key.startswith("typewriter."):
+        return draft.get("typewriter", {}).get(key[len("typewriter."):])
+    if key.startswith("picker."):
+        return draft.get("picker", {}).get(key[len("picker."):])
+    if key.startswith("corruption."):
+        return draft.get("corruption", {}).get(key[len("corruption."):])
+    return draft.get(key)
+
+
+def _set_draft_value(draft: dict, key: str, value) -> None:
+    """Set a value in draft using dot-path notation.
+
+    Handles special cases for nested dicts like punctuation_pauses where
+    the character itself is part of the path (e.g., "typewriter.punctuation_pauses..").
+    Creates intermediate dicts as needed.
+    """
+    if key.startswith("typewriter.punctuation_pauses."):
+        char = key[len("typewriter.punctuation_pauses."):]
+        draft.setdefault("typewriter", {}).setdefault("punctuation_pauses", {})[char] = value
+    elif key.startswith("typewriter."):
+        draft.setdefault("typewriter", {})[key[len("typewriter."):]] = value
+    elif key.startswith("picker."):
+        draft.setdefault("picker", {})[key[len("picker."):]] = value
+    elif key.startswith("corruption."):
+        draft.setdefault("corruption", {})[key[len("corruption."):]] = value
+    else:
+        draft[key] = value
+
+
+def apply_section_defaults(draft: dict, section: dict) -> None:
+    """Reset all keys in a section back to defaults.
+
+    Takes a section dict (from SETTINGS_SECTIONS) and resets all its
+    config_keys to their default values from _DEFAULTS.
+    """
+    for key in section["config_keys"]:
+        draft[key] = _deep_copy(_DEFAULTS[key])
+
+
+SETTINGS_SECTIONS: list[dict] = [
+    {
+        "id": "typewriter",
+        "label": "Typewriter",
+        "preserve_on_global_reset": False,
+        "has_subscreen": True,
+        "config_keys": ["typewriter"],
+        "rows": [
+            {"key": "typewriter.enabled",                     "label": "Enabled",           "type": "boolean"},
+            {"key": "typewriter.delay_ms",                    "label": "Speed",             "type": "speed_presets", "unit": "ms"},
+            {"key": "typewriter.punctuation_pauses..",        "label": "Pause after  .",    "type": "number",  "unit": "ms", "range": (0, 2000)},
+            {"key": "typewriter.punctuation_pauses.!",        "label": "Pause after  !",    "type": "number",  "unit": "ms", "range": (0, 2000)},
+            {"key": "typewriter.punctuation_pauses.?",        "label": "Pause after  ?",    "type": "number",  "unit": "ms", "range": (0, 2000)},
+            {"key": "typewriter.punctuation_pauses.…",   "label": "Pause after  …", "type": "number", "unit": "ms", "range": (0, 2000)},
+            {"key": "typewriter.punctuation_pauses.—",   "label": "Pause after  —", "type": "number", "unit": "ms", "range": (0, 2000)},
+        ],
+    },
+    {
+        "id": "display",
+        "label": "Display",
+        "preserve_on_global_reset": False,
+        "has_subscreen": False,
+        "config_keys": ["picker"],
+        "rows": [
+            {"key": "picker.page_size", "label": "Stories per page", "type": "number", "unit": "", "range": (1, 50)},
+        ],
+    },
+    {
+        "id": "corruption",
+        "label": "Corruption",
+        "preserve_on_global_reset": False,
+        "has_subscreen": True,
+        "config_keys": ["corruption"],
+        "rows": [
+            {"key": "corruption.enabled",           "label": "Enabled",         "type": "boolean"},
+            {"key": "corruption.intensity",         "label": "Intensity",       "type": "float",  "unit": "×", "range": (0.0, 1.0)},
+            {"key": "corruption.mode",              "label": "Mode",            "type": "cycle",  "values": ["consistent", "random"]},
+            {"key": "corruption.charset",           "label": "Character set",   "type": "cycle",  "values": ["blocks", "symbols", "diacritics", "custom"]},
+            {"key": "corruption.custom_chars",      "label": "Custom chars",    "type": "custom_chars"},
+            {"key": "corruption.animate",           "label": "Animate",         "type": "boolean"},
+            {"key": "corruption.scramble_frames",   "label": "Scramble frames", "type": "number", "unit": "",   "range": (1, 50)},
+            {"key": "corruption.scramble_delay_ms", "label": "Scramble delay",  "type": "number", "unit": "ms", "range": (0, 1000)},
+        ],
+    },
+    {
+        "id": "player",
+        "label": "Player",
+        "preserve_on_global_reset": True,
+        "has_subscreen": False,
+        "config_keys": ["player_name"],
+        "rows": [
+            {"key": "player_name", "label": "Player name", "type": "text"},
+        ],
+    },
+]
+
+
 def save_settings(data: dict, path: Path = Path("settings.json")) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 

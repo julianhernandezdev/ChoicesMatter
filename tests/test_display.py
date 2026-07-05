@@ -1,3 +1,4 @@
+import copy
 from unittest.mock import MagicMock, patch
 from io import StringIO
 from pathlib import Path
@@ -437,14 +438,15 @@ def test_show_settings_screen_save_on_s(display):
         mock_save.assert_called_once()
 
 
-def test_show_settings_screen_toggle_enabled_then_discard(display):
-    display.console.input.side_effect = ["1", "x"]
+def test_show_settings_screen_edit_number_row_then_discard(display):
+    # "2" edits Stories per page (number row), "5" sets value, "x" discards
+    display.console.input.side_effect = ["2", "5", "x"]
     display.show_settings_screen()  # must not raise
 
 
-def test_show_settings_screen_edit_pause_then_discard(display):
-    # "3" enters pause edit for '.', "" keeps current, "x" discards from main menu
-    display.console.input.side_effect = ["3", "", "x"]
+def test_show_settings_screen_edit_text_row_then_discard(display):
+    # "4" edits Player name (text row), "" keeps current, "x" discards
+    display.console.input.side_effect = ["4", "", "x"]
     display.show_settings_screen()
 
 
@@ -482,25 +484,44 @@ def test_settings_edit_speed_custom_invalid_then_valid(display):
     assert tw["delay_ms"] == 10
 
 
-def test_settings_edit_pause_sets_value(display):
-    pauses = {".": 550}
-    display.console.input.return_value = "300"
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 300
+from src.config import SETTINGS_SECTIONS
 
 
-def test_settings_edit_pause_keep_on_empty(display):
-    pauses = {".": 550}
-    display.console.input.return_value = ""
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 550
+def test_format_row_value_boolean_true(display):
+    row = {"type": "boolean"}
+    result = display._format_row_value(row, True)
+    assert "on" in result
 
 
-def test_settings_edit_pause_invalid_then_valid(display):
-    pauses = {".": 550}
-    display.console.input.side_effect = ["abc", "200"]
-    display._settings_edit_pause(pauses, ".", 550)
-    assert pauses["."] == 200
+def test_format_row_value_boolean_false(display):
+    row = {"type": "boolean"}
+    result = display._format_row_value(row, False)
+    assert "off" in result
+
+
+def test_format_row_value_number_with_unit(display):
+    row = {"type": "number", "unit": "ms"}
+    result = display._format_row_value(row, 35)
+    assert "35" in result
+    assert "ms" in result
+
+
+def test_format_row_value_number_no_unit(display):
+    row = {"type": "number", "unit": ""}
+    result = display._format_row_value(row, 5)
+    assert "5" in result
+
+
+def test_format_row_value_cycle(display):
+    row = {"type": "cycle", "values": ["consistent", "random"]}
+    result = display._format_row_value(row, "consistent")
+    assert "consistent" in result
+
+
+def test_format_row_value_text(display):
+    row = {"type": "text"}
+    result = display._format_row_value(row, "Felix")
+    assert "Felix" in result
 
 
 # ------------------------------------------------------------------
@@ -771,6 +792,71 @@ def test_typewrite_plain_segments_streams_chars(tmp_path) -> None:
     assert "abc" in panels
 
 
+# ------------------------------------------------------------------
+# _section_subscreen
+# ------------------------------------------------------------------
+
+def _make_draft():
+    from src.config import load_settings
+    return load_settings()
+
+
+def test_section_subscreen_x_returns_back(display):
+    display.console.input = MagicMock(side_effect=["x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    result = display._section_subscreen(section, draft)
+    assert result == "back"
+
+
+def test_section_subscreen_m_returns_save_exit(display):
+    display.console.input = MagicMock(side_effect=["m"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    with patch("src.display.save_settings"):
+        result = display._section_subscreen(section, draft)
+    assert result == "save_exit"
+
+
+def test_section_subscreen_q_returns_discard_exit(display):
+    display.console.input = MagicMock(side_effect=["q"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    result = display._section_subscreen(section, draft)
+    assert result == "discard_exit"
+
+
+def test_section_subscreen_r_resets_section(display):
+    # R+Y resets values; S (save) confirms — draft keeps reset value.
+    display.console.input = MagicMock(side_effect=["r", "y", "s", ""])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    with patch("src.display.save_settings"):
+        display._section_subscreen(section, draft)
+    from src.config import _DEFAULTS
+    assert draft["corruption"]["intensity"] == _DEFAULTS["corruption"]["intensity"]
+
+
+def test_section_subscreen_x_restores_snapshot(display):
+    # X discards all changes made inside the subscreen, including resets.
+    display.console.input = MagicMock(side_effect=["r", "y", "x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    display._section_subscreen(section, draft)
+    assert draft["corruption"]["intensity"] == 0.1
+
+
+def test_section_subscreen_r_cancel_no_change(display):
+    display.console.input = MagicMock(side_effect=["r", "n", "x"])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    display._section_subscreen(section, draft)
+    assert draft["corruption"]["intensity"] == 0.1
+
+
 def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
     """After scramble, settle phase streams the final corrupted form."""
     from src.display import Display, _assemble_text
@@ -795,3 +881,54 @@ def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
     final = panels[-1]
     assert final != "hello"    # corrupted
     assert len(final) == len("hello")  # same length
+
+
+# ------------------------------------------------------------------
+# _show_reset_selector
+# ------------------------------------------------------------------
+
+def test_show_reset_selector_cancel_returns_empty(display):
+    display.console.input = MagicMock(side_effect=["x"])
+    draft = _make_draft()
+    result = display._show_reset_selector(draft)
+    assert result == ""
+
+
+def test_show_reset_selector_nothing_checked_is_noop(display):
+    # Y with no checkboxes checked — returns empty, no changes
+    display.console.input = MagicMock(side_effect=["y", "x"])
+    draft = _make_draft()
+    original_tw = copy.deepcopy(draft.get("typewriter", {}))
+    result = display._show_reset_selector(draft)
+    # first Y does nothing (nothing selected), then x exits
+    assert result == ""
+    assert draft.get("typewriter") == original_tw
+
+
+def test_show_reset_selector_resets_selected_section(display):
+    # Toggle typewriter (1), then confirm (y)
+    display.console.input = MagicMock(side_effect=["1", "y"])
+    draft = _make_draft()
+    draft["typewriter"]["enabled"] = False
+    draft["typewriter"]["delay_ms"] = 999
+    result = display._show_reset_selector(draft)
+    assert draft["typewriter"]["enabled"] is True
+    assert draft["typewriter"]["delay_ms"] == 35
+    assert "Typewriter" in result
+
+
+def test_show_reset_selector_preserves_unchecked_section(display):
+    # Toggle typewriter (1) only, confirm (y) — corruption unchanged
+    display.console.input = MagicMock(side_effect=["1", "y"])
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.2
+    display._show_reset_selector(draft)
+    assert draft["corruption"]["intensity"] == 0.2  # untouched
+
+
+def test_show_reset_selector_feedback_lists_section_names(display):
+    display.console.input = MagicMock(side_effect=["1", "3", "y"])
+    draft = _make_draft()
+    result = display._show_reset_selector(draft)
+    assert "Typewriter" in result
+    assert "Corruption" in result

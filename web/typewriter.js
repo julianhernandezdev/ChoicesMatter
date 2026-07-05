@@ -12,6 +12,7 @@ export const TYPEWRITER_DEFAULTS = {
     enabled: true,
     charset: "blocks",
     intensity: 0.6,
+    mode: "consistent",
     animate: true,
     scramble_frames: 85,
     scramble_delay_ms: 40,
