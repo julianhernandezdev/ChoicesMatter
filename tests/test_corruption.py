@@ -220,3 +220,54 @@ def test_effective_intensity_multiplier_can_kill_corruption_entirely() -> None:
 
 def test_effective_intensity_result_capped_at_1() -> None:
     assert effective_intensity(0.9, {"intensity_multiplier": 2.0}) == pytest.approx(1.0)
+
+
+# --- cascade_reveal_order ---
+
+def test_cascade_reveal_order_returns_corrupted_position_count() -> None:
+    from src.corruption import cascade_reveal_order
+    order = cascade_reveal_order("hello world", 1.0, "consistent", 0)
+    # "hello world" has 10 corruptible chars (space excluded)
+    assert len(order) == 10
+
+def test_cascade_reveal_order_zero_intensity_is_empty() -> None:
+    from src.corruption import cascade_reveal_order
+    assert cascade_reveal_order("hello", 0.0, "consistent", 0) == []
+
+def test_cascade_reveal_order_consistent_mode_is_reproducible() -> None:
+    from src.corruption import cascade_reveal_order
+    o1 = cascade_reveal_order("The door is open.", 0.5, "consistent", 99)
+    o2 = cascade_reveal_order("The door is open.", 0.5, "consistent", 99)
+    assert o1 == o2
+
+def test_cascade_reveal_order_random_mode_varies_across_calls() -> None:
+    from src.corruption import cascade_reveal_order
+    text = "abcdefghijklmnopqrstuvwxyz"
+    orders = {tuple(cascade_reveal_order(text, 0.8, "random", 0)) for _ in range(10)}
+    assert len(orders) > 1
+
+def test_cascade_reveal_order_indices_are_valid_and_unique() -> None:
+    from src.corruption import cascade_reveal_order
+    text = "The signal fades."
+    order = cascade_reveal_order(text, 0.6, "consistent", 5)
+    assert len(order) == len(set(order))
+    assert all(0 <= i < len(text) for i in order)
+    assert all(text[i] not in _PUNCT for i in order)
+
+
+# --- decay monotonic-subset property (via corrupt_string) ---
+
+def test_decay_corrupted_positions_shrink_monotonically() -> None:
+    """For a fixed seed, the corrupted-position set at a lower intensity is always
+    a subset of the set at a higher intensity — the property the decay resolve
+    style depends on to 'heal' positions one at a time without re-corrupting."""
+    text = "abcdefghijklmnopqrstuvwxyz" * 2
+    seed = 7
+    prev_positions: set[int] | None = None
+    for steps in range(10, 0, -1):
+        intensity = steps / 10
+        result = corrupt_string(text, intensity, "consistent", seed, _BLOCKS)
+        positions = {i for i, (a, b) in enumerate(zip(text, result)) if a != b}
+        if prev_positions is not None:
+            assert positions <= prev_positions, f"positions grew at intensity {intensity}"
+        prev_positions = positions

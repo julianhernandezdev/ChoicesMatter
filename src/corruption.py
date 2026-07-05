@@ -135,3 +135,26 @@ def effective_intensity(span_intensity: float | None, cfg_corruption: dict) -> f
     resolved = span_intensity if span_intensity is not None else cfg_corruption.get("intensity", 1.0)
     multiplier = cfg_corruption.get("intensity_multiplier", 1.0)
     return min(resolved * multiplier, 1.0)
+
+
+def cascade_reveal_order(text: str, intensity: float, mode: str, seed: int) -> list[int]:
+    """Character indices in `text` corrupted at (intensity, mode, seed), in the
+    order they should be revealed (set back to clean) during a cascade resolve."""
+    corruptible = [i for i, c in enumerate(text) if c not in _PUNCT]
+    count = int(len(corruptible) * min(intensity, 1.0))
+    if count == 0:
+        return []
+    if mode == "consistent":
+        rel_positions = _lcg_select(len(corruptible), count, seed)
+        order = [corruptible[i] for i in rel_positions]
+        a, c, m = _LCG_A, _LCG_C, _LCG_M
+        state = seed % m
+        for i in range(len(order) - 1, 0, -1):
+            state = (a * state + c) % m
+            j = state % (i + 1)
+            order[i], order[j] = order[j], order[i]
+        return order
+    rel_positions = _random.sample(range(len(corruptible)), count)
+    order = [corruptible[i] for i in rel_positions]
+    _random.shuffle(order)
+    return order
