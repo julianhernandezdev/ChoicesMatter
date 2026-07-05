@@ -130,10 +130,52 @@ def test_seed_is_deterministic_from_text_and_index() -> None:
     segs2 = resolve_corruption("{corrupt}word{/corrupt}", None)
     assert segs1[0].seed == segs2[0].seed
 
-def test_default_intensity_is_1_when_no_node_corruption() -> None:
+def test_intensity_is_none_when_unspecified_anywhere() -> None:
+    """Story-side resolution no longer bakes in a default — that's Display's job now."""
     segs = resolve_corruption("{corrupt}text{/corrupt}", None)
-    assert segs[0].intensity == pytest.approx(1.0)
+    assert segs[0].intensity is None
 
-def test_default_mode_is_consistent() -> None:
+def test_mode_is_none_when_unspecified_anywhere() -> None:
     segs = resolve_corruption("{corrupt}text{/corrupt}", None)
-    assert segs[0].mode == "consistent"
+    assert segs[0].mode is None
+
+
+# --- resolve_style ---
+
+def test_span_with_resolve_style_decay() -> None:
+    segs = resolve_corruption("{corrupt:0.8:consistent:decay}text{/corrupt}", None)
+    assert segs[0].resolve_style == "decay"
+
+def test_span_with_resolve_style_cascade() -> None:
+    segs = resolve_corruption("{corrupt:0.8:random:cascade}text{/corrupt}", None)
+    assert segs[0].resolve_style == "cascade"
+
+def test_resolve_style_omitted_is_none() -> None:
+    segs = resolve_corruption("{corrupt}text{/corrupt}", None)
+    assert segs[0].resolve_style is None
+
+def test_resolve_style_alone_skips_intensity_and_mode() -> None:
+    """A single trailing param still parses correctly when the earlier params are omitted."""
+    segs = resolve_corruption("{corrupt:decay}text{/corrupt}", None)
+    assert segs[0].resolve_style == "decay"
+    assert segs[0].intensity is None
+    assert segs[0].mode is None
+
+def test_resolve_style_with_intensity_only_skips_mode() -> None:
+    segs = resolve_corruption("{corrupt:0.6:decay}text{/corrupt}", None)
+    assert segs[0].intensity == pytest.approx(0.6)
+    assert segs[0].mode is None
+    assert segs[0].resolve_style == "decay"
+
+def test_resolve_style_inherits_from_node_dict() -> None:
+    segs = resolve_corruption("{corrupt}text{/corrupt}", {"resolve_style": "cascade"})
+    assert segs[0].resolve_style == "cascade"
+
+def test_resolve_style_span_overrides_node() -> None:
+    segs = resolve_corruption("{corrupt:decay}text{/corrupt}", {"resolve_style": "cascade"})
+    assert segs[0].resolve_style == "decay"
+
+def test_node_float_corruption_leaves_resolve_style_none() -> None:
+    """A bare float node.corruption (no dict) never sets resolve_style."""
+    segs = resolve_corruption("{corrupt}text{/corrupt}", 0.5)
+    assert segs[0].resolve_style is None

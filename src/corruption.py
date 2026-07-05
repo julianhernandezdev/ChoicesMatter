@@ -17,7 +17,7 @@ _LCG_C: int = 1013904223
 _LCG_M: int = 2 ** 32
 
 _CORRUPT_RE = re.compile(
-    r"\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?\}(.*?)\{/corrupt\}",
+    r"\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?(?::(decay|cascade))?\}(.*?)\{/corrupt\}",
     re.DOTALL,
 )
 
@@ -25,9 +25,10 @@ _CORRUPT_RE = re.compile(
 @dataclasses.dataclass(frozen=True)
 class CorruptedSpan:
     text: str
-    intensity: float
-    mode: str   # "consistent" | "random"
+    intensity: float | None
+    mode: str | None
     seed: int
+    resolve_style: str | None = None
 
 
 TextSegments = list[str | CorruptedSpan]
@@ -85,13 +86,18 @@ def resolve_corruption(
     text: str,
     node_corruption: float | dict | None,
 ) -> TextSegments:
-    node_intensity: float = 1.0
-    node_mode: str = "consistent"
+    node_intensity: float | None = None
+    node_mode: str | None = None
+    node_resolve_style: str | None = None
     if isinstance(node_corruption, (int, float)):
         node_intensity = float(node_corruption)
     elif isinstance(node_corruption, dict):
-        node_intensity = float(node_corruption.get("intensity", 1.0))
-        node_mode = node_corruption.get("mode", "consistent")
+        if "intensity" in node_corruption:
+            node_intensity = float(node_corruption["intensity"])
+        if "mode" in node_corruption:
+            node_mode = node_corruption["mode"]
+        if "resolve_style" in node_corruption:
+            node_resolve_style = node_corruption["resolve_style"]
 
     segments: TextSegments = []
     last_end = 0
@@ -100,11 +106,16 @@ def resolve_corruption(
     for match in _CORRUPT_RE.finditer(text):
         if match.start() > last_end:
             segments.append(text[last_end:match.start()])
-        raw_intensity, raw_mode, span_text = match.group(1), match.group(2), match.group(3)
+        raw_intensity, raw_mode, raw_resolve_style, span_text = (
+            match.group(1), match.group(2), match.group(3), match.group(4)
+        )
         intensity = float(raw_intensity) if raw_intensity is not None else node_intensity
         mode = raw_mode if raw_mode is not None else node_mode
+        resolve_style = raw_resolve_style if raw_resolve_style is not None else node_resolve_style
         seed = _text_seed(span_text, span_index)
-        segments.append(CorruptedSpan(text=span_text, intensity=intensity, mode=mode, seed=seed))
+        segments.append(CorruptedSpan(
+            text=span_text, intensity=intensity, mode=mode, seed=seed, resolve_style=resolve_style,
+        ))
         last_end = match.end()
         span_index += 1
 
