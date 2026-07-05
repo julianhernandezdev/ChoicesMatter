@@ -701,6 +701,48 @@ class Display:
                     self.console.print("  [red]Enter a number between 5 and 200.[/red]")
             self.console.print("  [red]Enter 1–6.[/red]")
 
+    def _show_reset_selector(self, draft: dict) -> str:
+        """Show checkbox selector for resetting settings sections.
+
+        Only sections with ``has_subscreen=True`` and
+        ``preserve_on_global_reset=False`` appear (currently: Typewriter,
+        Corruption).  Returns a feedback string such as
+        ``"Reset: Typewriter, Corruption."`` or ``""`` if cancelled.
+        """
+        resettable = [s for s in SETTINGS_SECTIONS if not s["preserve_on_global_reset"] and s["has_subscreen"]]
+        checked = [False] * len(resettable)
+
+        while True:
+            self.clear_screen()
+            self.console.print()
+            self.console.print(Rule("[bold cyan]Reset to Defaults[/bold cyan]"))
+            self.console.print()
+            self.console.print("  [dim]Note: Player name and accessible mode will always be preserved.[/dim]")
+            self.console.print()
+            self.console.print("  Select sections to reset:")
+            self.console.print()
+            for i, section in enumerate(resettable, start=1):
+                mark = "[bold green]✓[/bold green]" if checked[i - 1] else " "
+                self.console.print(f"  {i}. [{mark}] {section['label']}")
+            self.console.print()
+            self.console.print("  [dim]Number + Enter to toggle · [green]Y[/green] confirm · [red]X[/red] cancel[/dim]")
+            raw = self.console.input("  › ").strip().lower()
+
+            if raw == "x":
+                return ""
+            if raw == "y":
+                selected = [resettable[i] for i, c in enumerate(checked) if c]
+                if not selected:
+                    self.console.print("  [dim]Nothing selected.[/dim]")
+                    continue
+                for section in selected:
+                    apply_section_defaults(draft, section)
+                return "Reset: " + ", ".join(s["label"] for s in selected) + "."
+            if raw.isdigit():
+                n = int(raw)
+                if 1 <= n <= len(resettable):
+                    checked[n - 1] = not checked[n - 1]
+
     def toggle_typewriter(self) -> None:
         cfg = self._cfg.setdefault("typewriter", {})
         cfg["enabled"] = not cfg.get("enabled", False)

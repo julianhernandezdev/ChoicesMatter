@@ -1,3 +1,4 @@
+import copy
 from unittest.mock import MagicMock, patch
 from io import StringIO
 from pathlib import Path
@@ -868,3 +869,54 @@ def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
     final = panels[-1]
     assert final != "hello"    # corrupted
     assert len(final) == len("hello")  # same length
+
+
+# ------------------------------------------------------------------
+# _show_reset_selector
+# ------------------------------------------------------------------
+
+def test_show_reset_selector_cancel_returns_empty(display):
+    display.console.input = MagicMock(side_effect=["x"])
+    draft = _make_draft()
+    result = display._show_reset_selector(draft)
+    assert result == ""
+
+
+def test_show_reset_selector_nothing_checked_is_noop(display):
+    # Y with no checkboxes checked — returns empty, no changes
+    display.console.input = MagicMock(side_effect=["y", "x"])
+    draft = _make_draft()
+    original_tw = copy.deepcopy(draft.get("typewriter", {}))
+    result = display._show_reset_selector(draft)
+    # first Y does nothing (nothing selected), then x exits
+    assert result == ""
+    assert draft.get("typewriter") == original_tw
+
+
+def test_show_reset_selector_resets_selected_section(display):
+    # Toggle typewriter (1), then confirm (y)
+    display.console.input = MagicMock(side_effect=["1", "y"])
+    draft = _make_draft()
+    draft["typewriter"]["enabled"] = False
+    draft["typewriter"]["delay_ms"] = 999
+    result = display._show_reset_selector(draft)
+    assert draft["typewriter"]["enabled"] is True
+    assert draft["typewriter"]["delay_ms"] == 35
+    assert "Typewriter" in result
+
+
+def test_show_reset_selector_preserves_unchecked_section(display):
+    # Toggle typewriter (1) only, confirm (y) — corruption unchanged
+    display.console.input = MagicMock(side_effect=["1", "y"])
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.2
+    display._show_reset_selector(draft)
+    assert draft["corruption"]["intensity"] == 0.2  # untouched
+
+
+def test_show_reset_selector_feedback_lists_section_names(display):
+    display.console.input = MagicMock(side_effect=["1", "2", "y"])
+    draft = _make_draft()
+    result = display._show_reset_selector(draft)
+    assert "Typewriter" in result
+    assert "Corruption" in result
