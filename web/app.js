@@ -338,6 +338,8 @@ function promptPrefix() {
   if (currentScreen === 'warning')        return 'Proceed? (<span class="key-fwd">Y</span> continue &middot; <span class="key-back">N</span> back): ';
   if (currentScreen === 'ending')         return 'Play again? (<span class="key-fwd">Y</span> yes &middot; <span class="key-back">N</span> library): ';
   if (currentScreen === 'settings-speed') return speedCustomEdit ? 'Enter ms (5&ndash;200): ' : '&gt; ';
+  if (currentScreen === 'settings-section') return '&gt; ';
+  if (currentScreen === 'settings-section-reset') return '&gt; ';
   return '&gt; ';
 }
 
@@ -1489,6 +1491,27 @@ function renderSectionSubscreen(section) {
   updatePrompt();
 }
 
+function renderSectionResetConfirm() {
+  if (!currentSectionScreen) return;
+  document.body.classList.remove('reader-mode');
+  pendingInput = '';
+  currentScreen = 'settings-section-reset';
+  setPageTitle('Settings – ' + currentSectionScreen.label);
+  app.innerHTML =
+    '<div class="terminal-screen">' +
+    renderRule('Reset ' + currentSectionScreen.label + ' to Defaults', 'green') +
+    '<div class="terminal-list">' +
+    '<div class="terminal-settings-row">' +
+    '<span class="setting-name">Reset ' + escapeHtml(currentSectionScreen.label) + ' settings to defaults?</span>' +
+    '</div></div>' +
+    '<div class="terminal-footer">' +
+    '<div class="footer-hint"><span class="key-fwd">Y</span> confirm &middot; <span class="key-back">any other key</span> cancel</div>' +
+    '<div class="terminal-prompt-line"></div>' +
+    '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">&#9000; Tap to type</button>' +
+    '</div></div>';
+  updatePrompt();
+}
+
 function startSettingsEdit(rowIndex) {
   var row = SETTINGS_ROWS[rowIndex];
   if (!row) return;
@@ -1835,14 +1858,17 @@ function handleSubmit(input) {
     if (input === 'm') { saveTypewriterSettings(settingsDraft); settingsDraft = null; renderLibrary(); return; }
     if (input === 'q') { settingsDraft = null; renderLibrary(); return; }
     if (input === 'r') {
-      if (currentSectionScreen && confirm('Reset ' + currentSectionScreen.label + ' to defaults?')) {
-        applyDefaults(settingsDraft, currentSectionScreen);
-        renderSectionSubscreen(currentSectionScreen);
-      }
+      renderSectionResetConfirm();
       return;
     }
     var nss = parseInt(input, 10);
     if (currentSectionScreen && nss >= 1 && nss <= currentSectionScreen.rows.length) startSectionRowEdit(nss - 1);
+
+  } else if (currentScreen === 'settings-section-reset') {
+    if (input === 'y') {
+      applyDefaults(settingsDraft, currentSectionScreen);
+    }
+    renderSectionSubscreen(currentSectionScreen);
 
   } else if (currentScreen === 'settings-speed') {
     if (input === 'b') { renderSettings(); return; }
