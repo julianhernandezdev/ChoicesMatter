@@ -13,7 +13,10 @@ from rich.rule import Rule
 from rich import box
 
 from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults
-from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string, effective_mode, effective_intensity
+from .corruption import (
+    CorruptedSpan, TextSegments, CHARSETS, corrupt_string,
+    effective_mode, effective_intensity, cascade_reveal_order,
+)
 from .story import Choice, Inset, Overlay
 
 try:
@@ -299,6 +302,9 @@ class Display:
         animate = cfg_corruption.get("animate", True)
         scramble_frames = max(1, cfg_corruption.get("scramble_frames", 8))
         scramble_delay = max(0, cfg_corruption.get("scramble_delay_ms", 60)) / 1000
+        resolve_frames = max(1, cfg_corruption.get("resolve_frames") or scramble_frames)
+        resolve_delay = max(0, cfg_corruption.get("resolve_delay_ms") or cfg_corruption.get("scramble_delay_ms", 60)) / 1000
+        cascade_stagger = max(0, cfg_corruption.get("cascade_stagger_ms") or cfg_corruption.get("scramble_delay_ms", 60)) / 1000
         pause_s = self._cfg.get("typewriter", {}).get("pause_ms", 500) / 1000
         raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
         char_pauses = {k: v / 1000 for k, v in raw_pauses.items()}
@@ -329,10 +335,11 @@ class Display:
                             time.sleep(pause_s)
                 else:
                     enabled = cfg_corruption.get("enabled", True)
-                    effective = min(segment.intensity * cfg_corruption.get("intensity", 1.0), 1.0)
+                    mode = effective_mode(segment.mode, cfg_corruption)
+                    intensity = effective_intensity(segment.intensity, cfg_corruption)
                     if enabled:
                         final = corrupt_string(
-                            segment.text, effective, segment.mode, segment.seed, charset
+                            segment.text, intensity, mode, segment.seed, charset
                         )
                     else:
                         final = segment.text
@@ -359,6 +366,40 @@ class Display:
                         live.update(make_panel(displayed))
                         live.refresh()
                         time.sleep(delay_s)
+
+                    if enabled and segment.resolve_style == "decay":
+                        prefix = displayed[:len(displayed) - len(segment.text)]
+                        for frame in range(resolve_frames):
+                            if _key_pending():
+                                _consume_key()
+                                live.update(make_panel(full_assembled))
+                                live.refresh()
+                                return
+                            frame_intensity = intensity * (1 - (frame + 1) / resolve_frames)
+                            frame_text = corrupt_string(segment.text, frame_intensity, mode, segment.seed, charset)
+                            live.update(make_panel(prefix + frame_text))
+                            live.refresh()
+                            time.sleep(resolve_delay)
+                        displayed = prefix + segment.text
+                        live.update(make_panel(displayed))
+                        live.refresh()
+                    elif enabled and segment.resolve_style == "cascade":
+                        prefix = displayed[:len(displayed) - len(segment.text)]
+                        order = cascade_reveal_order(segment.text, intensity, mode, segment.seed)
+                        chars = list(final)
+                        for idx in order:
+                            if _key_pending():
+                                _consume_key()
+                                live.update(make_panel(full_assembled))
+                                live.refresh()
+                                return
+                            chars[idx] = segment.text[idx]
+                            live.update(make_panel(prefix + "".join(chars)))
+                            live.refresh()
+                            time.sleep(cascade_stagger)
+                        displayed = prefix + segment.text
+                        live.update(make_panel(displayed))
+                        live.refresh()
 
     def _node_panel(
         self,

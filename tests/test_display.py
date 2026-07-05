@@ -963,6 +963,122 @@ def test_typewrite_corrupted_span_uses_final_form(tmp_path) -> None:
     assert len(final) == len("hello")  # same length
 
 
+def test_typewrite_decay_resolve_ends_with_clean_text() -> None:
+    """After the decay resolve phase, the panel shows the span's original clean text."""
+    from src.corruption import CorruptedSpan
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42, resolve_style="decay")
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 2, "scramble_delay_ms": 0,
+                       "resolve_frames": 3, "resolve_delay_ms": 0},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time"), \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    assert panels[-1] == "hello"
+
+
+def test_typewrite_cascade_resolve_ends_with_clean_text() -> None:
+    from src.corruption import CorruptedSpan
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42, resolve_style="cascade")
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 2, "scramble_delay_ms": 0,
+                       "cascade_stagger_ms": 0},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time"), \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    assert panels[-1] == "hello"
+
+
+def test_typewrite_no_resolve_style_stays_corrupted() -> None:
+    """Non-resolving spans are unaffected by the new phase (regression guard)."""
+    from src.corruption import CorruptedSpan
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42)
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 2, "scramble_delay_ms": 0},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time"), \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    assert panels[-1] != "hello"
+
+
+def test_typewrite_resolve_frames_falls_back_to_scramble_frames() -> None:
+    """resolve_frames: None must fall back to scramble_frames, not crash."""
+    from src.corruption import CorruptedSpan
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42, resolve_style="decay")
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 4, "scramble_delay_ms": 0,
+                       "resolve_frames": None, "resolve_delay_ms": None},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    with patch("src.display._key_pending", return_value=False), \
+         patch("src.display.time"), \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    assert panels[-1] == "hello"
+
+
+def test_typewrite_keypress_during_resolve_skips_to_clean_full_text() -> None:
+    """A keypress mid-resolve jumps straight to the fully assembled text, which is
+    clean for a resolving span (Task 6's _assemble_text fix)."""
+    from src.corruption import CorruptedSpan
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=42, resolve_style="decay")
+    d = _make_display_obj({
+        "typewriter": {"enabled": True, "delay_ms": 0, "pause_ms": 0, "punctuation_pauses": {}},
+        "corruption": {"enabled": True, "intensity": 1.0, "mode": "consistent",
+                       "charset": "blocks", "custom_chars": "█▓▒░",
+                       "animate": False, "scramble_frames": 2, "scramble_delay_ms": 0,
+                       "resolve_frames": 5, "resolve_delay_ms": 0},
+    })
+    panels = []
+    def make(t):
+        panels.append(t)
+        return MagicMock()
+    # _key_pending returns False for every char of "hello" (5) plus 1 for luck, then True
+    with patch("src.display._key_pending", side_effect=[False] * 6 + [True]), \
+         patch("src.display._consume_key"), \
+         patch("src.display.time"), \
+         patch("rich.live.Live.__enter__", return_value=MagicMock()), \
+         patch("rich.live.Live.__exit__", return_value=False):
+        d._typewrite(make, [span], 0.0)
+    assert panels[-1] == "hello"
+
+
 # ------------------------------------------------------------------
 # _show_reset_selector
 # ------------------------------------------------------------------
