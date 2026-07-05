@@ -617,6 +617,7 @@ class Display:
           R  — inline reset-to-defaults confirmation, then continue loop
           N  — dispatch to _edit_row (or hint if custom_chars gated)
         """
+        snapshot = {k: copy.deepcopy(draft.get(k)) for k in section["config_keys"] if k in draft}
         while True:
             self.clear_screen()
             self.console.print()
@@ -647,6 +648,8 @@ class Display:
                 self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                 return "back"
             if raw == "x":
+                for k, v in snapshot.items():
+                    draft[k] = v
                 return "back"
             if raw == "m":
                 save_settings(draft)

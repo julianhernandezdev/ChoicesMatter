@@ -707,7 +707,9 @@ function renderEnding(view) {
 }
 
 function renderSettings() {
-  if (isAccessibleMode()) { renderAccessibleSettings(); return; }
+  var feedbackToShow = resetFeedback;
+  resetFeedback = '';
+  if (isAccessibleMode()) { renderAccessibleSettings(feedbackToShow); return; }
   document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings';
@@ -763,11 +765,10 @@ function renderSettings() {
     '<div class="terminal-list">' + rows + '</div>' +
     '<div class="terminal-footer">' +
     '<div class="footer-hint">Enter a number to edit &middot; <span class="key-fwd">S</span> save &middot; <span class="key-back">X</span> discard &middot; <span class="key-fwd">R</span> reset. Press Enter to confirm.' +
-    (resetFeedback ? '<div class="reset-feedback" style="color:#6af;margin-top:4px">✓ ' + escapeHtml(resetFeedback) + '</div>' : '') + '</div>' +
+    (feedbackToShow ? '<div class="reset-feedback" style="color:#6af;margin-top:4px">✓ ' + escapeHtml(feedbackToShow) + '</div>' : '') + '</div>' +
     '<div class="terminal-prompt-line"></div>' +
     '<button class="mobile-keyboard-btn" data-action="show-keyboard" aria-label="Open keyboard">⌨ Tap to type</button>' +
     '</div></div>';
-  resetFeedback = '';
   updatePrompt();
 }
 
@@ -1249,7 +1250,7 @@ function renderAccessibleEnding(view) {
   app.querySelector('.r-play-again-btn').focus();
 }
 
-function renderAccessibleSettings() {
+function renderAccessibleSettings(feedback) {
   pendingInput = '';
   currentScreen = 'settings';
   document.body.classList.add('reader-mode');
@@ -1301,6 +1302,7 @@ function renderAccessibleSettings() {
   app.innerHTML =
     '<main class="reader-screen">' +
     '<h1 class="r-page-title">Settings</h1>' +
+    (feedback ? '<p class="r-reset-feedback" role="status" style="color:#6af">&#10003; ' + escapeHtml(feedback) + '</p>' : '') +
     '<p class="r-page-sub">Press Enter on a row to edit its value.</p>' +
     '<div class="r-settings" role="list" aria-label="Settings">' + rowsHtml + '</div>' +
     '<div class="r-nav">' +
@@ -1369,15 +1371,17 @@ function renderAccessibleSpeedPresets() {
 function renderAccessibleSectionSubscreen(section) {
   pendingInput = '';
   currentScreen = 'settings-section';
-  currentSectionScreen = section;
   document.body.classList.add('reader-mode');
   setPageTitle('Settings – ' + section.label);
 
-  sectionDraftSnapshot = {};
-  section.defaultKeys.forEach(function(key) {
-    var val = settingsDraft[key];
-    sectionDraftSnapshot[key] = (val !== null && typeof val === 'object') ? Object.assign({}, val) : val;
-  });
+  if (currentSectionScreen !== section) {
+    sectionDraftSnapshot = {};
+    section.defaultKeys.forEach(function(key) {
+      var val = settingsDraft[key];
+      sectionDraftSnapshot[key] = (val !== null && typeof val === 'object') ? Object.assign({}, val) : val;
+    });
+  }
+  currentSectionScreen = section;
 
   var rowsHtml = section.rows.map(function(row, i) {
     var val = getSettingValue(settingsDraft, row.key);
@@ -1442,19 +1446,17 @@ function renderSectionSubscreen(section) {
   document.body.classList.remove('reader-mode');
   pendingInput = '';
   currentScreen = 'settings-section';
-  currentSectionScreen = section;
   sectionEditRow = null;
 
-  // Snapshot this section's keys so X can restore them
-  sectionDraftSnapshot = {};
-  section.defaultKeys.forEach(function(key) {
-    var val = settingsDraft[key];
-    if (val !== null && typeof val === 'object') {
-      sectionDraftSnapshot[key] = Object.assign({}, val);
-    } else {
-      sectionDraftSnapshot[key] = val;
-    }
-  });
+  // Snapshot this section's keys so X can restore them — only on initial entry
+  if (currentSectionScreen !== section) {
+    sectionDraftSnapshot = {};
+    section.defaultKeys.forEach(function(key) {
+      var val = settingsDraft[key];
+      sectionDraftSnapshot[key] = (val !== null && typeof val === 'object') ? Object.assign({}, val) : val;
+    });
+  }
+  currentSectionScreen = section;
 
   setPageTitle('Settings – ' + section.label);
 

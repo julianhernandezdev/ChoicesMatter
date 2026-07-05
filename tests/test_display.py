@@ -827,13 +827,25 @@ def test_section_subscreen_q_returns_discard_exit(display):
 
 
 def test_section_subscreen_r_resets_section(display):
+    # R+Y resets values; S (save) confirms — draft keeps reset value.
+    display.console.input = MagicMock(side_effect=["r", "y", "s", ""])
+    section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
+    draft = _make_draft()
+    draft["corruption"]["intensity"] = 0.1
+    with patch("src.display.save_settings"):
+        display._section_subscreen(section, draft)
+    from src.config import _DEFAULTS
+    assert draft["corruption"]["intensity"] == _DEFAULTS["corruption"]["intensity"]
+
+
+def test_section_subscreen_x_restores_snapshot(display):
+    # X discards all changes made inside the subscreen, including resets.
     display.console.input = MagicMock(side_effect=["r", "y", "x"])
     section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
     draft = _make_draft()
     draft["corruption"]["intensity"] = 0.1
     display._section_subscreen(section, draft)
-    from src.config import _DEFAULTS
-    assert draft["corruption"]["intensity"] == _DEFAULTS["corruption"]["intensity"]
+    assert draft["corruption"]["intensity"] == 0.1
 
 
 def test_section_subscreen_r_cancel_no_change(display):
