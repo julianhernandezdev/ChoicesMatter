@@ -98,7 +98,7 @@ console.log(JSON.stringify({ enabled: draft.enabled, delay_ms: draft.delay_ms })
 """)
     result = json.loads(out)
     assert result['enabled'] is True
-    assert result['delay_ms'] == 20  # TYPEWRITER_DEFAULTS.delay_ms
+    assert result['delay_ms'] == 35  # TYPEWRITER_DEFAULTS.delay_ms
 
 
 def test_apply_defaults_corruption():

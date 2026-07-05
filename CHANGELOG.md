@@ -6,6 +6,11 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Typewriter Defaults — Engine Parity
+- **Fixed** `web/typewriter.js` `TYPEWRITER_DEFAULTS` disagreed with the CLI's real defaults (`src/config.py` `_DEFAULTS`) — web shipped `delay_ms: 20` and flat `100–200ms` punctuation pauses while the CLI used `delay_ms: 35` and `250–700ms` pauses tuned per character. Web now matches exactly: `delay_ms: 35`, `pauses: {".": 550, "!": 250, "?": 350, "…": 700, "—": 600}`
+- **Fixed** `settings.example.json` had drifted from `src/config.py` `_DEFAULTS` (`page_size: 10` vs. `5`, `delay_ms: 40` vs. `35`, em-dash pause `800` vs. `600`) — reverted the template back in sync with the actual runtime defaults
+- **Changed** `tests/test_web_settings.py::test_apply_defaults_typewriter` — updated hardcoded `delay_ms == 20` assertion to `35`
+
 ### Protagonist Name Prompt — Priority Bug Fix
 - **Fixed** Blank name-prompt submission resolved the story's `name_default` before the settings-saved `player_name`, in both `main.py` (`_launch_story`) and `web/app.js` (`_resolvePlayerName`) — the opposite of the documented contract ("`name_default` is a fallback for when no saved `player_name` exists"). Since `settings.json` always resolves to at least `"Felix"`, this made `name_default` win unconditionally whenever a story declared one, silently shadowing the player's saved name
 - **Added** `_resolve_player_name(entered, name_default, settings_name)` pure helper in `main.py` (mirrors the existing `_resolvePlayerName` shape in `web/app.js`); priority is now typed name > saved settings name > story `name_default`

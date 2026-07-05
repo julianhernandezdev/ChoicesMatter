@@ -2,9 +2,9 @@ const SETTINGS_KEY = "choices-matter:typewriter-settings";
 
 export const TYPEWRITER_DEFAULTS = {
   enabled: true,
-  delay_ms: 20,
+  delay_ms: 35,
   pause_ms: 500,
-  pauses: { '.': 150, '!': 150, '?': 150, '…': 200, '—': 100 },
+  pauses: { '.': 550, '!': 250, '?': 350, '…': 700, '—': 600 },
   page_size: 5,
   accessible_mode: null,
   player_name: "Felix",

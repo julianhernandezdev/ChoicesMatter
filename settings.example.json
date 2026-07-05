@@ -2,18 +2,18 @@
   "player_name": "Felix",
   "accessible_mode": null,
   "picker": {
-    "page_size": 10
+    "page_size": 5
   },
   "typewriter": {
     "enabled": true,
-    "delay_ms": 40,
+    "delay_ms": 35,
     "pause_ms": 500,
     "punctuation_pauses": {
       ".": 550,
       "!": 250,
       "?": 350,
       "…": 700,
-      "—": 800
+      "—": 600
     }
   },
   "overlay": {
