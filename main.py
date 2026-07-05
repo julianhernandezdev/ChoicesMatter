@@ -210,7 +210,7 @@ def _build_entries(
             continue
 
         info = _load_story_info(path)
-        title, story_id, node_count, ending_count, est_time, has_warnings = info
+        title, story_id, node_count, ending_count, est_time, has_warnings, author, version = info
 
         has_save = False
         endings_found = 0
@@ -231,16 +231,18 @@ def _build_entries(
             "endings_found": endings_found,
             "est_time": est_time,
             "has_warnings": has_warnings,
+            "author": author,
+            "version": version,
         })
     return entries
 
 
-def _load_story_info(path: Path) -> tuple[str, str, int, int, str, bool]:
+def _load_story_info(path: Path) -> tuple[str, str, int, int, str, bool, str, str]:
     try:
         s = StoryLoader.load(path)
-        return (s.title, s.id, s.node_count, s.ending_count, s.est_time, bool(s.warnings))
+        return (s.title, s.id, s.node_count, s.ending_count, s.est_time, bool(s.warnings), s.author, s.version)
     except StoryValidationError:
-        return (path.stem, "", 0, 0, "", False)
+        return (path.stem, "", 0, 0, "", False, "", "")
 
 
 if __name__ == "__main__":

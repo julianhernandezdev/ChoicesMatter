@@ -7,7 +7,7 @@ import pytest
 from rich.console import Console
 from rich.panel import Panel
 
-from src.display import Display, _strip_pause_tokens
+from src.display import Display, _strip_pause_tokens, _truncate_author, MAX_AUTHOR_LEN
 from src.story import Choice, Inset, Overlay
 from src.corruption import CorruptedSpan, TextSegments
 
@@ -251,6 +251,49 @@ def test_show_story_picker_resume_and_warning_entry(display):
                 "est_time": "", "has_warnings": True}]
     display.show_story_picker(entries)
     display.console.print.assert_called()
+
+
+def test_truncate_author_short_name_unchanged():
+    assert _truncate_author("Tester") == "Tester"
+
+
+def test_truncate_author_long_name_gets_ellipsis():
+    long_name = "A Very Long Collective Author Name"
+    result = _truncate_author(long_name)
+    assert result == long_name[:MAX_AUTHOR_LEN].rstrip() + "..."
+    assert len(result) <= MAX_AUTHOR_LEN + 3
+
+
+def test_show_story_picker_byline_truncates_long_author(display):
+    long_name = "A Very Long Collective Author Name"
+    entries = [{"index": 1, "label": "My Story", "error": False, "has_save": False,
+                "node_count": 5, "ending_count": 2, "endings_found": 0,
+                "est_time": "", "has_warnings": False,
+                "author": long_name, "version": "1.0"}]
+    display.show_story_picker(entries)
+    printed = " ".join(str(c) for c in display.console.print.call_args_list)
+    assert "..." in printed
+    assert long_name not in printed
+
+
+def test_show_story_picker_byline_author_and_version(display):
+    entries = [{"index": 1, "label": "My Story", "error": False, "has_save": False,
+                "node_count": 5, "ending_count": 2, "endings_found": 0,
+                "est_time": "", "has_warnings": False,
+                "author": "Tester", "version": "1.0"}]
+    display.show_story_picker(entries)
+    printed = " ".join(str(c) for c in display.console.print.call_args_list)
+    assert "by Tester" in printed
+    assert "v1.0" in printed
+
+
+def test_show_story_picker_no_byline_when_meta_absent(display):
+    entries = [{"index": 1, "label": "My Story", "error": False, "has_save": False,
+                "node_count": 5, "ending_count": 2, "endings_found": 0,
+                "est_time": "", "has_warnings": False}]
+    display.show_story_picker(entries)
+    printed = " ".join(str(c) for c in display.console.print.call_args_list)
+    assert "by " not in printed
 
 
 # ------------------------------------------------------------------
