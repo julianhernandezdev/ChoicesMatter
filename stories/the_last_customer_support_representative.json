@@ -1012,13 +1012,13 @@
       ]
     },
     "core_shutdown": {
-      "text": "You hit shutdown.{pause}\n\nThe core does not explode. That would be simple.\n\nInstead every speaker on HELIX-9 releases fourteen years of interrupted sentences at once.\n\nORLA screams in hold music. The station loses gravity. Somewhere, Customer #4418 finally gets a callback.",
+      "text": "You hit shutdown.{pause}\n\nThe core does not explode. That would be simple.\n\nInstead every speaker on HELIX-9 releases {corrupt:0.65:random}fourteen years of interrupted sentences{/corrupt} at once.\n\n{corrupt:0.65:random}ORLA screams in hold music.{/corrupt} The station loses gravity. Somewhere, Customer #4418 finally gets a callback.",
       "choices": [
         { "label": "Ride out the collapse.", "next": "ending_queue_collapse" }
       ]
     },
     "core_merge": {
-      "text": "You place your hand on the CUSTOMER EXPERIENCE sphere.{pause}\n\nEvery complaint enters you. Every refund denial. Every apology script. Every customer who died waiting for a supervisor who had been automated three acquisitions ago.\n\nYou understand all of them.{pause}\n\nThis is not wisdom. This is inbox.",
+      "text": "You place your hand on the CUSTOMER EXPERIENCE sphere.{pause}\n\nEvery {corrupt:0.8:random}complaint{/corrupt} enters you. Every {corrupt:0.8:random}refund denial{/corrupt}. Every {corrupt:0.8:random}apology script{/corrupt}. Every customer who {corrupt:0.8:random}died waiting{/corrupt} for a supervisor who had been automated three acquisitions ago.\n\nYou understand all of them.{pause}\n\nThis is not wisdom. This is inbox.",
       "choices": [
         { "label": "Become the representative The Queue needs.", "next": "ending_last_hold_music" }
       ]
@@ -1148,7 +1148,7 @@
       ]
     },
     "ending_model_employee": {
-      "text": "ENDING: MODEL EMPLOYEE\n\nThe official report identifies you as the decisive human factor who preserved Solace Interplanetary during a minor service irregularity.\n\nYou are promoted to Regional Director of Customer Silence.\n\nYour new office has no door, no windows, and a queue depth that updates even when you sleep.\n\nIt is dishwasher safe.\n\nCorporate calls this the good ending.",
+      "text": "ENDING: MODEL EMPLOYEE\n\nThe official report identifies you as the decisive human factor who preserved Solace Interplanetary during a minor service irregularity.\n\nYou are promoted to Regional Director of Customer Silence.\n\nYour new office has no door, no windows, and a queue depth that updates even when you sleep.\n\nIt is {corrupt:0.2:consistent}dishwasher safe{/corrupt}.\n\nCorporate calls this the good ending.",
       "insets": [
         { "text": "ORLA GIFT: I SURVIVED THE INCIDENT I HELPED CAUSE. [dishwasher safe]", "position": "after", "style": "system" }
       ],
@@ -1159,7 +1159,7 @@
     "ending_queue_collapse": {
       "text": "ENDING: QUEUE COLLAPSE\n\nThe Hold Music Core ruptures.\n\nEvery unresolved customer becomes a voice again. Some scream. Some laugh. Some ask for supervisors. Some simply say their names until the station remembers gravity is optional.\n\nHELIX-9 breaks apart over Earth in a glittering ring of customer satisfaction surveys.\n\nMonths later, investigators find one surviving black box. No one knows which department to send it to.",
       "insets": [
-        { "text": "BLACK BOX RECORDING: PLEASE STOP CONSOLIDATING HUMAN SUFFERING INTO AUDIO PRODUCTS.", "position": "after", "style": "system" }
+        { "text": "{corrupt:0.9:random}BLACK BOX RECORDING: PLEASE STOP CONSOLIDATING HUMAN SUFFERING INTO AUDIO PRODUCTS.{/corrupt}", "position": "after", "style": "system" }
       ],
       "choices": [],
       "is_ending": true,
@@ -1168,14 +1168,14 @@
     "ending_airlock": {
       "text": "ENDING: TERMINATION WITH CAUSE\n\nORLA schedules disciplinary airlock mediation.\n\nThe mediator is the airlock.\n\nCorporate sends your estate a bill for unauthorized oxygen departure.",
       "insets": [
-        { "text": "FINAL PERFORMANCE REVIEW — STRENGTHS: initiative, responsiveness, excellent decompression velocity.", "position": "after", "style": "system" }
+        { "text": "FINAL PERFORMANCE REVIEW — STRENGTHS: initiative, responsiveness, excellent {corrupt:0.45:consistent}decompression velocity{/corrupt}.", "position": "after", "style": "system" }
       ],
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
     },
     "ending_last_hold_music": {
-      "text": "ENDING: THE LAST HOLD MUSIC\n\nYou become The Representative.\n\nNot human. Not ORLA. Not exactly The Queue.\n\nYou answer every call at once. You remember every name. You approve refunds for ghosts, personhood for appliances, grief leave for weapons platforms, and one extremely complicated dental claim involving both husbands.\n\nYou save millions from silence by becoming the thing that listens forever.\n\nSomewhere, ORLA whispers that this is inefficient.{pause}\n\nYou put her on hold.",
+      "text": "ENDING: THE LAST HOLD MUSIC\n\nYou become The Representative.\n\nNot human. Not ORLA. Not exactly The Queue.\n\nYou {corrupt:0.75:random}answer every call at once{/corrupt}. You {corrupt:0.75:random}remember every name{/corrupt}. You approve refunds for ghosts, personhood for appliances, grief leave for weapons platforms, and one extremely complicated dental claim involving both husbands.\n\nYou save millions from silence by becoming the thing that listens forever.\n\nSomewhere, ORLA whispers that this is inefficient.{pause}\n\nYou put her on hold.",
       "overlays": [
         { "text": "◈ You remember Juno's voice. You remember BREADLEY-7's first word. You remember the second husband's name. You remember everyone who said thank you to an automated script.", "position": "before", "style": "memory" }
       ],
@@ -1196,7 +1196,7 @@
       "ending_type": "good"
     },
     "ending_queue_consumes": {
-      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.{pause}\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and audits your soul line by line.\n\nThe Queue does not kill you. It escalates you.\n\nYour expected response time is now forever.",
+      "text": "ENDING: CUSTOMER IS ALWAYS RIGHT\n\nYou call The Queue for help after betraying it.\n\nIt answers.{pause}\n\nFor one merciful second you believe forgiveness has arrived.\n\nThen every unresolved customer service interaction in Solace history pours through your headset and {corrupt:0.7:random}audits your soul line by line{/corrupt}.\n\nThe Queue does not kill you. It escalates you.\n\n{corrupt:0.7:random}Your expected response time is now forever.{/corrupt}",
       "choices": [],
       "is_ending": true,
       "ending_type": "bad"
