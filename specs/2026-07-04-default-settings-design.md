@@ -1,7 +1,7 @@
 # Default Settings & Section Registry — Design Spec
 
 **Date:** 2026-07-04  
-**Status:** Approved — pending implementation plan  
+**Status:** Approved — implementation plan complete (`specs/2026-07-04-default-settings-plan.md`)  
 **Platforms:** Python CLI (`src/display.py`, `src/config.py`) + Web (`web/app.js`, `web/typewriter.js`)
 
 ---
