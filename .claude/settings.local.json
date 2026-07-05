@@ -44,7 +44,16 @@
       "Bash(python -c ' *)",
       "Bash(python -m pytest tests/ -q --ignore=tests/test_web.py)",
       "Bash(python scripts/sync_stories.py)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "WebFetch(domain:julianhernandezdev.github.io)",
+      "Skill(run)",
+      "Bash(ls web/*.html)",
+      "Bash(ls *.html)",
+      "Bash(find . -maxdepth 2 -iname \"index.html\")",
+      "Bash(pkill -f \"http.server 8934\")",
+      "Bash(pkill -f \"http.server 8935\")",
+      "Bash(pkill -f \"http.server 8936\")",
+      "mcp__playwright__browser_handle_dialog"
     ]
   },
   "enabledMcpjsonServers": [

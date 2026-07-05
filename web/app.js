@@ -407,12 +407,12 @@ function renderPicker() {
 
   var menuEntries = [];
 
-  Object.keys(folders).sort().forEach(function(name) {
-    menuEntries.push({ type: 'folder', name: name });
-  });
-
   rootStories.forEach(function(entry) {
     menuEntries.push({ type: 'story', entry: entry });
+  });
+
+  Object.keys(folders).sort().forEach(function(name) {
+    menuEntries.push({ type: 'folder', name: name });
   });
 
   activeMenuEntries = menuEntries;
@@ -527,9 +527,9 @@ function renderWarnings(entry, resume) {
 
 function _resolvePlayerName(entered, meta) {
   if (entered !== '') return entered;
-  if (meta.name_default) return meta.name_default;
   var savedName = loadTypewriterSettings().player_name;
   if (savedName) return savedName;
+  if (meta.name_default) return meta.name_default;
   return null; // reject — no fallback available
 }
 
@@ -853,11 +853,11 @@ function renderAccessiblePicker() {
   });
 
   var menuEntries = [];
-  Object.keys(folders).sort().forEach(function(name) {
-    menuEntries.push({ type: 'folder', name: name });
-  });
   rootStories.forEach(function(entry) {
     menuEntries.push({ type: 'story', entry: entry });
+  });
+  Object.keys(folders).sort().forEach(function(name) {
+    menuEntries.push({ type: 'folder', name: name });
   });
   activeMenuEntries = menuEntries;
 

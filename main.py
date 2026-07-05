@@ -140,6 +140,23 @@ def _run_folder_picker(
         return chosen_path
 
 
+def _resolve_player_name(entered: str, name_default: str, settings_name: str) -> str | None:
+    """Resolve the protagonist name after an empty name-prompt submission.
+
+    Priority: typed name > saved settings player_name > story's name_default.
+    The settings name wins over name_default because settings.json always
+    resolves to a value (default "Felix") — name_default is a fallback only
+    for the case where no saved player_name exists at all.
+    """
+    if entered:
+        return entered
+    if settings_name:
+        return settings_name
+    if name_default:
+        return name_default
+    return None
+
+
 def _launch_story(
     path: Path,
     errors: dict[Path, str],
@@ -162,17 +179,13 @@ def _launch_story(
     settings_name = load_settings().get("player_name", "Felix")
     initial_state: dict[str, bool | int | str] = {"player_name": settings_name}
     if story.name_prompt and not save_manager.has_save(story.id):
-        name = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
-        if name is None:
+        entered = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
+        if entered is None:
             return
-        if not name:
-            if story.name_default:
-                name = story.name_default
-            elif settings_name:
-                name = settings_name
-            else:
-                display.show_name_required()
-                return
+        name = _resolve_player_name(entered, story.name_default or "", settings_name)
+        if name is None:
+            display.show_name_required()
+            return
         initial_state = {"player_name": name}
     Engine(story, save_manager, display, gallery_manager, initial_state=initial_state).run()
     display.clear_screen()

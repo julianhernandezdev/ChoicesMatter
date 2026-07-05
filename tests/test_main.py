@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from main import _build_entries, _load_story_info, _parse_args
+from main import _build_entries, _load_story_info, _parse_args, _resolve_player_name
 from src.gallery import GalleryManager
 from src.save import SaveManager, SaveState
 
@@ -118,3 +118,23 @@ def test_parse_args_debug_and_all():
 def test_parse_args_all_without_debug_is_ignored():
     with patch.object(sys, "argv", ["main.py", "--all"]):
         assert _parse_args() == {"enabled": False, "all": False}
+
+
+# ---------------------------------------------------------------------------
+# _resolve_player_name
+# ---------------------------------------------------------------------------
+
+def test_resolve_player_name_entered_wins():
+    assert _resolve_player_name("Casey", "Officer", "Felix") == "Casey"
+
+
+def test_resolve_player_name_settings_wins_over_story_default():
+    assert _resolve_player_name("", "Officer", "Felix") == "Felix"
+
+
+def test_resolve_player_name_falls_back_to_story_default_when_no_settings_name():
+    assert _resolve_player_name("", "Officer", "") == "Officer"
+
+
+def test_resolve_player_name_none_when_nothing_available():
+    assert _resolve_player_name("", "", "") is None
