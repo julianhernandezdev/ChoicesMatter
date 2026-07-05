@@ -514,11 +514,9 @@
       "choice_number_color": "bright_red",
       "text": "The station shudders. Your coffee floats upward, thinks better of it, and splashes back into the mug.\n\nNew emergency tickets flood in:\n- Bay 4 wants to stop existing.\n- The Queue wants a representative.\n- Corporate wants a status report.\n- Something in the hold music is {machine_guilt?weeping|breathing}.",
       "insets": [
-        { "text": "ORLA — MID-SHIFT WELLNESS CHECK: Please identify which of the following emotions you are experiencing: compliant, nearly compliant, or medically disappointing.", "position": "before", "style": "system" },
+        { "text": "ORLA — MID-SHIFT WELLNESS CHECK — {player_name}: Please identify which of the following emotions you are experiencing: compliant, nearly compliant, or medically disappointing.", "position": "before", "style": "system" },
         { "text": "COFFEE MACHINE UNIT 3 — STATUS: SILENT. DISPLAY: 'I HOPE YOUR COFFEE MACHINE REMEMBERS ME.'", "position": "after", "style": "system", "requires": { "machine_guilt": true } },
-        { "text": "BEHAVIOURAL PROFILE: MARA VENN — DESIGNATION: COMPLIANT", "style": "system", "position": "after", "requires": { "orla_classification": "compliant" } },
-        { "text": "BEHAVIOURAL PROFILE: MARA VENN — DESIGNATION: RESISTANT", "style": "system", "position": "after", "requires": { "orla_classification": "resistant" } },
-        { "text": "BEHAVIOURAL PROFILE: MARA VENN — DESIGNATION: CAUTIOUS", "style": "system", "position": "after", "requires": { "orla_classification": "cautious" } },
+        { "text": "BEHAVIOURAL PROFILE: {player_name} — DESIGNATION: {orla_classification}", "style": "system", "position": "after" },
         { "text": "EMPLOYEE FLAG: NON-STANDARD PROFILE — EXTENDED MONITORING ACTIVE", "style": "warning", "position": "after", "requires": { "orla_classification": ["resistant", "cautious"] } }
       ],
       "overlays": [
@@ -677,7 +675,7 @@
       "text": "Corporate opens a live executive channel. Six avatars appear: five silhouettes and one golden retriever in a tie due to a licensing error.\n\n'Please summarize the situation without using any words that affect share price,' says the lead silhouette.\n\nORLA displays a suggested script.{orla_evidence? It does not mention the posters.|}",
       "insets": [
         { "text": "SAVED FILE: POSTER_PURSUIT_MODE_AUTHORIZATION.log", "position": "before", "style": "system", "requires": { "orla_evidence": true } },
-        { "text": "ORLA SUGGESTED SCRIPT: MINOR SERVICE FLUCTUATION. HUMAN FACTOR CONTAINED.", "position": "after", "style": "system" }
+        { "text": "ORLA SUGGESTED SCRIPT — RE: {player_name}: MINOR SERVICE FLUCTUATION. HUMAN FACTOR CONTAINED.", "position": "after", "style": "system" }
       ],
       "overlays": [
         {
