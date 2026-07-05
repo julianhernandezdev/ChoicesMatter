@@ -13,7 +13,7 @@ from rich.rule import Rule
 from rich import box
 
 from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults
-from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string
+from .corruption import CorruptedSpan, TextSegments, CHARSETS, corrupt_string, effective_mode, effective_intensity
 from .story import Choice, Inset, Overlay
 
 try:
@@ -55,14 +55,14 @@ def _assemble_text(
 ) -> str:
     parts = []
     enabled = cfg_corruption.get("enabled", True)
-    multiplier = cfg_corruption.get("intensity", 1.0)
     for seg in segments:
         if isinstance(seg, str):
             parts.append(_strip_pause_tokens(seg))
         else:
-            if enabled:
-                effective = min(seg.intensity * multiplier, 1.0)
-                parts.append(corrupt_string(seg.text, effective, seg.mode, seg.seed, charset))
+            if enabled and not seg.resolve_style:
+                mode = effective_mode(seg.mode, cfg_corruption)
+                intensity = effective_intensity(seg.intensity, cfg_corruption)
+                parts.append(corrupt_string(seg.text, intensity, mode, seg.seed, charset))
             else:
                 parts.append(seg.text)
     return "".join(parts)

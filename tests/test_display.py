@@ -802,13 +802,50 @@ def test_assemble_text_with_span_disabled() -> None:
     assert result == "hello"   # original text when disabled
 
 
-def test_assemble_text_global_multiplier() -> None:
+def test_assemble_text_intensity_default_used_when_span_unset() -> None:
     from src.display import _assemble_text
-    cfg = {"enabled": True, "intensity": 0.0}   # multiplier kills all corruption
     charset = ["█"]
-    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=0)
+    span = CorruptedSpan(text="hello", intensity=None, mode="consistent", seed=0)
+    cfg = {"enabled": True, "intensity": 1.0}
     result = _assemble_text([span], charset, cfg)
-    assert result == "hello"   # multiplied to zero
+    assert "█" in result
+
+
+def test_assemble_text_story_intensity_ignores_global_default() -> None:
+    """Story-defined intensity fully overrides the global default — no scaling."""
+    from src.display import _assemble_text
+    charset = ["█"]
+    span = CorruptedSpan(text="hello", intensity=0.9, mode="consistent", seed=0)
+    cfg = {"enabled": True, "intensity": 0.0}   # would have killed corruption under the old formula
+    result = _assemble_text([span], charset, cfg)
+    assert "█" in result
+
+
+def test_assemble_text_intensity_multiplier_kills_corruption() -> None:
+    from src.display import _assemble_text
+    charset = ["█"]
+    span = CorruptedSpan(text="hello", intensity=0.9, mode="consistent", seed=0)
+    cfg = {"enabled": True, "intensity_multiplier": 0.0}
+    result = _assemble_text([span], charset, cfg)
+    assert result == "hello"
+
+
+def test_assemble_text_mode_default_used_when_span_unset() -> None:
+    from src.display import _assemble_text
+    charset = ["█"]
+    span = CorruptedSpan(text="abcdefghij", intensity=1.0, mode=None, seed=0)
+    cfg = {"enabled": True, "mode": "random"}
+    result = _assemble_text([span], charset, cfg)
+    assert result == "█" * 10
+
+
+def test_assemble_text_resolving_span_renders_clean() -> None:
+    from src.display import _assemble_text
+    charset = ["█"]
+    span = CorruptedSpan(text="hello", intensity=1.0, mode="consistent", seed=0, resolve_style="decay")
+    cfg = {"enabled": True, "intensity": 1.0}
+    result = _assemble_text([span], charset, cfg)
+    assert result == "hello"
 
 
 # ------------------------------------------------------------------
