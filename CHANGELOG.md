@@ -6,9 +6,21 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Story Picker
+- **Added** Author/version byline row to the story picker — `by {author} · v{version}` printed dim beneath the title/status line, above the nodes/endings/time stats line (`Display.show_story_picker()`, `src/display.py`)
+- **Added** `MAX_AUTHOR_LEN` (20) and `_truncate_author()` in `src/display.py` — author names longer than 20 chars truncate with `...` appended
+- **Changed** `main.py`: `_load_story_info()` and `_build_entries()` now also return/carry `author` and `version` from `Story` (previously loaded but unused in the picker)
+
+### Story Metadata Cleanup
+- **Normalized** `meta.author` across all 40 public stories to 3 canonical values: `"Choices Matter"` (35 stories), `"ChoicesMatterGPT"` (4 stories, all in `stories/ChoicesMatterGPT/`), and `"Fable"` (*The One-Eyed Guest*, unchanged by request)
+- **Moved** `stories/ChoicesMatterGPT/awaiting_response.json` → `stories/awaiting_response.json`
+- **Moved** `stories/the_cartographers_confession.json` → `stories/horror/the_cartographers_confession.json`
+- **Synced** `web/stories.json` via `scripts/sync_stories.py` to reflect both moves
+
 ### Stories
 - **Added** *The One-Eyed Guest* (`stories/the_one_eyed_guest.json`) — Nordic folk-horror one-shot: a homestead keeper faces a one-eyed wanderer's three guest-right tests across a single night; inside/outside staging split after the first test, diegetic vocabulary-glossing insets (`memory`/`warning` styles), `{corrupt}` spans tied to forbidden knowledge landing, an obfuscated final choice with its blindness narrated in-fiction, and three endings (good/neutral/bad). First story authored end-to-end by a Claude Fable 5 subagent from a brainstormed spec
-- **Synced** `web/stories.json` — added *The One-Eyed Guest* via `scripts/sync_stories.py`
+- **Restored** *The Locked Room* (v1.3) and *The Watcher in the Light* (v1.1) to public release (`stories/horror/`) — both were excluded from the 2026-05 general release for graphic content; that call no longer applies and both validate cleanly via `scripts/validate_story.py`
+- **Synced** `web/stories.json` — added *The One-Eyed Guest*, *The Locked Room*, and *The Watcher in the Light* via `scripts/sync_stories.py`
 
 ### Default Settings & Section Registry
 - **Added** `SETTINGS_SECTIONS` registry (Python `src/config.py`, web `web/app.js`) as single source of truth for all settings — each entry declares id, label, preserve flag, subscreen flag, config keys, and row descriptors

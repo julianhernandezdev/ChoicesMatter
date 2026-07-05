@@ -2097,10 +2097,6 @@ document.addEventListener('keydown', function(e) {
 
 // --- Mobile keyboard capture ---
 
-document.addEventListener('click', function() {
-  if (isTwAnimating()) { skipTypewriter(); }
-});
-
 mobileCapture.addEventListener('input', function() {
   if (currentScreen === 'settings' && settingsEditRow !== null) {
     var inline = document.getElementById('settings-edit-input');
