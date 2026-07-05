@@ -125,3 +125,13 @@ def resolve_corruption(
     if not segments:
         return [text]
     return segments
+
+
+def effective_mode(span_mode: str | None, cfg_corruption: dict) -> str:
+    return span_mode or cfg_corruption.get("mode", "consistent")
+
+
+def effective_intensity(span_intensity: float | None, cfg_corruption: dict) -> float:
+    resolved = span_intensity if span_intensity is not None else cfg_corruption.get("intensity", 1.0)
+    multiplier = cfg_corruption.get("intensity_multiplier", 1.0)
+    return min(resolved * multiplier, 1.0)

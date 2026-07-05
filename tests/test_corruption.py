@@ -179,3 +179,44 @@ def test_node_float_corruption_leaves_resolve_style_none() -> None:
     """A bare float node.corruption (no dict) never sets resolve_style."""
     segs = resolve_corruption("{corrupt}text{/corrupt}", 0.5)
     assert segs[0].resolve_style is None
+
+
+# --- effective_mode / effective_intensity ---
+
+from src.corruption import effective_mode, effective_intensity
+
+
+def test_effective_mode_uses_span_value_when_set() -> None:
+    assert effective_mode("random", {"mode": "consistent"}) == "random"
+
+def test_effective_mode_falls_back_to_cfg_default_when_span_none() -> None:
+    assert effective_mode(None, {"mode": "random"}) == "random"
+
+def test_effective_mode_falls_back_to_consistent_when_cfg_missing_too() -> None:
+    assert effective_mode(None, {}) == "consistent"
+
+def test_effective_intensity_uses_span_value_when_set() -> None:
+    """Story-defined intensity fully overrides the global default — no multiplication."""
+    assert effective_intensity(0.9, {"intensity": 0.1}) == pytest.approx(0.9)
+
+def test_effective_intensity_falls_back_to_cfg_default_when_span_none() -> None:
+    assert effective_intensity(None, {"intensity": 0.6}) == pytest.approx(0.6)
+
+def test_effective_intensity_falls_back_to_1_when_cfg_missing_too() -> None:
+    assert effective_intensity(None, {}) == pytest.approx(1.0)
+
+def test_effective_intensity_zero_is_not_treated_as_unset() -> None:
+    """0.0 is a valid author intensity — must not be treated as falsy/unset."""
+    assert effective_intensity(0.0, {"intensity": 0.9}) == pytest.approx(0.0)
+
+def test_effective_intensity_multiplier_applies_to_story_value() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 0.3}) == pytest.approx(0.27)
+
+def test_effective_intensity_multiplier_applies_to_default_value() -> None:
+    assert effective_intensity(None, {"intensity": 0.6, "intensity_multiplier": 0.3}) == pytest.approx(0.18)
+
+def test_effective_intensity_multiplier_can_kill_corruption_entirely() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 0.0}) == pytest.approx(0.0)
+
+def test_effective_intensity_result_capped_at_1() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 2.0}) == pytest.approx(1.0)
