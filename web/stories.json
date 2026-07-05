@@ -33,6 +33,10 @@
       "category": "uncategorized"
     },
     {
+      "path": "stories/horror/the_locked_room.json",
+      "category": "horror"
+    },
+    {
       "path": "stories/ChoicesMatterGPT/moonlitdoor.json",
       "category": "ChoicesMatterGPT"
     },
@@ -42,6 +46,10 @@
     },
     {
       "path": "stories/horror/the_vulture_corridor_v2_1_demo.json",
+      "category": "horror"
+    },
+    {
+      "path": "stories/horror/watcher_in_the_light.json",
       "category": "horror"
     },
     {
