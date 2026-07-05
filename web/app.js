@@ -707,6 +707,8 @@ function renderEnding(view) {
 }
 
 function renderSettings() {
+  currentSectionScreen = null;
+  sectionDraftSnapshot = null;
   var feedbackToShow = resetFeedback;
   resetFeedback = '';
   if (isAccessibleMode()) { renderAccessibleSettings(feedbackToShow); return; }
@@ -1251,6 +1253,8 @@ function renderAccessibleEnding(view) {
 }
 
 function renderAccessibleSettings(feedback) {
+  currentSectionScreen = null;
+  sectionDraftSnapshot = null;
   pendingInput = '';
   currentScreen = 'settings';
   document.body.classList.add('reader-mode');
