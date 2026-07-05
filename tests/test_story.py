@@ -823,3 +823,42 @@ def test_inline_corrupt_substitution_flag_starting_with_corrupt_not_flagged(tmp_
     path = tmp_path / "s.json"
     path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
     StoryLoader.load(path)   # must not raise
+
+
+def test_node_corruption_dict_accepts_resolve_style() -> None:
+    result = StoryLoader._parse_corruption(
+        {"intensity": 0.5, "resolve_style": "decay"}, "node1", "test.json"
+    )
+    assert result["resolve_style"] == "decay"
+
+
+def test_node_corruption_dict_rejects_bad_resolve_style() -> None:
+    with pytest.raises(StoryValidationError, match="resolve_style"):
+        StoryLoader._parse_corruption(
+            {"resolve_style": "reveal"}, "node1", "test.json"
+        )
+
+
+def test_node_corruption_dict_resolve_style_alone_is_valid() -> None:
+    result = StoryLoader._parse_corruption({"resolve_style": "cascade"}, "node1", "test.json")
+    assert result == {"resolve_style": "cascade"}
+
+
+def test_span_resolve_style_decay_is_valid() -> None:
+    # Should not raise
+    StoryLoader._validate_corruption_spans(
+        "{corrupt:0.8:consistent:decay}text{/corrupt}", "node 'n' text", "test.json"
+    )
+
+
+def test_span_resolve_style_cascade_is_valid() -> None:
+    StoryLoader._validate_corruption_spans(
+        "{corrupt:cascade}text{/corrupt}", "node 'n' text", "test.json"
+    )
+
+
+def test_span_unknown_resolve_style_raises() -> None:
+    with pytest.raises(StoryValidationError, match="unknown"):
+        StoryLoader._validate_corruption_spans(
+            "{corrupt:reveal}text{/corrupt}", "node 'n' text", "test.json"
+        )
