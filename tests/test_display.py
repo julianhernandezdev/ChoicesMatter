@@ -915,7 +915,7 @@ def test_show_reset_selector_preserves_unchecked_section(display):
 
 
 def test_show_reset_selector_feedback_lists_section_names(display):
-    display.console.input = MagicMock(side_effect=["1", "2", "y"])
+    display.console.input = MagicMock(side_effect=["1", "3", "y"])
     draft = _make_draft()
     result = display._show_reset_selector(draft)
     assert "Typewriter" in result

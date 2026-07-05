@@ -704,12 +704,11 @@ class Display:
     def _show_reset_selector(self, draft: dict) -> str:
         """Show checkbox selector for resetting settings sections.
 
-        Only sections with ``has_subscreen=True`` and
-        ``preserve_on_global_reset=False`` appear (currently: Typewriter,
-        Corruption).  Returns a feedback string such as
-        ``"Reset: Typewriter, Corruption."`` or ``""`` if cancelled.
+        Only sections with ``preserve_on_global_reset=False`` appear
+        (currently: Typewriter, Display, Corruption).  Returns a feedback
+        string such as ``"Reset: Typewriter, Corruption."`` or ``""`` if cancelled.
         """
-        resettable = [s for s in SETTINGS_SECTIONS if not s["preserve_on_global_reset"] and s["has_subscreen"]]
+        resettable = [s for s in SETTINGS_SECTIONS if not s["preserve_on_global_reset"]]
         checked = [False] * len(resettable)
 
         while True:
