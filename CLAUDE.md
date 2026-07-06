@@ -240,7 +240,7 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `name_default` present without `name_prompt` also being set
 - `name_default` present but not a non-empty string
 - `corruption` (node field): float not in `[0.0, 1.0]`; dict containing unknown keys (only `intensity`, `mode`, and `resolve_style` are allowed); dict `intensity` not a float in `[0.0, 1.0]`; dict `mode` not `"consistent"` or `"random"`; dict `resolve_style` not `"decay"` or `"cascade"`; any other type
-- `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`
+- `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`; resolve_style param not `"decay"` or `"cascade"`
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
