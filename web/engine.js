@@ -15,7 +15,7 @@ export function substituteVars(text, state = {}) {
   });
 }
 
-const _CORRUPT_RE = /\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?\}([\s\S]*?)\{\/corrupt\}/g;
+const _CORRUPT_RE = /\{corrupt(?::([0-9]*\.?[0-9]+))?(?::(consistent|random))?(?::(decay|cascade))?\}([\s\S]*?)\{\/corrupt\}/g;
 
 function _textSeed(text, index) {
   const combined = text + String(index);
@@ -27,13 +27,15 @@ function _textSeed(text, index) {
 }
 
 export function resolveCorruption(text, nodeCorruption) {
-  let nodeIntensity = 1.0;
-  let nodeMode = "consistent";
+  let nodeIntensity = null;
+  let nodeMode = null;
+  let nodeResolveStyle = null;
   if (typeof nodeCorruption === "number") {
     nodeIntensity = nodeCorruption;
   } else if (nodeCorruption && typeof nodeCorruption === "object") {
-    nodeIntensity = nodeCorruption.intensity ?? 1.0;
-    nodeMode = nodeCorruption.mode ?? "consistent";
+    if (nodeCorruption.intensity !== undefined) nodeIntensity = nodeCorruption.intensity;
+    if (nodeCorruption.mode !== undefined) nodeMode = nodeCorruption.mode;
+    if (nodeCorruption.resolve_style !== undefined) nodeResolveStyle = nodeCorruption.resolve_style;
   }
 
   const segments = [];
@@ -48,11 +50,13 @@ export function resolveCorruption(text, nodeCorruption) {
     }
     const rawIntensity = match[1];
     const rawMode = match[2];
-    const spanText = match[3];
+    const rawResolveStyle = match[3];
+    const spanText = match[4];
     const intensity = rawIntensity !== undefined ? parseFloat(rawIntensity) : nodeIntensity;
     const mode = rawMode !== undefined ? rawMode : nodeMode;
+    const resolveStyle = rawResolveStyle !== undefined ? rawResolveStyle : nodeResolveStyle;
     const seed = _textSeed(spanText, spanIndex);
-    segments.push({ text: spanText, intensity, mode, seed });
+    segments.push({ text: spanText, intensity, mode, seed, resolve_style: resolveStyle });
     lastEnd = match.index + match[0].length;
     spanIndex++;
   }
