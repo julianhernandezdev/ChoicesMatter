@@ -130,10 +130,144 @@ def test_seed_is_deterministic_from_text_and_index() -> None:
     segs2 = resolve_corruption("{corrupt}word{/corrupt}", None)
     assert segs1[0].seed == segs2[0].seed
 
-def test_default_intensity_is_1_when_no_node_corruption() -> None:
+def test_intensity_is_none_when_unspecified_anywhere() -> None:
+    """Story-side resolution no longer bakes in a default — that's Display's job now."""
     segs = resolve_corruption("{corrupt}text{/corrupt}", None)
-    assert segs[0].intensity == pytest.approx(1.0)
+    assert segs[0].intensity is None
 
-def test_default_mode_is_consistent() -> None:
+def test_mode_is_none_when_unspecified_anywhere() -> None:
     segs = resolve_corruption("{corrupt}text{/corrupt}", None)
-    assert segs[0].mode == "consistent"
+    assert segs[0].mode is None
+
+
+# --- resolve_style ---
+
+def test_span_with_resolve_style_decay() -> None:
+    segs = resolve_corruption("{corrupt:0.8:consistent:decay}text{/corrupt}", None)
+    assert segs[0].resolve_style == "decay"
+
+def test_span_with_resolve_style_cascade() -> None:
+    segs = resolve_corruption("{corrupt:0.8:random:cascade}text{/corrupt}", None)
+    assert segs[0].resolve_style == "cascade"
+
+def test_resolve_style_omitted_is_none() -> None:
+    segs = resolve_corruption("{corrupt}text{/corrupt}", None)
+    assert segs[0].resolve_style is None
+
+def test_resolve_style_alone_skips_intensity_and_mode() -> None:
+    """A single trailing param still parses correctly when the earlier params are omitted."""
+    segs = resolve_corruption("{corrupt:decay}text{/corrupt}", None)
+    assert segs[0].resolve_style == "decay"
+    assert segs[0].intensity is None
+    assert segs[0].mode is None
+
+def test_resolve_style_with_intensity_only_skips_mode() -> None:
+    segs = resolve_corruption("{corrupt:0.6:decay}text{/corrupt}", None)
+    assert segs[0].intensity == pytest.approx(0.6)
+    assert segs[0].mode is None
+    assert segs[0].resolve_style == "decay"
+
+def test_resolve_style_inherits_from_node_dict() -> None:
+    segs = resolve_corruption("{corrupt}text{/corrupt}", {"resolve_style": "cascade"})
+    assert segs[0].resolve_style == "cascade"
+
+def test_resolve_style_span_overrides_node() -> None:
+    segs = resolve_corruption("{corrupt:decay}text{/corrupt}", {"resolve_style": "cascade"})
+    assert segs[0].resolve_style == "decay"
+
+def test_node_float_corruption_leaves_resolve_style_none() -> None:
+    """A bare float node.corruption (no dict) never sets resolve_style."""
+    segs = resolve_corruption("{corrupt}text{/corrupt}", 0.5)
+    assert segs[0].resolve_style is None
+
+
+# --- effective_mode / effective_intensity ---
+
+from src.corruption import effective_mode, effective_intensity
+
+
+def test_effective_mode_uses_span_value_when_set() -> None:
+    assert effective_mode("random", {"mode": "consistent"}) == "random"
+
+def test_effective_mode_falls_back_to_cfg_default_when_span_none() -> None:
+    assert effective_mode(None, {"mode": "random"}) == "random"
+
+def test_effective_mode_falls_back_to_consistent_when_cfg_missing_too() -> None:
+    assert effective_mode(None, {}) == "consistent"
+
+def test_effective_intensity_uses_span_value_when_set() -> None:
+    """Story-defined intensity fully overrides the global default — no multiplication."""
+    assert effective_intensity(0.9, {"intensity": 0.1}) == pytest.approx(0.9)
+
+def test_effective_intensity_falls_back_to_cfg_default_when_span_none() -> None:
+    assert effective_intensity(None, {"intensity": 0.6}) == pytest.approx(0.6)
+
+def test_effective_intensity_falls_back_to_1_when_cfg_missing_too() -> None:
+    assert effective_intensity(None, {}) == pytest.approx(1.0)
+
+def test_effective_intensity_zero_is_not_treated_as_unset() -> None:
+    """0.0 is a valid author intensity — must not be treated as falsy/unset."""
+    assert effective_intensity(0.0, {"intensity": 0.9}) == pytest.approx(0.0)
+
+def test_effective_intensity_multiplier_applies_to_story_value() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 0.3}) == pytest.approx(0.27)
+
+def test_effective_intensity_multiplier_applies_to_default_value() -> None:
+    assert effective_intensity(None, {"intensity": 0.6, "intensity_multiplier": 0.3}) == pytest.approx(0.18)
+
+def test_effective_intensity_multiplier_can_kill_corruption_entirely() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 0.0}) == pytest.approx(0.0)
+
+def test_effective_intensity_result_capped_at_1() -> None:
+    assert effective_intensity(0.9, {"intensity_multiplier": 2.0}) == pytest.approx(1.0)
+
+
+# --- cascade_reveal_order ---
+
+def test_cascade_reveal_order_returns_same_positions_shuffled() -> None:
+    from src.corruption import cascade_reveal_order
+    positions = [0, 2, 4, 6, 8]
+    order = cascade_reveal_order(positions, "consistent", 0)
+    assert sorted(order) == positions
+
+def test_cascade_reveal_order_empty_positions_is_empty() -> None:
+    from src.corruption import cascade_reveal_order
+    assert cascade_reveal_order([], "consistent", 0) == []
+
+def test_cascade_reveal_order_consistent_mode_is_reproducible() -> None:
+    from src.corruption import cascade_reveal_order
+    positions = [1, 3, 5, 7, 9, 11, 13]
+    o1 = cascade_reveal_order(positions, "consistent", 99)
+    o2 = cascade_reveal_order(positions, "consistent", 99)
+    assert o1 == o2
+
+def test_cascade_reveal_order_random_mode_varies_across_calls() -> None:
+    from src.corruption import cascade_reveal_order
+    positions = list(range(20))
+    orders = {tuple(cascade_reveal_order(positions, "random", 0)) for _ in range(10)}
+    assert len(orders) > 1
+
+def test_cascade_reveal_order_indices_are_unique_permutation() -> None:
+    from src.corruption import cascade_reveal_order
+    positions = [2, 5, 9, 12, 15]
+    order = cascade_reveal_order(positions, "consistent", 5)
+    assert sorted(order) == positions
+    assert len(order) == len(set(order))
+
+
+# --- decay monotonic-subset property (via corrupt_string) ---
+
+def test_decay_corrupted_positions_shrink_monotonically() -> None:
+    """For a fixed seed, the corrupted-position set at a lower intensity is always
+    a subset of the set at a higher intensity — the property the decay resolve
+    style depends on to 'heal' positions one at a time without re-corrupting."""
+    text = "abcdefghijklmnopqrstuvwxyz" * 2
+    seed = 7
+    prev_positions: set[int] | None = None
+    for steps in range(10, 0, -1):
+        intensity = steps / 10
+        result = corrupt_string(text, intensity, "consistent", seed, _BLOCKS)
+        positions = {i for i, (a, b) in enumerate(zip(text, result)) if a != b}
+        if prev_positions is not None:
+            assert positions <= prev_positions, f"positions grew at intensity {intensity}"
+        prev_positions = positions

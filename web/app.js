@@ -137,15 +137,27 @@ function _lcgSelect(nTotal, nSelect, seed) {
   return new Set(indices.slice(nTotal - nSelect));
 }
 
+function _effectiveMode(spanMode, cfg) {
+  return spanMode || (cfg.mode != null ? cfg.mode : "consistent");
+}
+
+function _effectiveIntensity(spanIntensity, cfg) {
+  var resolved = spanIntensity != null ? spanIntensity : (cfg.intensity != null ? cfg.intensity : 1.0);
+  var multiplier = cfg.intensity_multiplier != null ? cfg.intensity_multiplier : 1.0;
+  return Math.min(resolved * multiplier, 1.0);
+}
+
 function _corruptString(span, cfg) {
+  var mode = _effectiveMode(span.mode, cfg);
+  var intensity = _effectiveIntensity(span.intensity, cfg);
   var charset = cfg.charset === "custom"
     ? [...(cfg.custom_chars || "█▓▒░")]
     : (_CHARSET_MAP[cfg.charset] || _CHARSET_MAP.blocks);
   if (!charset.length) return span.text;
   var corruptible = [...span.text].map(function(c, i) { return _PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
-  var count = Math.floor(corruptible.length * Math.min(span.intensity * (cfg.intensity != null ? cfg.intensity : 1.0), 1.0));
+  var count = Math.floor(corruptible.length * Math.min(intensity, 1.0));
   if (count === 0) return span.text;
-  var positions = span.mode === "consistent"
+  var positions = mode === "consistent"
     ? _lcgSelect(corruptible.length, count, span.seed)
     : new Set([...Array(corruptible.length).keys()].sort(function() { return Math.random() - 0.5; }).slice(0, count));
   var a = 1664525, c = 1013904223, m = 4294967296;
@@ -153,7 +165,7 @@ function _corruptString(span, cfg) {
   var chars = [...span.text];
   corruptible.forEach(function(charIdx, posIdx) {
     if (positions.has(posIdx)) {
-      if (span.mode === "consistent") {
+      if (mode === "consistent") {
         state = (a * state + c) % m;
         chars[charIdx] = charset[state % charset.length];
       } else {
@@ -169,7 +181,7 @@ function _assembleText(segments, cfg) {
   var corruption = (cfg && cfg.corruption) || {};
   return segments.map(function(seg) {
     if (typeof seg === "string") return seg.replace(/\{pause\}/g, "");
-    if (!corruption.enabled) return seg.text;
+    if (!corruption.enabled || seg.resolve_style) return seg.text;
     return _corruptString(seg, corruption);
   }).join("");
 }
@@ -253,13 +265,17 @@ var SETTINGS_SECTIONS = [
     preserveOnGlobalReset: false, hasSubscreen: true,
     defaultKeys: ['corruption'],
     rows: [
-      { key: 'corruption.enabled',           label: 'Enabled',         type: 'boolean',                                              subsection: 'Corruption' },
-      { key: 'corruption.intensity',         label: 'Intensity',       type: 'float',   unit: '×',                             subsection: null },
-      { key: 'corruption.mode',              label: 'Mode',            type: 'cycle',   values: ['consistent', 'random'],            subsection: null },
-      { key: 'corruption.charset',           label: 'Character set',   type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], subsection: null },
-      { key: 'corruption.animate',           label: 'Animate',         type: 'boolean',                                             subsection: null },
-      { key: 'corruption.scramble_frames',   label: 'Scramble frames', type: 'number',  unit: '',                                   subsection: null },
-      { key: 'corruption.scramble_delay_ms', label: 'Scramble delay',  type: 'number',  unit: 'ms',                                 subsection: null },
+      { key: 'corruption.enabled',              label: 'Enabled',              type: 'boolean',                                       subsection: 'Corruption' },
+      { key: 'corruption.intensity',            label: 'Intensity Default',    type: 'float',   unit: '×',                             subsection: null },
+      { key: 'corruption.intensity_multiplier', label: 'Intensity Multiplier', type: 'float',   unit: '×',                             subsection: null },
+      { key: 'corruption.mode',                 label: 'Mode Default',         type: 'cycle',   values: ['consistent', 'random'],      subsection: null },
+      { key: 'corruption.charset',              label: 'Character set',        type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], subsection: null },
+      { key: 'corruption.animate',              label: 'Animate',              type: 'boolean',                                       subsection: null },
+      { key: 'corruption.scramble_frames',      label: 'Scramble frames',      type: 'number',  unit: '',                              subsection: null },
+      { key: 'corruption.scramble_delay_ms',    label: 'Scramble delay',       type: 'number',  unit: 'ms',                            subsection: null },
+      { key: 'corruption.resolve_frames',       label: 'Resolve frames',       type: 'number',  unit: '',                              subsection: null },
+      { key: 'corruption.resolve_delay_ms',     label: 'Resolve delay',        type: 'number',  unit: 'ms',                            subsection: null },
+      { key: 'corruption.cascade_stagger_ms',   label: 'Cascade stagger',      type: 'number',  unit: 'ms',                            subsection: null },
     ],
   },
   {
@@ -267,7 +283,7 @@ var SETTINGS_SECTIONS = [
     preserveOnGlobalReset: true, hasSubscreen: false,
     defaultKeys: ['player_name'],
     rows: [
-      { key: 'player_name', label: 'Player name', type: 'text', subsection: 'Player' },
+      { key: 'player_name', label: 'Player name Default', type: 'text', subsection: 'Player' },
     ],
   },
   {
@@ -1417,7 +1433,8 @@ function renderAccessibleSectionSubscreen(section) {
     if (row.type === 'boolean') display = val ? 'On' : 'Off';
     else if (row.type === 'a11y') display = val === null || val === undefined ? 'Auto' : val ? 'On' : 'Off';
     else if (row.type === 'cycle') display = val;
-    else display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+    else if (val === null || val === undefined) display = 'Auto';
+    else display = String(val) + (row.unit ? ' ' + row.unit : '');
     return '<div role="listitem" class="r-setting-row" tabindex="0" data-section-row-index="' + i + '"' +
       ' aria-label="' + escapeHtml(row.label) + ', currently ' + escapeHtml(String(display)) + '">' +
       '<span class="r-setting-num">' + (i + 1) + '.</span>' +
@@ -1498,8 +1515,10 @@ function renderSectionSubscreen(section) {
       display = val === null || val === undefined ? 'auto' : val ? 'on' : 'off';
     } else if (row.type === 'cycle') {
       display = val;
+    } else if (val === null || val === undefined) {
+      display = 'Auto';
     } else {
-      display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+      display = String(val) + (row.unit ? ' ' + row.unit : '');
     }
     rows += '<div class="terminal-settings-row" data-action="section-row" data-row="' + i + '">' +
       '<span class="setting-num">' + (i + 1) + '.</span>' +

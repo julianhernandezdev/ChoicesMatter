@@ -102,7 +102,7 @@ Stories have two top-level keys: `meta` and `nodes`.
 | `ending_type` | No | `good`, `bad`, or `neutral` — controls ending panel color |
 | `scene` | No | Location label displayed as a dim Rule header above the story panel; once set, carries forward to nodes without a `scene` key |
 | `choice_number_color` | No | `rich` color name or hex (e.g. `bright_red`, `#ffaa00`) — node-level fallback for choice number prefixes; overridden per-choice by `choice.color` |
-| `corruption` | No | `float` 0–1 or `{ "intensity": float, "mode": "consistent"\|"random" }` — baseline corruption for all text on this node; provides defaults for inline `{corrupt}` spans that omit params |
+| `corruption` | No | `float` 0–1 or `{ "intensity": float, "mode": "consistent"\|"random", "resolve_style": "decay"\|"cascade" }` — baseline corruption for all text on this node; provides defaults for inline `{corrupt}` spans that omit params |
 
 An empty `choices` array is treated as an ending even without `is_ending: true`.
 
@@ -239,8 +239,8 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `name_prompt` present but not a non-empty string
 - `name_default` present without `name_prompt` also being set
 - `name_default` present but not a non-empty string
-- `corruption` (node field): float not in `[0.0, 1.0]`; dict containing unknown keys (only `intensity` and `mode` are allowed); dict `intensity` not a float in `[0.0, 1.0]`; dict `mode` not `"consistent"` or `"random"`; any other type
-- `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`
+- `corruption` (node field): float not in `[0.0, 1.0]`; dict containing unknown keys (only `intensity`, `mode`, and `resolve_style` are allowed); dict `intensity` not a float in `[0.0, 1.0]`; dict `mode` not `"consistent"` or `"random"`; dict `resolve_style` not `"decay"` or `"cascade"`; any other type
+- `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`; resolve_style param not `"decay"` or `"cascade"`
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
@@ -394,13 +394,17 @@ Per-character extra pauses are configurable in `settings.json`:
   },
   "corruption": {
     "enabled": true,
-    "intensity": 1.0,
+    "intensity": 0.6,
+    "intensity_multiplier": 1.0,
     "mode": "consistent",
     "charset": "blocks",
     "custom_chars": "█▓▒░",
     "animate": true,
-    "scramble_frames": 8,
-    "scramble_delay_ms": 60
+    "scramble_frames": 85,
+    "scramble_delay_ms": 40,
+    "resolve_frames": null,
+    "resolve_delay_ms": null,
+    "cascade_stagger_ms": null
   }
 }
 ```
@@ -427,8 +431,14 @@ Authors wrap phrases in `{corrupt}…{/corrupt}` to mark them for glitch renderi
 | `{corrupt:0.8}text{/corrupt}` | Sets intensity (0.0–1.0) for this span |
 | `{corrupt:random}text{/corrupt}` | Sets mode for this span (`consistent` or `random`) |
 | `{corrupt:0.8:random}text{/corrupt}` | Sets both — intensity first, then mode |
+| `{corrupt:0.8:random:decay}text{/corrupt}` | Sets intensity, mode, and resolve style — span types in corrupted, then settles into clean text via a shrinking-intensity decay |
+| `{corrupt:0.8:random:cascade}text{/corrupt}` | Same, but characters lock into their clean value one at a time instead of decaying together |
 
-Inheritance chain: span param → node `corruption` field → `settings.json` `corruption` defaults. Effective intensity is `min(author_intensity × cfg["corruption"]["intensity"], 1.0)`.
+Params are positional and must appear in order (`intensity:mode:resolve_style`) — a value in the wrong slot is not validated against the other params' formats and is rendered as literal text instead of being applied.
+
+Story-defined `intensity`/`mode` (node or span) now fully **override** the global `Intensity Default`/`Mode Default` settings rather than being multiplied with them — the global settings apply only when the story defines neither. `Intensity Multiplier` is a separate, always-applied accessibility control layered on top of whichever value wins (span → node → global default).
+
+Inheritance chain: span param → node `corruption` field → `settings.json` `corruption` defaults. `resolve_style` follows the same chain but has no global-settings fallback — omitting it everywhere simply means the span never enters a resolve phase.
 
 `{corrupt}` spans are not supported in choice `label` fields. Nested spans are forbidden. Every open tag must have a matching close tag — mismatches raise `StoryValidationError` at load time.
 

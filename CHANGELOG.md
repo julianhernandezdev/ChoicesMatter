@@ -38,6 +38,15 @@ All notable changes to Choices Matter, most recent first.
 - **Restored** *The Locked Room* (v1.3) and *The Watcher in the Light* (v1.1) to public release (`stories/horror/`) — both were excluded from the 2026-05 general release for graphic content; that call no longer applies and both validate cleanly via `scripts/validate_story.py`
 - **Synced** `web/stories.json` — added *The One-Eyed Guest*, *The Locked Room*, and *The Watcher in the Light* via `scripts/sync_stories.py`
 
+### Corruption Resolve Effect
+- **Added** `resolve_style` param (`decay`/`cascade`) as the 4th positional param on `{corrupt:intensity:mode:resolve_style}` spans, and as an optional key on the node `corruption` field — an opt-in second typewriter phase that settles a corrupted span into its original clean text
+- **Added** `cascade_reveal_order`, `effective_mode`, `effective_intensity` to `src/corruption.py`; mirrored in `web/app.js`/`web/typewriter.js`
+- **Fixed** `settings.json`'s `corruption.mode` was documented as a fallback default but was never actually read by `resolve_corruption()` — now wired correctly via render-time resolution in `display.py`/`app.js`/`typewriter.js`
+- **Changed** `corruption.intensity` (relabeled **Intensity Default**) no longer multiplies with story-defined intensity — a story-defined value now fully overrides it, matching `mode`'s existing override-or-default behavior. This is a player-visible behavior change, not just a bug fix.
+- **Added** `corruption.intensity_multiplier` (relabeled **Intensity Multiplier**) — a new always-applied scalar restoring the global corruption-dampening accessibility control that the Intensity Default change would otherwise have removed
+- **Added** `resolve_frames`, `resolve_delay_ms`, `cascade_stagger_ms` settings (fall back to `scramble_frames`/`scramble_delay_ms` when unset)
+- **Changed** `player_name` setting relabeled **Player name Default** (label only — no behavior change, `meta.name_prompt` already overrides it)
+
 ### Default Settings & Section Registry
 - **Added** `SETTINGS_SECTIONS` registry (Python `src/config.py`, web `web/app.js`) as single source of truth for all settings — each entry declares id, label, preserve flag, subscreen flag, config keys, and row descriptors
 - **Changed** Settings screen rendering is now fully registry-driven on both platforms; web `SETTINGS_ROWS` is now a derived constant

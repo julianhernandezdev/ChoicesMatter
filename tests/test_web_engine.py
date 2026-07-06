@@ -368,7 +368,7 @@ def test_js_resolve_corruption_span_object() -> None:
     result = json.loads(_rc("{corrupt}broken{/corrupt}", None))
     assert len(result) == 1
     assert result[0]["text"] == "broken"
-    assert result[0]["mode"] == "consistent"
+    assert result[0]["mode"] is None
 
 
 def test_js_resolve_corruption_intensity_override() -> None:
@@ -435,3 +435,35 @@ console.log(JSON.stringify(view.node.text));
     assert result[0] == "Hello "
     assert result[1]["text"] == "world"
     assert result[2] == "."
+
+
+def test_js_resolve_corruption_resolve_style_decay() -> None:
+    result = json.loads(_rc("{corrupt:0.8:consistent:decay}text{/corrupt}", None))
+    assert result[0]["resolve_style"] == "decay"
+
+
+def test_js_resolve_corruption_resolve_style_cascade() -> None:
+    result = json.loads(_rc("{corrupt:0.8:random:cascade}text{/corrupt}", None))
+    assert result[0]["resolve_style"] == "cascade"
+
+
+def test_js_resolve_corruption_resolve_style_omitted_is_null() -> None:
+    result = json.loads(_rc("{corrupt}text{/corrupt}", None))
+    assert result[0]["resolve_style"] is None
+
+
+def test_js_resolve_corruption_resolve_style_alone_skips_intensity_and_mode() -> None:
+    result = json.loads(_rc("{corrupt:decay}text{/corrupt}", None))
+    assert result[0]["resolve_style"] == "decay"
+    assert result[0]["intensity"] is None
+    assert result[0]["mode"] is None
+
+
+def test_js_resolve_corruption_resolve_style_inherits_from_node() -> None:
+    result = json.loads(_rc("{corrupt}text{/corrupt}", {"resolve_style": "cascade"}))
+    assert result[0]["resolve_style"] == "cascade"
+
+
+def test_js_resolve_corruption_intensity_is_null_when_unspecified() -> None:
+    result = json.loads(_rc("{corrupt}text{/corrupt}", None))
+    assert result[0]["intensity"] is None

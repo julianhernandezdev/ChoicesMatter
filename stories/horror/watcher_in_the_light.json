@@ -190,7 +190,7 @@
 
     "evidence_choice": {
       "choice_number_color": "bright_red",
-      "text": "The transcriptions run sixty pages. You skim the first few, then stop skimming. Then sit down on the floor and read every word.\n\nIt isn't language exactly — more like the grammar underneath language, the part that existed before words. Edmund translated it anyway. The phrase at the centre of everything reads, in his approximation: {corrupt:0.6}I have always been here. I will always be here. You are already part of the pattern.{/corrupt}\n\nHis last transcription entry: \"It's right. It was right from the beginning.\"\n\nYou're holding these pages. Decide.",
+      "text": "The transcriptions run sixty pages. You skim the first few, then stop skimming. Then sit down on the floor and read every word.\n\nIt isn't language exactly — more like the grammar underneath language, the part that existed before words. Edmund translated it anyway. The phrase at the centre of everything reads, in his approximation: {corrupt:0.6:cascade}I have always been here. I will always be here. You are already part of the pattern.{/corrupt}\n\nHis last transcription entry: \"It's right. It was right from the beginning.\"\n\nYou're holding these pages. Decide.",
       "choices": [
         {
           "label": "Burn it. The charts, the notebook, all of it. This should not exist.",

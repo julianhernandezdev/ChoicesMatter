@@ -442,6 +442,7 @@ class StoryLoader:
     @staticmethod
     def _parse_corruption(value: object, node_id: str, filename: str) -> float | dict:
         _CORRUPTION_MODES = {"consistent", "random"}
+        _RESOLVE_STYLES = {"decay", "cascade"}
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             v = float(value)
             if not (0.0 <= v <= 1.0):
@@ -450,7 +451,7 @@ class StoryLoader:
                 )
             return v
         if isinstance(value, dict):
-            unknown = set(value.keys()) - {"intensity", "mode"}
+            unknown = set(value.keys()) - {"intensity", "mode", "resolve_style"}
             if unknown:
                 raise StoryValidationError(
                     f"'{filename}': node '{node_id}' corruption dict has unknown keys: {sorted(unknown)}"
@@ -466,6 +467,12 @@ class StoryLoader:
                 if m not in _CORRUPTION_MODES:
                     raise StoryValidationError(
                         f"'{filename}': node '{node_id}' corruption mode must be 'consistent' or 'random', got '{m}'"
+                    )
+            if "resolve_style" in value:
+                r = value["resolve_style"]
+                if r not in _RESOLVE_STYLES:
+                    raise StoryValidationError(
+                        f"'{filename}': node '{node_id}' corruption resolve_style must be 'decay' or 'cascade', got '{r}'"
                     )
             return value
         raise StoryValidationError(
@@ -491,7 +498,7 @@ class StoryLoader:
                 if inner:
                     parts = inner.split(":")
                     for part in parts:
-                        if part in ("consistent", "random"):
+                        if part in ("consistent", "random", "decay", "cascade"):
                             continue
                         try:
                             v = float(part)
@@ -501,7 +508,8 @@ class StoryLoader:
                                 )
                         except ValueError:
                             raise StoryValidationError(
-                                f"'{filename}': {location}: unknown {{corrupt}} mode '{part}' — use 'consistent' or 'random'"
+                                f"'{filename}': {location}: unknown {{corrupt}} param '{part}' — use a float 0.0–1.0, "
+                                f"'consistent'/'random', or 'decay'/'cascade'"
                             )
             else:
                 if depth == 0:
