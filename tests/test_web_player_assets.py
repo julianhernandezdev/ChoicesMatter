@@ -135,3 +135,39 @@ def test_app_js_corrupt_string_uses_effective_intensity() -> None:
 def test_app_js_assemble_text_bypasses_resolving_spans() -> None:
     app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     assert "seg.resolve_style" in app
+
+
+def test_app_js_settings_mode_row_relabeled() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "label: 'Mode Default'" in app
+
+
+def test_app_js_settings_intensity_row_relabeled() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "label: 'Intensity Default'" in app
+
+
+def test_app_js_settings_has_intensity_multiplier_row() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "corruption.intensity_multiplier" in app
+    assert "label: 'Intensity Multiplier'" in app
+
+
+def test_app_js_settings_has_resolve_timing_rows() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "corruption.resolve_frames" in app
+    assert "corruption.resolve_delay_ms" in app
+    assert "corruption.cascade_stagger_ms" in app
+
+
+def test_app_js_player_name_row_relabeled() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "label: 'Player name Default'" in app
+
+
+def test_typewriter_js_defaults_include_new_keys() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "intensity_multiplier: 1.0" in tw
+    assert "resolve_frames: null" in tw
+    assert "resolve_delay_ms: null" in tw
+    assert "cascade_stagger_ms: null" in tw

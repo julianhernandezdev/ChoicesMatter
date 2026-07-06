@@ -12,10 +12,14 @@ export const TYPEWRITER_DEFAULTS = {
     enabled: true,
     charset: "blocks",
     intensity: 0.6,
+    intensity_multiplier: 1.0,
     mode: "consistent",
     animate: true,
     scramble_frames: 85,
     scramble_delay_ms: 40,
+    resolve_frames: null,
+    resolve_delay_ms: null,
+    cascade_stagger_ms: null,
   },
 };
 

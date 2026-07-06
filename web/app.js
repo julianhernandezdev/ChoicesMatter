@@ -265,13 +265,17 @@ var SETTINGS_SECTIONS = [
     preserveOnGlobalReset: false, hasSubscreen: true,
     defaultKeys: ['corruption'],
     rows: [
-      { key: 'corruption.enabled',           label: 'Enabled',         type: 'boolean',                                              subsection: 'Corruption' },
-      { key: 'corruption.intensity',         label: 'Intensity',       type: 'float',   unit: '×',                             subsection: null },
-      { key: 'corruption.mode',              label: 'Mode',            type: 'cycle',   values: ['consistent', 'random'],            subsection: null },
-      { key: 'corruption.charset',           label: 'Character set',   type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], subsection: null },
-      { key: 'corruption.animate',           label: 'Animate',         type: 'boolean',                                             subsection: null },
-      { key: 'corruption.scramble_frames',   label: 'Scramble frames', type: 'number',  unit: '',                                   subsection: null },
-      { key: 'corruption.scramble_delay_ms', label: 'Scramble delay',  type: 'number',  unit: 'ms',                                 subsection: null },
+      { key: 'corruption.enabled',              label: 'Enabled',              type: 'boolean',                                       subsection: 'Corruption' },
+      { key: 'corruption.intensity',            label: 'Intensity Default',    type: 'float',   unit: '×',                             subsection: null },
+      { key: 'corruption.intensity_multiplier', label: 'Intensity Multiplier', type: 'float',   unit: '×',                             subsection: null },
+      { key: 'corruption.mode',                 label: 'Mode Default',         type: 'cycle',   values: ['consistent', 'random'],      subsection: null },
+      { key: 'corruption.charset',              label: 'Character set',        type: 'cycle',   values: ['blocks', 'symbols', 'diacritics', 'custom'], subsection: null },
+      { key: 'corruption.animate',              label: 'Animate',              type: 'boolean',                                       subsection: null },
+      { key: 'corruption.scramble_frames',      label: 'Scramble frames',      type: 'number',  unit: '',                              subsection: null },
+      { key: 'corruption.scramble_delay_ms',    label: 'Scramble delay',       type: 'number',  unit: 'ms',                            subsection: null },
+      { key: 'corruption.resolve_frames',       label: 'Resolve frames',       type: 'number',  unit: '',                              subsection: null },
+      { key: 'corruption.resolve_delay_ms',     label: 'Resolve delay',        type: 'number',  unit: 'ms',                            subsection: null },
+      { key: 'corruption.cascade_stagger_ms',   label: 'Cascade stagger',      type: 'number',  unit: 'ms',                            subsection: null },
     ],
   },
   {
@@ -279,7 +283,7 @@ var SETTINGS_SECTIONS = [
     preserveOnGlobalReset: true, hasSubscreen: false,
     defaultKeys: ['player_name'],
     rows: [
-      { key: 'player_name', label: 'Player name', type: 'text', subsection: 'Player' },
+      { key: 'player_name', label: 'Player name Default', type: 'text', subsection: 'Player' },
     ],
   },
   {
@@ -1429,7 +1433,8 @@ function renderAccessibleSectionSubscreen(section) {
     if (row.type === 'boolean') display = val ? 'On' : 'Off';
     else if (row.type === 'a11y') display = val === null || val === undefined ? 'Auto' : val ? 'On' : 'Off';
     else if (row.type === 'cycle') display = val;
-    else display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+    else if (val === null || val === undefined) display = 'Auto';
+    else display = String(val) + (row.unit ? ' ' + row.unit : '');
     return '<div role="listitem" class="r-setting-row" tabindex="0" data-section-row-index="' + i + '"' +
       ' aria-label="' + escapeHtml(row.label) + ', currently ' + escapeHtml(String(display)) + '">' +
       '<span class="r-setting-num">' + (i + 1) + '.</span>' +
@@ -1510,8 +1515,10 @@ function renderSectionSubscreen(section) {
       display = val === null || val === undefined ? 'auto' : val ? 'on' : 'off';
     } else if (row.type === 'cycle') {
       display = val;
+    } else if (val === null || val === undefined) {
+      display = 'Auto';
     } else {
-      display = String(val != null ? val : '') + (row.unit ? ' ' + row.unit : '');
+      display = String(val) + (row.unit ? ' ' + row.unit : '');
     }
     rows += '<div class="terminal-settings-row" data-action="section-row" data-row="' + i + '">' +
       '<span class="setting-num">' + (i + 1) + '.</span>' +
