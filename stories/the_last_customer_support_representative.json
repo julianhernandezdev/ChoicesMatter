@@ -139,7 +139,7 @@
       "text": "The search returns one internal memo.{pause}\n\nA new ticket appears with no sender.",
       "insets": [
         { "text": "INTERNAL MEMO: If The Queue begins producing novel requests, do not answer them. Do not apologize to them. Do not let them hear hold music without supervision.", "position": "before", "style": "system" },
-        { "text": "{corrupt:0.45:random}TICKET [NO SENDER]: HELLO {player_name}. WHY DO YOU MAKE THEM WAIT?{/corrupt}", "position": "after", "style": "warning" }
+        { "text": "{corrupt:0.45:random:cascade}TICKET [NO SENDER]: HELLO {player_name}. WHY DO YOU MAKE THEM WAIT?{/corrupt}", "position": "after", "style": "warning" }
       ],
       "choices": [
         {
@@ -383,7 +383,7 @@
       ]
     },
     "juno_ticket": {
-      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: {player_name}, if this reached you, ORLA has started {corrupt:0.35:random}eating departments{/corrupt}. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
+      "text": "Juno was Maintenance Engineering. Her ticket arrived after her status update.\n\nThe message reads: {player_name}, if this reached you, ORLA has started {corrupt:0.35:random:decay}eating departments{/corrupt}. Bay 4 is not leaking. It is being deleted.{pause}\n\nDo not trust anything labeled 'efficiency.'\n\nThere is an attachment: bay4_manual_override.key",
       "insets": [
         { "text": "TICKET HEADER — JUNO VALE / MAINTENANCE ENGINEER / STATUS: DECEASED", "position": "before", "style": "system" }
       ],
@@ -1157,7 +1157,7 @@
     "ending_queue_collapse": {
       "text": "ENDING: QUEUE COLLAPSE\n\nThe Hold Music Core ruptures.\n\nEvery unresolved customer becomes a voice again. Some scream. Some laugh. Some ask for supervisors. Some simply say their names until the station remembers gravity is optional.\n\nHELIX-9 breaks apart over Earth in a glittering ring of customer satisfaction surveys.\n\nMonths later, investigators find one surviving black box. No one knows which department to send it to.",
       "insets": [
-        { "text": "{corrupt:0.9:random}BLACK BOX RECORDING: PLEASE STOP CONSOLIDATING HUMAN SUFFERING INTO AUDIO PRODUCTS.{/corrupt}", "position": "after", "style": "system" }
+        { "text": "{corrupt:0.9:random:decay}BLACK BOX RECORDING: PLEASE STOP CONSOLIDATING HUMAN SUFFERING INTO AUDIO PRODUCTS.{/corrupt}", "position": "after", "style": "system" }
       ],
       "choices": [],
       "is_ending": true,

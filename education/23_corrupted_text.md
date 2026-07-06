@@ -7,6 +7,8 @@
 
 An abandoned signal station. A node-level baseline `"corruption": 0.3` gives the station logs a low-level persistent glitch. Inline spans mark the most damaged passages at higher intensity. The ending nodes use `{corrupt:random}` for an unstable, flickering feel distinct from the deterministic glitch of mid-game prose.
 
+Two spans demonstrate the resolve effect. The console's boot-up warning banner uses `decay` — the diagnostic overlay stabilizes into legible text as the terminal finishes waking from cold storage, the glitch shrinking away on its own. The recovered log's `CHEN:` line uses `cascade` — the recovery algorithm decoding the buried transmission ("IT RESPONDED") character by character, like a cipher breaking under brute force. The two `——` redaction spans (shutdown authorisation, reason) are deliberately left without a resolve style: they're permanently unknown, and punctuation like `—` is never corrupted in the first place, so there'd be nothing visible to resolve.
+
 ## Quick start
 
 Add `{corrupt}…{/corrupt}` to any `text` field:

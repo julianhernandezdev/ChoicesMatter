@@ -77,7 +77,7 @@
           "position": "after"
         }
       ],
-      "text": "The terminal opens a carrier shell and fails to render most of it.\n\n{corrupt:0.3:random}SIGNAL ORIGIN: // RELAY INDEX MISSING // CARRIER: CLASS-7 BURST // ENCODING: UNDECLARED // RECIPIENT FIELD UNAVAILABLE // AWAITING RESPONSE{/corrupt}\n\nAt first glance it is ordinary damage: compression noise, storage rot, a packet old enough to have lost its edges. You log the integrity percentage and prepare the standard recovery procedure.",
+      "text": "The terminal opens a carrier shell and fails to render most of it.\n\n{corrupt:0.3:random:decay}SIGNAL ORIGIN: // RELAY INDEX MISSING // CARRIER: CLASS-7 BURST // ENCODING: UNDECLARED // RECIPIENT FIELD UNAVAILABLE // AWAITING RESPONSE{/corrupt}\n\nAt first glance it is ordinary damage: compression noise, storage rot, a packet old enough to have lost its edges. You log the integrity percentage and prepare the standard recovery procedure.",
       "choices": [
         {
           "label": "Run a conservative recovery pass.",
