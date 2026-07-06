@@ -176,20 +176,20 @@ Processing order in the engine pipeline:
 
 ## Settings reference
 
-Eleven keys live under `"corruption"` in `settings.json`:
+Twelve keys live under `"corruption"` in `settings.json`:
 
 ```json
 {
   "corruption": {
     "enabled": true,
-    "intensity": 1.0,
+    "intensity": 0.6,
     "intensity_multiplier": 1.0,
     "mode": "consistent",
     "charset": "blocks",
     "custom_chars": "█▓▒░",
     "animate": true,
-    "scramble_frames": 8,
-    "scramble_delay_ms": 60,
+    "scramble_frames": 85,
+    "scramble_delay_ms": 40,
     "resolve_frames": null,
     "resolve_delay_ms": null,
     "cascade_stagger_ms": null
@@ -200,19 +200,19 @@ Eleven keys live under `"corruption"` in `settings.json`:
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `enabled` | bool | `true` | Master toggle — `false` renders clean text everywhere, strips all `{corrupt}` spans |
-| `intensity` | float 0–1 | `1.0` | (Labelled **Intensity Default** in-game) Fallback intensity used only when neither span nor node specifies one — a story-defined intensity fully overrides this rather than multiplying with it |
+| `intensity` | float 0–1 | `0.6` | (Labelled **Intensity Default** in-game) Fallback intensity used only when neither span nor node specifies one — a story-defined intensity fully overrides this rather than multiplying with it |
 | `intensity_multiplier` | float 0–1 | `1.0` | (Labelled **Intensity Multiplier** in-game) Always-applied accessibility scalar layered on top of whichever intensity wins (span → node → `intensity` default) |
 | `mode` | string | `"consistent"` | (Labelled **Mode Default** in-game) Fallback mode when neither span nor node specifies one — same override-or-default behaviour as `intensity` |
 | `charset` | string | `"blocks"` | Active character set — `"blocks"`, `"symbols"`, `"diacritics"`, or `"custom"` |
 | `custom_chars` | string | `"█▓▒░"` | Character pool used only when `charset` is `"custom"` |
 | `animate` | bool | `true` | Scramble-settle animation in typewriter mode; `false` renders statically |
-| `scramble_frames` | int | `8` | Number of scramble frames before the span settles to its final corrupted form |
-| `scramble_delay_ms` | int | `60` | Milliseconds between scramble frames |
+| `scramble_frames` | int | `85` | Number of scramble frames before the span settles to its final corrupted form |
+| `scramble_delay_ms` | int | `40` | Milliseconds between scramble frames |
 | `resolve_frames` | int or `null` | `null` | Number of frames for a `decay` resolve; falls back to `scramble_frames` when `null` |
 | `resolve_delay_ms` | int or `null` | `null` | Milliseconds between decay frames; falls back to `scramble_delay_ms` when `null` |
 | `cascade_stagger_ms` | int or `null` | `null` | Milliseconds between each character locking in during a `cascade` resolve; falls back to `scramble_delay_ms` when `null` |
 
-Access these in the CLI via **Settings → 10. Corruption →** from the story picker. The sub-screen exposes all eleven keys, showing `Auto` for any of the three resolve-timing keys left `null`. The `custom_chars` row is dimmed and non-interactive unless `charset` is `"custom"`.
+Access these in the CLI via **Settings → 10. Corruption →** from the story picker. The sub-screen exposes all twelve keys, showing `Auto` for any of the three resolve-timing keys left `null`. The `custom_chars` row is dimmed and non-interactive unless `charset` is `"custom"`.
 
 ## Complete worked example
 

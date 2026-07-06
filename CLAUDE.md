@@ -394,14 +394,14 @@ Per-character extra pauses are configurable in `settings.json`:
   },
   "corruption": {
     "enabled": true,
-    "intensity": 1.0,
+    "intensity": 0.6,
     "intensity_multiplier": 1.0,
     "mode": "consistent",
     "charset": "blocks",
     "custom_chars": "█▓▒░",
     "animate": true,
-    "scramble_frames": 8,
-    "scramble_delay_ms": 60,
+    "scramble_frames": 85,
+    "scramble_delay_ms": 40,
     "resolve_frames": null,
     "resolve_delay_ms": null,
     "cascade_stagger_ms": null
