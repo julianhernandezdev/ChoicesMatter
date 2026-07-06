@@ -170,4 +170,20 @@ def test_typewriter_js_defaults_include_new_keys() -> None:
     assert "intensity_multiplier: 1.0" in tw
     assert "resolve_frames: null" in tw
     assert "resolve_delay_ms: null" in tw
+
+
+def test_typewriter_js_has_resolve_decay_queue_item() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "'resolve-decay'" in tw
+
+
+def test_typewriter_js_has_resolve_cascade_queue_item() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "'resolve-cascade'" in tw
+
+
+def test_typewriter_js_uses_effective_intensity_resolution() -> None:
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "_twEffectiveIntensity(" in tw
+    assert "_twEffectiveMode(" in tw
     assert "cascade_stagger_ms: null" in tw

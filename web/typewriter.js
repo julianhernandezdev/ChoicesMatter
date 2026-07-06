@@ -94,15 +94,27 @@ function _twLcgSelect(nTotal, nSelect, seed) {
   return new Set(indices.slice(nTotal - nSelect));
 }
 
+function _twEffectiveMode(spanMode, corruption) {
+  return spanMode || (corruption.mode != null ? corruption.mode : "consistent");
+}
+
+function _twEffectiveIntensity(spanIntensity, corruption) {
+  var resolved = spanIntensity != null ? spanIntensity : (corruption.intensity != null ? corruption.intensity : 1.0);
+  var multiplier = corruption.intensity_multiplier != null ? corruption.intensity_multiplier : 1.0;
+  return Math.min(resolved * multiplier, 1.0);
+}
+
 function _twCorruptString(span, corruption) {
+  var mode = _twEffectiveMode(span.mode, corruption);
+  var intensity = _twEffectiveIntensity(span.intensity, corruption);
   var charset = corruption.charset === "custom"
     ? [...(corruption.custom_chars || "█▓▒░")]
     : (_TW_CHARSET_MAP[corruption.charset] || _TW_CHARSET_MAP.blocks);
   if (!charset.length) return span.text;
   var corruptible = [...span.text].map(function(c, i) { return _TW_PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
-  var count = Math.floor(corruptible.length * Math.min(span.intensity * (corruption.intensity != null ? corruption.intensity : 1.0), 1.0));
+  var count = Math.floor(corruptible.length * Math.min(intensity, 1.0));
   if (count === 0) return span.text;
-  var positions = span.mode === "consistent"
+  var positions = mode === "consistent"
     ? _twLcgSelect(corruptible.length, count, span.seed)
     : new Set([...Array(corruptible.length).keys()].sort(function() { return Math.random() - 0.5; }).slice(0, count));
   var a = 1664525, c = 1013904223, m = 4294967296;
@@ -110,7 +122,7 @@ function _twCorruptString(span, corruption) {
   var chars = [...span.text];
   corruptible.forEach(function(charIdx, posIdx) {
     if (positions.has(posIdx)) {
-      if (span.mode === "consistent") {
+      if (mode === "consistent") {
         state = (a * state + c) % m;
         chars[charIdx] = charset[state % charset.length];
       } else {
@@ -144,7 +156,7 @@ export function startTypewriter(element, textOrSegments) {
   // Build full assembled text for skip-to-end
   var fullText = inputSegments.map(function(seg) {
     if (typeof seg === 'string') return seg.replace(/\{pause\}/g, '');
-    if (!corruption.enabled) return seg.text;
+    if (!corruption.enabled || seg.resolve_style) return seg.text;
     return _twCorruptString(seg, corruption);
   }).join('');
 
@@ -170,6 +182,11 @@ export function startTypewriter(element, textOrSegments) {
       } else if (rendered.length > 0) {
         playQueue.push({ type: 'text', text: rendered });
       }
+      if (corruption.enabled && seg.resolve_style === 'decay') {
+        playQueue.push({ type: 'resolve-decay', span: seg });
+      } else if (corruption.enabled && seg.resolve_style === 'cascade') {
+        playQueue.push({ type: 'resolve-cascade', span: seg });
+      }
     }
   });
 
@@ -183,6 +200,8 @@ export function startTypewriter(element, textOrSegments) {
   var charIdx = 0;
   var scrambleFrame = 0;
   var scrambleBase = '';
+  var cascadeOrder = null;
+  var cascadeChars = null;
 
   function step() {
     // Advance past exhausted text items
@@ -216,6 +235,62 @@ export function startTypewriter(element, textOrSegments) {
         scrambleFrame = 0;
         element.textContent = scrambleBase;
         playQueue[queueIdx] = { type: 'text', text: item.settled };
+        twAnimation = { id: setTimeout(step, delay), text: fullText, element: element, toReveal: toReveal };
+      }
+      return;
+    }
+    if (item.type === 'resolve-decay') {
+      var resolveFrames = corruption.resolve_frames != null ? corruption.resolve_frames : corruption.scramble_frames;
+      var resolveDelay = corruption.resolve_delay_ms != null ? corruption.resolve_delay_ms : corruption.scramble_delay_ms;
+      if (scrambleFrame === 0) scrambleBase = element.textContent.slice(0, -item.span.text.length);
+      var intensity = _twEffectiveIntensity(item.span.intensity, corruption) * (1 - (scrambleFrame + 1) / resolveFrames);
+      var frameText = _twCorruptString(Object.assign({}, item.span, { intensity: intensity }), corruption);
+      element.textContent = scrambleBase + frameText;
+      scrambleFrame++;
+      if (scrambleFrame < resolveFrames) {
+        twAnimation = { id: setTimeout(step, resolveDelay), text: fullText, element: element, toReveal: toReveal };
+      } else {
+        scrambleFrame = 0;
+        element.textContent = scrambleBase + item.span.text;
+        queueIdx++;
+        twAnimation = { id: setTimeout(step, delay), text: fullText, element: element, toReveal: toReveal };
+      }
+      return;
+    }
+    if (item.type === 'resolve-cascade') {
+      var cascadeStagger = corruption.cascade_stagger_ms != null ? corruption.cascade_stagger_ms : corruption.scramble_delay_ms;
+      if (cascadeOrder === null) {
+        scrambleBase = element.textContent.slice(0, -item.span.text.length);
+        var settledForm = element.textContent.slice(-item.span.text.length);
+        var mode = _twEffectiveMode(item.span.mode, corruption);
+        var positions = [];
+        for (var i = 0; i < item.span.text.length; i++) {
+          if (settledForm[i] !== item.span.text[i]) positions.push(i);
+        }
+        cascadeOrder = positions;
+        if (mode === 'consistent') {
+          var a = 1664525, c = 1013904223, m = 4294967296;
+          var state = item.span.seed % m;
+          for (var j = cascadeOrder.length - 1; j > 0; j--) {
+            state = (a * state + c) % m;
+            var k = state % (j + 1);
+            var tmp = cascadeOrder[j]; cascadeOrder[j] = cascadeOrder[k]; cascadeOrder[k] = tmp;
+          }
+        } else {
+          cascadeOrder.sort(function() { return Math.random() - 0.5; });
+        }
+        cascadeChars = [...settledForm];
+      }
+      if (cascadeOrder.length > 0) {
+        var nextIdx = cascadeOrder.shift();
+        cascadeChars[nextIdx] = item.span.text[nextIdx];
+        element.textContent = scrambleBase + cascadeChars.join('');
+        twAnimation = { id: setTimeout(step, cascadeStagger), text: fullText, element: element, toReveal: toReveal };
+      } else {
+        cascadeOrder = null;
+        cascadeChars = null;
+        element.textContent = scrambleBase + item.span.text;
+        queueIdx++;
         twAnimation = { id: setTimeout(step, delay), text: fullText, element: element, toReveal: toReveal };
       }
       return;
