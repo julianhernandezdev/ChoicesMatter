@@ -224,35 +224,35 @@ def test_effective_intensity_result_capped_at_1() -> None:
 
 # --- cascade_reveal_order ---
 
-def test_cascade_reveal_order_returns_corrupted_position_count() -> None:
+def test_cascade_reveal_order_returns_same_positions_shuffled() -> None:
     from src.corruption import cascade_reveal_order
-    order = cascade_reveal_order("hello world", 1.0, "consistent", 0)
-    # "hello world" has 10 corruptible chars (space excluded)
-    assert len(order) == 10
+    positions = [0, 2, 4, 6, 8]
+    order = cascade_reveal_order(positions, "consistent", 0)
+    assert sorted(order) == positions
 
-def test_cascade_reveal_order_zero_intensity_is_empty() -> None:
+def test_cascade_reveal_order_empty_positions_is_empty() -> None:
     from src.corruption import cascade_reveal_order
-    assert cascade_reveal_order("hello", 0.0, "consistent", 0) == []
+    assert cascade_reveal_order([], "consistent", 0) == []
 
 def test_cascade_reveal_order_consistent_mode_is_reproducible() -> None:
     from src.corruption import cascade_reveal_order
-    o1 = cascade_reveal_order("The door is open.", 0.5, "consistent", 99)
-    o2 = cascade_reveal_order("The door is open.", 0.5, "consistent", 99)
+    positions = [1, 3, 5, 7, 9, 11, 13]
+    o1 = cascade_reveal_order(positions, "consistent", 99)
+    o2 = cascade_reveal_order(positions, "consistent", 99)
     assert o1 == o2
 
 def test_cascade_reveal_order_random_mode_varies_across_calls() -> None:
     from src.corruption import cascade_reveal_order
-    text = "abcdefghijklmnopqrstuvwxyz"
-    orders = {tuple(cascade_reveal_order(text, 0.8, "random", 0)) for _ in range(10)}
+    positions = list(range(20))
+    orders = {tuple(cascade_reveal_order(positions, "random", 0)) for _ in range(10)}
     assert len(orders) > 1
 
-def test_cascade_reveal_order_indices_are_valid_and_unique() -> None:
+def test_cascade_reveal_order_indices_are_unique_permutation() -> None:
     from src.corruption import cascade_reveal_order
-    text = "The signal fades."
-    order = cascade_reveal_order(text, 0.6, "consistent", 5)
+    positions = [2, 5, 9, 12, 15]
+    order = cascade_reveal_order(positions, "consistent", 5)
+    assert sorted(order) == positions
     assert len(order) == len(set(order))
-    assert all(0 <= i < len(text) for i in order)
-    assert all(text[i] not in _PUNCT for i in order)
 
 
 # --- decay monotonic-subset property (via corrupt_string) ---

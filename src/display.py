@@ -302,9 +302,12 @@ class Display:
         animate = cfg_corruption.get("animate", True)
         scramble_frames = max(1, cfg_corruption.get("scramble_frames", 8))
         scramble_delay = max(0, cfg_corruption.get("scramble_delay_ms", 60)) / 1000
-        resolve_frames = max(1, cfg_corruption.get("resolve_frames") or scramble_frames)
-        resolve_delay = max(0, cfg_corruption.get("resolve_delay_ms") or cfg_corruption.get("scramble_delay_ms", 60)) / 1000
-        cascade_stagger = max(0, cfg_corruption.get("cascade_stagger_ms") or cfg_corruption.get("scramble_delay_ms", 60)) / 1000
+        _resolve_frames_raw = cfg_corruption.get("resolve_frames")
+        resolve_frames = max(1, _resolve_frames_raw if _resolve_frames_raw is not None else scramble_frames)
+        _resolve_delay_raw = cfg_corruption.get("resolve_delay_ms")
+        resolve_delay = max(0, _resolve_delay_raw if _resolve_delay_raw is not None else cfg_corruption.get("scramble_delay_ms", 60)) / 1000
+        _cascade_stagger_raw = cfg_corruption.get("cascade_stagger_ms")
+        cascade_stagger = max(0, _cascade_stagger_raw if _cascade_stagger_raw is not None else cfg_corruption.get("scramble_delay_ms", 60)) / 1000
         pause_s = self._cfg.get("typewriter", {}).get("pause_ms", 500) / 1000
         raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
         char_pauses = {k: v / 1000 for k, v in raw_pauses.items()}
@@ -385,7 +388,8 @@ class Display:
                         live.refresh()
                     elif enabled and segment.resolve_style == "cascade":
                         prefix = displayed[:len(displayed) - len(segment.text)]
-                        order = cascade_reveal_order(segment.text, intensity, mode, segment.seed)
+                        positions = [i for i in range(len(final)) if final[i] != segment.text[i]]
+                        order = cascade_reveal_order(positions, mode, segment.seed)
                         chars = list(final)
                         for idx in order:
                             if _key_pending():
