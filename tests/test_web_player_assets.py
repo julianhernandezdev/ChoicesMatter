@@ -115,3 +115,23 @@ def test_app_js_assembles_text_in_static_html() -> None:
     assert "function _assembleText(" in app
     # Text assembly is used in multiple prose placements (corruption and pause token handling)
     assert "_assembleText(" in app
+
+
+def test_app_js_has_effective_mode_helper() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function _effectiveMode(" in app
+
+
+def test_app_js_has_effective_intensity_helper() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "function _effectiveIntensity(" in app
+
+
+def test_app_js_corrupt_string_uses_effective_intensity() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "_effectiveIntensity(span.intensity" in app
+
+
+def test_app_js_assemble_text_bypasses_resolving_spans() -> None:
+    app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "seg.resolve_style" in app
