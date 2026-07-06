@@ -187,3 +187,16 @@ def test_typewriter_js_uses_effective_intensity_resolution() -> None:
     assert "_twEffectiveIntensity(" in tw
     assert "_twEffectiveMode(" in tw
     assert "cascade_stagger_ms: null" in tw
+
+
+def test_typewriter_js_decay_resolves_intensity_only_once() -> None:
+    """The decay handler must call the raw renderer directly with an already-resolved
+    intensity, not re-invoke _twCorruptString (which would re-apply intensity_multiplier
+    a second time, producing a quadratic instead of linear falloff)."""
+    tw = (ROOT / "web" / "typewriter.js").read_text(encoding="utf-8")
+    assert "_twCorruptStringRaw(" in tw
+    # The decay handler's frame computation must use the raw renderer, not _twCorruptString
+    # wrapped around an already-resolved intensity value.
+    decay_section = tw[tw.index("if (item.type === 'resolve-decay')"):tw.index("if (item.type === 'resolve-cascade')")]
+    assert "_twCorruptStringRaw(item.span.text" in decay_section
+    assert "_twCorruptString(Object.assign" not in decay_section

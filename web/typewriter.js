@@ -104,22 +104,20 @@ function _twEffectiveIntensity(spanIntensity, corruption) {
   return Math.min(resolved * multiplier, 1.0);
 }
 
-function _twCorruptString(span, corruption) {
-  var mode = _twEffectiveMode(span.mode, corruption);
-  var intensity = _twEffectiveIntensity(span.intensity, corruption);
+function _twCorruptStringRaw(text, intensity, mode, seed, corruption) {
   var charset = corruption.charset === "custom"
     ? [...(corruption.custom_chars || "█▓▒░")]
     : (_TW_CHARSET_MAP[corruption.charset] || _TW_CHARSET_MAP.blocks);
-  if (!charset.length) return span.text;
-  var corruptible = [...span.text].map(function(c, i) { return _TW_PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
+  if (!charset.length) return text;
+  var corruptible = [...text].map(function(c, i) { return _TW_PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
   var count = Math.floor(corruptible.length * Math.min(intensity, 1.0));
-  if (count === 0) return span.text;
+  if (count === 0) return text;
   var positions = mode === "consistent"
-    ? _twLcgSelect(corruptible.length, count, span.seed)
+    ? _twLcgSelect(corruptible.length, count, seed)
     : new Set([...Array(corruptible.length).keys()].sort(function() { return Math.random() - 0.5; }).slice(0, count));
   var a = 1664525, c = 1013904223, m = 4294967296;
-  var state = span.seed % m;
-  var chars = [...span.text];
+  var state = seed % m;
+  var chars = [...text];
   corruptible.forEach(function(charIdx, posIdx) {
     if (positions.has(posIdx)) {
       if (mode === "consistent") {
@@ -131,6 +129,12 @@ function _twCorruptString(span, corruption) {
     }
   });
   return chars.join("");
+}
+
+function _twCorruptString(span, corruption) {
+  var mode = _twEffectiveMode(span.mode, corruption);
+  var intensity = _twEffectiveIntensity(span.intensity, corruption);
+  return _twCorruptStringRaw(span.text, intensity, mode, span.seed, corruption);
 }
 
 // ---
@@ -243,8 +247,10 @@ export function startTypewriter(element, textOrSegments) {
       var resolveFrames = corruption.resolve_frames != null ? corruption.resolve_frames : corruption.scramble_frames;
       var resolveDelay = corruption.resolve_delay_ms != null ? corruption.resolve_delay_ms : corruption.scramble_delay_ms;
       if (scrambleFrame === 0) scrambleBase = element.textContent.slice(0, -item.span.text.length);
-      var intensity = _twEffectiveIntensity(item.span.intensity, corruption) * (1 - (scrambleFrame + 1) / resolveFrames);
-      var frameText = _twCorruptString(Object.assign({}, item.span, { intensity: intensity }), corruption);
+      var mode = _twEffectiveMode(item.span.mode, corruption);
+      var baseIntensity = _twEffectiveIntensity(item.span.intensity, corruption);
+      var intensity = baseIntensity * (1 - (scrambleFrame + 1) / resolveFrames);
+      var frameText = _twCorruptStringRaw(item.span.text, intensity, mode, item.span.seed, corruption);
       element.textContent = scrambleBase + frameText;
       scrambleFrame++;
       if (scrambleFrame < resolveFrames) {
