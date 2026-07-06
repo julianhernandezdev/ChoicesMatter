@@ -604,6 +604,8 @@ class Display:
                         self._edit_row(draft, row)
 
     def _format_row_value(self, row: dict, val) -> str:
+        if val is None:
+            return "[dim]Auto[/dim]"
         t = row.get("type", "")
         if t == "boolean":
             return "[green]on[/green]" if val else "[dim]off[/dim]"

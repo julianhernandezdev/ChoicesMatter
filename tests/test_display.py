@@ -567,6 +567,12 @@ def test_format_row_value_text(display):
     assert "Felix" in result
 
 
+def test_format_row_value_none_shows_auto(display) -> None:
+    row = {"key": "corruption.resolve_frames", "label": "Resolve frames", "type": "number", "unit": ""}
+    result = display._format_row_value(row, None)
+    assert "Auto" in result
+
+
 # ------------------------------------------------------------------
 # Debug mode: style labels
 # ------------------------------------------------------------------
