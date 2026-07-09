@@ -452,6 +452,20 @@ In web accessible mode, all corruption is stripped and original text is shown. T
 - Save is deleted on ending — a save at an ending node would require distinguishing "just reached" from "resuming at", adding edge cases for no benefit.
 - `settings.json` is gitignored (per-user). `settings.example.json` is committed as a template.
 
+## Exploration Tooling
+
+For open-ended code-understanding questions ("how does X work", "where is Y
+handled", "why does Z happen") — in the main session and in any dispatched
+subagent — try `mcp__semble__search` (and `find_related` on a promising hit)
+before reaching for Read/Grep/Glob. Read/Grep/Glob remain the right tool once
+the exact file is already known: opening a specific file to edit it, reading a
+plan/brief/spec, or reading a small config or story JSON.
+
+Don't re-Read a file already Read earlier in this same conversation with the
+same range, unless there's specific reason to believe it changed since (an
+edit landed, a tool ran that could have modified it, or substantial time/turns
+have passed). The content is already in context — reuse it.
+
 ## Adding a Story
 
 Drop a `.json` file into `/stories/`. No code changes needed.
