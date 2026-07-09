@@ -149,3 +149,138 @@ def test_scan_project_ignores_blank_and_malformed_lines(tmp_path: Path) -> None:
     acc = scan_project(tmp_path)  # must not raise
 
     assert acc.tool_calls == {}
+
+
+from scripts.audit_skill_tokens import (
+    build_snapshot,
+    format_delta,
+    format_report,
+    load_baseline,
+    main,
+    save_baseline,
+)
+
+
+# ---------------------------------------------------------------------------
+# build_snapshot
+# ---------------------------------------------------------------------------
+
+def test_build_snapshot_computes_read_share_and_fruitless_rate() -> None:
+    acc = AuditAccumulator()
+    acc.tool_calls = {"Read": 100, "mcp__semble__search": 2}
+    acc.semble_calls = 2
+    acc.result_chars_by_tool = {"Read": 4000, "Grep": 1000}  # -> 1000 tok, 250 tok
+    acc.grep_glob_total = 10
+    acc.fruitless_grep_glob = 3
+    acc.true_duplicate_reads = 7
+
+    snapshot = build_snapshot(acc)
+
+    assert snapshot["read_calls"] == 100
+    assert snapshot["semble_calls"] == 2
+    assert snapshot["read_share_of_exploration_tokens"] == 0.8  # 1000 / (1000 + 250)
+    assert snapshot["fruitless_grep_glob_rate"] == 0.3
+    assert snapshot["true_duplicate_reads"] == 7
+
+
+def test_build_snapshot_handles_zero_totals() -> None:
+    acc = AuditAccumulator()
+    snapshot = build_snapshot(acc)
+    assert snapshot["read_share_of_exploration_tokens"] == 0.0
+    assert snapshot["fruitless_grep_glob_rate"] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# baseline persistence
+# ---------------------------------------------------------------------------
+
+def test_load_baseline_missing_file_returns_none(tmp_path: Path) -> None:
+    assert load_baseline(tmp_path / "does-not-exist.json") is None
+
+
+def test_save_then_load_baseline_roundtrip(tmp_path: Path) -> None:
+    path = tmp_path / "nested" / "baseline.json"
+    snapshot = {"read_calls": 1140, "semble_calls": 3}
+
+    save_baseline(path, snapshot)
+    loaded = load_baseline(path)
+
+    assert loaded == snapshot
+
+
+# ---------------------------------------------------------------------------
+# format_delta / format_report
+# ---------------------------------------------------------------------------
+
+def test_format_delta_shows_before_and_after() -> None:
+    baseline = {
+        "read_calls": 1140, "semble_calls": 3,
+        "read_share_of_exploration_tokens": 0.79,
+        "fruitless_grep_glob_rate": 0.183,
+        "true_duplicate_reads": 60,
+    }
+    current = {
+        "read_calls": 900, "semble_calls": 40,
+        "read_share_of_exploration_tokens": 0.55,
+        "fruitless_grep_glob_rate": 0.10,
+        "true_duplicate_reads": 20,
+    }
+
+    text = format_delta(current, baseline)
+
+    assert "1140:3" in text
+    assert "900:40" in text
+    assert "79.0%" in text and "55.0%" in text
+
+
+def test_format_report_lists_tool_calls() -> None:
+    acc = AuditAccumulator()
+    acc.tool_calls = {"Read": 5, "Grep": 2}
+    acc.result_chars_by_tool = {"Read": 400}
+    acc.result_calls_by_tool = {"Read": 5}
+    acc.files_read_count = {"a.py": 3}
+
+    text = format_report(acc)
+
+    assert "Read" in text
+    assert "a.py" in text
+
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
+
+def test_main_first_run_writes_baseline(tmp_path: Path) -> None:
+    transcripts_dir = tmp_path / "transcripts"
+    _write_transcript(transcripts_dir / "session.jsonl", [
+        _assistant_entry(tool_uses=[{"id": "t1", "name": "Read", "input": {"file_path": "a.py"}}]),
+    ])
+    baseline_path = tmp_path / "baseline.json"
+
+    exit_code = main(["--transcripts-dir", str(transcripts_dir)], baseline_path=baseline_path)
+
+    assert exit_code == 0
+    assert baseline_path.exists()
+    assert load_baseline(baseline_path)["read_calls"] == 1
+
+
+def test_main_second_run_prints_delta(tmp_path: Path, capsys) -> None:
+    transcripts_dir = tmp_path / "transcripts"
+    _write_transcript(transcripts_dir / "session.jsonl", [
+        _assistant_entry(tool_uses=[{"id": "t1", "name": "Read", "input": {"file_path": "a.py"}}]),
+    ])
+    baseline_path = tmp_path / "baseline.json"
+    save_baseline(baseline_path, build_snapshot(AuditAccumulator()))
+
+    main(["--transcripts-dir", str(transcripts_dir)], baseline_path=baseline_path)
+
+    captured = capsys.readouterr()
+    assert "Delta vs baseline" in captured.out
+
+
+def test_main_missing_transcripts_dir_returns_error(tmp_path: Path) -> None:
+    exit_code = main(
+        ["--transcripts-dir", str(tmp_path / "nope")],
+        baseline_path=tmp_path / "baseline.json",
+    )
+    assert exit_code == 1

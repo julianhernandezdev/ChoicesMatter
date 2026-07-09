@@ -20,6 +20,7 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Iterator
 
 
 def derive_project_slug(cwd: str) -> str:
@@ -164,3 +165,125 @@ def scan_project(transcripts_dir: Path) -> AuditAccumulator:
             elif entry_type == "user":
                 acc.add_user_message(message)
     return acc
+
+
+EXPLORATION_TOOLS = ("Read", "Grep", "Glob", "Bash", "Agent", "mcp__semble__search")
+BASELINE_PATH = Path("docs/projectmanagement/skill-token-baseline.json")
+
+
+def build_snapshot(acc: AuditAccumulator) -> dict:
+    """Reduce an AuditAccumulator to the small set of numbers tracked
+    across runs to answer 'did the CLAUDE.md guidance change anything'."""
+    read_tokens = acc.result_chars_by_tool.get("Read", 0) // 4
+    total_exploration_tokens = sum(
+        acc.result_chars_by_tool.get(name, 0) for name in EXPLORATION_TOOLS
+    ) // 4
+    read_share = (read_tokens / total_exploration_tokens) if total_exploration_tokens else 0.0
+    fruitless_rate = (
+        acc.fruitless_grep_glob / acc.grep_glob_total if acc.grep_glob_total else 0.0
+    )
+    return {
+        "read_calls": acc.tool_calls.get("Read", 0),
+        "semble_calls": acc.semble_calls,
+        "read_share_of_exploration_tokens": round(read_share, 4),
+        "fruitless_grep_glob_rate": round(fruitless_rate, 4),
+        "true_duplicate_reads": acc.true_duplicate_reads,
+    }
+
+
+def load_baseline(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_baseline(path: Path, snapshot: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+
+
+def format_delta(current: dict, baseline: dict) -> str:
+    base_share = baseline["read_share_of_exploration_tokens"] * 100
+    cur_share = current["read_share_of_exploration_tokens"] * 100
+    base_fruitless = baseline["fruitless_grep_glob_rate"] * 100
+    cur_fruitless = current["fruitless_grep_glob_rate"] * 100
+    lines = [
+        "Delta vs baseline:",
+        f"  Read : semble calls       {baseline['read_calls']}:{baseline['semble_calls']} -> "
+        f"{current['read_calls']}:{current['semble_calls']}",
+        f"  Read share of expl. tok   {base_share:.1f}% -> {cur_share:.1f}% ({cur_share - base_share:+.1f}pp)",
+        f"  Fruitless Grep/Glob rate  {base_fruitless:.1f}% -> {cur_fruitless:.1f}% "
+        f"({cur_fruitless - base_fruitless:+.1f}pp)",
+        f"  True-duplicate Reads      {baseline['true_duplicate_reads']} -> {current['true_duplicate_reads']}",
+    ]
+    return "\n".join(lines)
+
+
+def format_report(acc: AuditAccumulator) -> str:
+    lines = ["=== Tool call counts ==="]
+    for name, count in sorted(acc.tool_calls.items(), key=lambda kv: -kv[1]):
+        lines.append(f"{count:6d}  {name}")
+
+    lines.append("")
+    lines.append("=== Tool-result token payload ===")
+    for name, chars in sorted(acc.result_chars_by_tool.items(), key=lambda kv: -kv[1]):
+        calls = acc.result_calls_by_tool.get(name, 0)
+        lines.append(f"{name:30s} {calls:6d} calls  {chars // 4:>10,d} tok")
+
+    lines.append("")
+    lines.append(f"Read : semble calls: {acc.tool_calls.get('Read', 0)} : {acc.semble_calls}")
+    lines.append(f"Agent (subagent) dispatches: {acc.agent_dispatch_count}")
+    if acc.sub_first_turn_cc:
+        avg_cold_start = sum(acc.sub_first_turn_cc) / len(acc.sub_first_turn_cc)
+        lines.append(
+            f"Subagent cold-start avg: {avg_cold_start:,.0f} tok  "
+            f"total: {sum(acc.sub_first_turn_cc):,} tok"
+        )
+    lines.append(f"True-duplicate Read calls (same file+range, same conversation): {acc.true_duplicate_reads}")
+    if acc.grep_glob_total:
+        lines.append(
+            f"Fruitless Grep/Glob rate: {acc.fruitless_grep_glob}/{acc.grep_glob_total} "
+            f"({acc.fruitless_grep_glob / acc.grep_glob_total:.1%})"
+        )
+
+    lines.append("")
+    lines.append("=== Top 10 most re-Read files ===")
+    for path_str, count in sorted(acc.files_read_count.items(), key=lambda kv: -kv[1])[:10]:
+        lines.append(f"{count:4d}  {path_str}")
+
+    return "\n".join(lines)
+
+
+def main(argv: list[str], baseline_path: Path = BASELINE_PATH) -> int:
+    transcripts_dir_arg = None
+    if "--transcripts-dir" in argv:
+        idx = argv.index("--transcripts-dir")
+        transcripts_dir_arg = argv[idx + 1]
+
+    if transcripts_dir_arg:
+        transcripts_dir = Path(transcripts_dir_arg)
+    else:
+        slug = derive_project_slug(str(Path.cwd()))
+        transcripts_dir = Path.home() / ".claude" / "projects" / slug
+
+    if not transcripts_dir.exists():
+        print(f"Transcripts directory not found: {transcripts_dir}", file=sys.stderr)
+        return 1
+
+    acc = scan_project(transcripts_dir)
+    print(format_report(acc))
+
+    snapshot = build_snapshot(acc)
+    baseline = load_baseline(baseline_path)
+    if baseline is None:
+        save_baseline(baseline_path, snapshot)
+        print(f"\nBaseline snapshot saved to {baseline_path}")
+    else:
+        print()
+        print(format_delta(snapshot, baseline))
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
