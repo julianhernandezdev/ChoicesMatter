@@ -178,7 +178,7 @@ class Display:
         if total_pages > 1:
             self.console.print(
                 f"  [cyan]Page {page + 1} of {total_pages}[/cyan]  "
-                f"[dim]·  A prev · D next · 0 first page[/dim]"
+                "[dim]·  [/dim][cyan]A[/cyan][dim] prev · [/dim][cyan]D[/cyan][dim] next · [/dim][cyan]0[/cyan][dim] first page[/dim]"
             )
             self.console.print()
 
@@ -510,16 +510,14 @@ class Display:
             enabled = self._cfg.get("typewriter", {}).get("enabled", False)
             tw_label = "[green]ON[/green]" if enabled else "[dim]OFF[/dim]"
             if has_back:
-                hint = "Enter a number, B to go back, or Q to quit"
-                if total_pages > 1:
-                    hint += "  ·  A prev · D next · 0 first page"
-                self.console.print(f"  [bold]{hint}:[/bold]")
+                self.console.print("  [dim]B to go back, or Q to quit[/dim]")
+                self.console.print("  [dim]Enter a number for a story, or a letter for other options:[/dim]")
             else:
-                hint = "Enter a number, Q to quit, C to clear saves, or S for settings"
-                if total_pages > 1:
-                    hint += "  ·  A prev · D next · 0 first page"
-                self.console.print(f"  [bold]{hint}:[/bold]")
+                self.console.print(
+                    "  [dim]Q to quit, [/dim][red]C[/red][dim] to clear saves, or [/dim][cyan]S[/cyan][dim] for settings[/dim]"
+                )
                 self.console.print(f"  [dim]T · Toggle typewriter (session only)[/dim]  {tw_label}")
+                self.console.print("  [dim]Enter a number for a story, or a letter for other options:[/dim]")
             raw = self.console.input("  › ").strip().lower()
             if raw == "q":
                 return None
