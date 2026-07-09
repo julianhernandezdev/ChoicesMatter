@@ -1,4 +1,17 @@
-from scripts.audit_skill_tokens import derive_project_slug
+import json
+from pathlib import Path
+
+from scripts.audit_skill_tokens import (
+    AuditAccumulator,
+    build_snapshot,
+    derive_project_slug,
+    format_delta,
+    format_report,
+    load_baseline,
+    main,
+    save_baseline,
+    scan_project,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -15,12 +28,6 @@ def test_derive_project_slug_forward_slash_path() -> None:
 
 def test_derive_project_slug_lowercases_only_drive_letter() -> None:
     assert derive_project_slug(r"C:\Users\julia\SomeProject") == "c--Users-julia-SomeProject"
-
-
-import json
-from pathlib import Path
-
-from scripts.audit_skill_tokens import AuditAccumulator, scan_project
 
 
 # ---------------------------------------------------------------------------
@@ -149,16 +156,6 @@ def test_scan_project_ignores_blank_and_malformed_lines(tmp_path: Path) -> None:
     acc = scan_project(tmp_path)  # must not raise
 
     assert acc.tool_calls == {}
-
-
-from scripts.audit_skill_tokens import (
-    build_snapshot,
-    format_delta,
-    format_report,
-    load_baseline,
-    main,
-    save_baseline,
-)
 
 
 # ---------------------------------------------------------------------------
