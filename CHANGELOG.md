@@ -6,6 +6,10 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### CLAUDE.md Drift Sync
+- **Fixed** CLAUDE.md's Dependency Flow omitted `src/corruption.py` and `main.py`'s use of `src/config.py`; its Display Layer table was missing `get_page_size`, `prompt_protagonist_name` and `show_name_required` and had stale signatures for `show_choices` (`debug_state`), `show_story_picker` (`title`/`page`/`total_pages`), `prompt_story_select` (`has_back`/`total_pages` and the extra return values) and `show_settings_screen` (now sectioned, not just Typewriter)
+- **Added** `tests/test_docs_drift.py` — fails if a public `Display` method or a `src/*.py` module is not mentioned in CLAUDE.md, so the map cannot drift silently. Scope note: only the Module table, Dependency Flow and Display Layer were audited against the code; the Save, Validation and Flag sections were not
+
 ### Protagonist Name Prompt — Fresh-Run Re-prompt (CLI)
 - **Fixed** The CLI only asked for the protagonist name on first launch with no save. Choosing **New game** at the resume prompt silently reused the settings name, and **Play again** silently reused the launch-time name, while the web player prompted in both cases. The prompt now runs at every fresh-run start
 - **Added** `Engine.__init__` `fresh_run_state` param — an optional host-supplied callable invoked at every fresh-run start (no save, New game, play again); it returns the seed-state dict, or `None` to abort back to the picker without touching an existing save. `_resolve_start()` and `_reset()` now return `bool`

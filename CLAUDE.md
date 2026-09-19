@@ -25,6 +25,7 @@ python main.py
 | `src/gallery.py` | Ending gallery — tracks found endings per story across runs |
 | `src/display.py` | All `rich` rendering — nothing else imports `rich` |
 | `src/config.py` | Loads and saves `settings.json`, deep-merges with hardcoded defaults |
+| `src/corruption.py` | Resolves `{corrupt}` spans and node-level `corruption` baselines into `TextSegments`; imported by `engine.py` (resolution) and `display.py` (rendering) |
 
 ```
 /src                 Python CLI engine package (imported as src.X from main.py and tests/)
@@ -34,7 +35,8 @@ python main.py
                        horror/
                        showcase/         (including showcase/sci-fi/)
                        ChoicesMatterGPT/ (GPT-authored stories)
-/tests               Test suite — pytest for Python; node tests/test_web_engine.js for JS engine parity
+/tests               Test suite — pytest for Python; tests/test_web_engine.py shells out to Node
+                       (subprocess) to exercise web/engine.js directly, so `pytest` alone covers both
 /education           Feature guide docs — one .md per example story + feature-reference.md master index
 /accessibility       WCAG docs: implementation guide, screen reader test scripts, renderer authoring checklist
 /scripts             Developer tools (sync_stories.py, validate_story.py)
@@ -50,15 +52,17 @@ settings.example.json  Committed template
 ```
 main.py
   └── StoryLoader (src/story.py)             loads + validates JSON
+  └── load_settings (src/config.py)          reads settings.json (seeds player_name)
   └── Display (src/display.py)               all terminal rendering
   └── Engine (src/engine.py)
         └── Story (src/story.py)             data model, node resolver
         └── SaveManager (src/save.py)        read/write save state
         └── GalleryManager (src/gallery.py)  record + persist found endings
+        └── resolve_corruption (src/corruption.py)  {corrupt} spans → TextSegments
         └── Display (src/display.py)         render calls only
 ```
 
-`src/config.py` is imported by `src/display.py` and by `main.py` (which reads the saved `player_name` setting).
+`src/config.py` is imported by `src/display.py` and by `main.py` (which reads the saved `player_name` setting). `src/corruption.py` is imported by `src/engine.py` (span resolution) and `src/display.py` (rendering).
 
 ## Story JSON Format
 
@@ -267,17 +271,20 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | `show_title_screen()` | — |
 | `clear_screen()` | — |
 | `show_node(story_title, node_text, before_insets, after_insets, current_scene=None)` | Story panel; renders dim Rule above panel when `current_scene` is set |
-| `show_choices(choices, before_overlays, after_overlays, choice_number_color=None)` | Overlays wrap the choice list; staggers when typewriter is on; number color resolved as `choice.color → choice_number_color → "cyan"` |
+| `show_choices(choices, before_overlays, after_overlays, choice_number_color=None, debug_state=None)` | Overlays wrap the choice list; staggers when typewriter is on; number color resolved as `choice.color → choice_number_color → "cyan"`; when `--debug` is on and `debug_state` (the flag dict) is given, a debug panel follows the choices |
 | `show_ending(node_text, ending_type, overlays)` | Overlays appear before the ending panel |
 | `show_save_indicator()` | — |
 | `show_content_warnings(title, warnings)` | Warning panel before story launch; returns True (proceed) / False (back) |
-| `show_story_picker(entries)` | — |
+| `show_story_picker(entries, title="Select a Story", page=0, total_pages=1)` | Renders one page of entries; shows the prev/next/first-page hint when `total_pages > 1` |
+| `get_page_size()` | Stories per picker page — `picker.page_size` from settings |
 | `show_no_stories()` | — |
 | `show_picker_error(name, message)` | — |
 | `show_clear_complete()` | — |
 | `toggle_typewriter()` | Flips `typewriter.enabled` in-memory; prints new state |
-| `show_settings_screen()` | Typewriter settings screen — edits a draft copy of config, writes to `settings.json` via `config.save_settings()` on confirm; changes take effect next launch |
-| `prompt_story_select(count)` | Returns 1-based int, `None` (quit), `"clear"`, `"toggle_typewriter"`, or `"settings"` |
+| `show_settings_screen()` | Sectioned settings screen (Typewriter, Display, Corruption, Player) driven by `config.SETTINGS_SECTIONS` — edits a draft copy of config, writes to `settings.json` via `config.save_settings()` on confirm; changes take effect next launch |
+| `prompt_story_select(count, has_back=False, total_pages=1)` | Returns a 1-based int, `None` (quit), `"back"` (only when `has_back`, i.e. inside a folder), `"clear"` / `"toggle_typewriter"` / `"settings"` (only at the top level, when `has_back` is False), or — when `total_pages > 1` — `"prev_page"`, `"next_page"`, `"first_page"` |
+| `prompt_protagonist_name(prompt_text, prefill="")` | Name prompt for `meta.name_prompt`; returns the entered string (empty is valid — the caller applies the fallback chain) or `None` on Q |
+| `show_name_required()` | Tells the player to set a Player Name in Settings; waits for Enter |
 | `prompt_continue_or_new()` | Returns True (continue) / False (new) |
 | `prompt_clear_confirm()` | Returns True/False |
 | `prompt_choice(choices)` | Returns 1-based int or None (Q to menu) |
