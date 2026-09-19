@@ -1023,6 +1023,81 @@ def test_no_initial_state_defaults_to_empty(saves_dir: Path, two_node_story: Sto
 
 
 # ------------------------------------------------------------------
+# fresh_run_state provider
+# ------------------------------------------------------------------
+
+def _saved_start(sm: SaveManager, name: str = "Saved") -> None:
+    sm.write(SaveState(
+        story_id="test_story",
+        current_node="start",
+        history=[],
+        state={"player_name": name},
+    ))
+
+
+def test_fresh_run_state_seeds_state_when_no_save(saves_dir: Path, two_node_story: Story) -> None:
+    provider = MagicMock(return_value={"player_name": "Casey"})
+    engine = Engine(two_node_story, SaveManager(saves_dir), _make_display(), fresh_run_state=provider)
+    assert engine._resolve_start() is True
+    provider.assert_called_once_with()
+    assert engine._state["player_name"] == "Casey"
+
+
+def test_fresh_run_state_called_on_new_game_at_resume_prompt(saves_dir: Path, two_node_story: Story) -> None:
+    sm = SaveManager(saves_dir)
+    _saved_start(sm)
+    provider = MagicMock(return_value={"player_name": "Newer"})
+    engine = Engine(two_node_story, sm, _make_display(continue_save=False), fresh_run_state=provider)
+    assert engine._resolve_start() is True
+    provider.assert_called_once_with()
+    assert engine._state["player_name"] == "Newer"
+
+
+def test_fresh_run_state_not_called_on_continue(saves_dir: Path, two_node_story: Story) -> None:
+    sm = SaveManager(saves_dir)
+    _saved_start(sm)
+    provider = MagicMock(return_value={"player_name": "Newer"})
+    engine = Engine(two_node_story, sm, _make_display(continue_save=True), fresh_run_state=provider)
+    assert engine._resolve_start() is True
+    provider.assert_not_called()
+    assert engine._state["player_name"] == "Saved"
+
+
+def test_fresh_run_state_none_aborts_start_and_keeps_save(saves_dir: Path, two_node_story: Story) -> None:
+    sm = SaveManager(saves_dir)
+    _saved_start(sm)
+    provider = MagicMock(return_value=None)
+    display = _make_display(continue_save=False)
+    Engine(two_node_story, sm, display, fresh_run_state=provider).run()
+    provider.assert_called_once_with()
+    display.clear_screen.assert_not_called()
+    display.show_node.assert_not_called()
+    assert sm.has_save("test_story") is True
+
+
+def test_fresh_run_state_called_again_on_play_again(saves_dir: Path, two_node_story: Story) -> None:
+    provider = MagicMock(side_effect=[{"player_name": "First"}, {"player_name": "Second"}])
+    display = _make_display()
+    display.prompt_play_again.side_effect = [True, False]
+    engine = Engine(two_node_story, SaveManager(saves_dir), display, fresh_run_state=provider)
+    engine.run()
+    assert provider.call_count == 2
+    assert engine._state["player_name"] == "Second"
+    assert display.show_ending.call_count == 2
+
+
+def test_fresh_run_state_none_on_play_again_ends_run(saves_dir: Path, two_node_story: Story) -> None:
+    provider = MagicMock(side_effect=[{"player_name": "First"}, None])
+    display = _make_display()
+    # A single True: if the abort were ignored the engine would ask again and
+    # StopIteration would fail the test instead of hanging it.
+    display.prompt_play_again.side_effect = [True]
+    Engine(two_node_story, SaveManager(saves_dir), display, fresh_run_state=provider).run()
+    assert provider.call_count == 2
+    assert display.show_ending.call_count == 1
+
+
+# ------------------------------------------------------------------
 # Corruption pipeline: resolve_corruption wired into _pt
 # ------------------------------------------------------------------
 

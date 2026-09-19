@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
+from collections.abc import Callable
 
 from .corruption import CorruptedSpan, TextSegments, resolve_corruption
 from .display import Display
@@ -22,12 +23,14 @@ class Engine:
         display: Display,
         gallery_manager: GalleryManager | None = None,
         initial_state: dict[str, bool | int | str] | None = None,
+        fresh_run_state: Callable[[], dict[str, bool | int | str] | None] | None = None,
     ) -> None:
         self.story = story
         self.save_manager = save_manager
         self.display = display
         self.gallery_manager = gallery_manager
         self._initial_state: dict[str, bool | int | str] = dict(initial_state) if initial_state else {}
+        self._fresh_run_state = fresh_run_state
         self._current_node: str = story.start_node
         self._history: list[str] = []
         self._state: dict[str, bool | int | str] = {}
@@ -38,7 +41,8 @@ class Engine:
     # ------------------------------------------------------------------
 
     def run(self) -> None:
-        self._resolve_start()
+        if not self._resolve_start():
+            return
         self.display.clear_screen()
 
         while True:
@@ -74,7 +78,8 @@ class Engine:
                     self.gallery_manager.record_ending(self.story.id, self._current_node)
                 self.save_manager.delete(self.story.id)
                 if self.display.prompt_play_again():
-                    self._reset()
+                    if not self._reset():
+                        return
                     continue
                 return
 
@@ -117,7 +122,8 @@ class Engine:
             else:
                 self._state[key] = value
 
-    def _resolve_start(self) -> None:
+    def _resolve_start(self) -> bool:
+        """Set up the run's starting state. Returns False if the host aborted a fresh start."""
         if self.save_manager.has_save(self.story.id):
             saved = self.save_manager.load(self.story.id)
             if saved and saved.current_node in self.story.nodes:
@@ -125,10 +131,25 @@ class Engine:
                     self._current_node = saved.current_node
                     self._history = saved.history
                     self._state = dict(saved.state)
-                    return
+                    return True
+        return self._begin_fresh()
+
+    def _begin_fresh(self) -> bool:
+        """Start a fresh run. Asks the host for seed state if it supplied a provider.
+
+        Returns False (touching nothing) when the provider returns None, meaning
+        the player backed out.
+        """
+        if self._fresh_run_state is not None:
+            seed = self._fresh_run_state()
+            if seed is None:
+                return False
+            self._initial_state = dict(seed)
         self._current_node = self.story.start_node
         self._history = []
         self._state = dict(self._initial_state)
+        self._current_scene = None
+        return True
 
     def _advance(self, choice: Choice) -> None:
         self._apply_sets(choice.sets)
@@ -145,12 +166,9 @@ class Engine:
         self.save_manager.write(state)
         self.display.show_save_indicator()
 
-    def _reset(self) -> None:
-        self._current_node = self.story.start_node
-        self._history = []
-        self._state = dict(self._initial_state)
-        self._current_scene = None
+    def _reset(self) -> bool:
         self.save_manager.delete(self.story.id)
+        return self._begin_fresh()
 
     @staticmethod
     def _substitute_vars(text: str, state: dict) -> str:
