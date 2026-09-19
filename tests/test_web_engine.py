@@ -9,6 +9,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -467,3 +469,218 @@ def test_js_resolve_corruption_resolve_style_inherits_from_node() -> None:
 def test_js_resolve_corruption_intensity_is_null_when_unspecified() -> None:
     result = json.loads(_rc("{corrupt}text{/corrupt}", None))
     assert result[0]["intensity"] is None
+
+
+# ---------------------------------------------------------------------------
+# Settings clamping (parity with src/config.py)
+# ---------------------------------------------------------------------------
+
+def _js_json(script_body: str):
+    """Run an ES-module snippet that console.logs JSON and return the parsed value."""
+    return json.loads(_run(script_body))
+
+
+def _py_key_to_js(py_key: str) -> str:
+    if py_key == "picker.page_size":
+        return "page_size"
+    if py_key.startswith("typewriter.punctuation_pauses."):
+        return "pauses." + py_key[len("typewriter.punctuation_pauses."):]
+    return py_key
+
+
+def test_js_setting_ranges_match_python_registry() -> None:
+    from src.config import SETTING_RANGES as PY_RANGES
+    js = _js_json("""
+import { SETTING_RANGES } from './web/engine.js';
+console.log(JSON.stringify(SETTING_RANGES));
+""")
+    expected = {_py_key_to_js(k): list(v) for k, v in PY_RANGES.items()}
+    assert js == expected
+
+
+def test_js_defaults_lie_within_their_ranges() -> None:
+    offenders = _js_json("""
+import { SETTING_RANGES } from './web/engine.js';
+import { TYPEWRITER_DEFAULTS as D } from './web/typewriter.js';
+const bad = [];
+for (const [key, [lo, hi]] of Object.entries(SETTING_RANGES)) {
+  let v;
+  if (key === 'page_size') v = D.page_size;
+  else if (key.startsWith('pauses.')) v = D.pauses[key.slice('pauses.'.length)];
+  else if (key.startsWith('corruption.')) v = D.corruption[key.slice('corruption.'.length)];
+  if (v === null || v === undefined) continue;
+  if (v < lo || v > hi) bad.push(key + '=' + v);
+}
+console.log(JSON.stringify(bad));
+""")
+    assert offenders == []
+
+
+_TIMING_CASES = [
+    {"scramble_frames": 85, "scramble_delay_ms": 40, "resolve_frames": None, "resolve_delay_ms": None, "cascade_stagger_ms": None},
+    {"scramble_frames": 0, "scramble_delay_ms": -3, "resolve_frames": None, "resolve_delay_ms": None, "cascade_stagger_ms": None},
+    {"scramble_frames": -5, "scramble_delay_ms": 5000, "resolve_frames": None, "resolve_delay_ms": None, "cascade_stagger_ms": None},
+    {"scramble_frames": 9999, "scramble_delay_ms": 40, "resolve_frames": 300, "resolve_delay_ms": 5000, "cascade_stagger_ms": -1},
+    {"scramble_frames": 10, "scramble_delay_ms": 20, "resolve_frames": 7, "resolve_delay_ms": 0, "cascade_stagger_ms": 15},
+]
+
+
+@pytest.mark.parametrize("cfg", _TIMING_CASES)
+def test_js_corruption_timing_matches_python(cfg: dict) -> None:
+    from src.config import corruption_timing
+    js = _js_json(f"""
+import {{ corruptionTiming }} from './web/engine.js';
+console.log(JSON.stringify(corruptionTiming({json.dumps(cfg)})));
+""")
+    py = corruption_timing(cfg)
+    assert js == {
+        "scrambleFrames": py["scramble_frames"],
+        "scrambleDelay": py["scramble_delay_ms"],
+        "resolveFrames": py["resolve_frames"],
+        "resolveDelay": py["resolve_delay_ms"],
+        "cascadeStagger": py["cascade_stagger_ms"],
+    }
+
+
+def test_js_clamp_setting() -> None:
+    js = _js_json("""
+import { clampSetting } from './web/engine.js';
+console.log(JSON.stringify([
+  clampSetting('corruption.scramble_frames', 0),
+  clampSetting('corruption.scramble_frames', 85),
+  clampSetting('corruption.scramble_frames', 9999),
+  clampSetting('pauses..', -1),
+  clampSetting('page_size', NaN),
+  clampSetting('unknown_key', 12345),
+]));
+""")
+    assert js == [1, 85, 200, 0, 1, 9999]
+
+
+def test_js_corruption_count_guards_non_positive_intensity() -> None:
+    js = _js_json("""
+import { corruptionCount } from './web/engine.js';
+console.log(JSON.stringify([
+  corruptionCount(6, -0.5),
+  corruptionCount(6, 0),
+  corruptionCount(6, NaN),
+  corruptionCount(6, 0.5),
+  corruptionCount(6, 1),
+  corruptionCount(6, 1.5),
+  corruptionCount(0, 0.5),
+]));
+""")
+    assert js == [0, 0, 0, 3, 6, 6, 0]
+
+
+def test_js_commit_setting_value_number_rows_clamp_and_parse_strictly() -> None:
+    js = _js_json("""
+import { commitSettingValue } from './web/engine.js';
+const frames = { key: 'corruption.scramble_frames', type: 'number' };
+const page = { key: 'page_size', type: 'number' };
+console.log(JSON.stringify([
+  commitSettingValue(frames, '12'),
+  commitSettingValue(frames, ' 85 '),
+  commitSettingValue(frames, '0'),
+  commitSettingValue(frames, '9999'),
+  commitSettingValue(frames, '12abc'),
+  commitSettingValue(frames, ''),
+  commitSettingValue(frames, '-3'),
+  commitSettingValue(frames, '5.5'),
+  commitSettingValue(page, '99'),
+]));
+""")
+    assert js == [
+        {"ok": True, "value": 12},
+        {"ok": True, "value": 85},
+        {"ok": True, "value": 1},
+        {"ok": True, "value": 200},
+        {"ok": False},
+        {"ok": False},
+        {"ok": False},
+        {"ok": False},
+        {"ok": True, "value": 50},
+    ]
+
+
+def test_js_commit_setting_value_float_rows_reject_out_of_range() -> None:
+    js = _js_json("""
+import { commitSettingValue } from './web/engine.js';
+const row = { key: 'corruption.intensity', type: 'float' };
+console.log(JSON.stringify([
+  commitSettingValue(row, '0.6'),
+  commitSettingValue(row, '0'),
+  commitSettingValue(row, '1'),
+  commitSettingValue(row, '1.5'),
+  commitSettingValue(row, '-0.1'),
+  commitSettingValue(row, 'abc'),
+]));
+""")
+    assert js == [
+        {"ok": True, "value": 0.6},
+        {"ok": True, "value": 0},
+        {"ok": True, "value": 1},
+        {"ok": False},
+        {"ok": False},
+        {"ok": False},
+    ]
+
+
+def test_js_sanitize_corruption_settings() -> None:
+    js = _js_json("""
+import { sanitizeCorruptionSettings } from './web/engine.js';
+const defaults = {
+  enabled: true, charset: 'blocks', intensity: 0.6, intensity_multiplier: 1.0, mode: 'consistent',
+  animate: true, scramble_frames: 85, scramble_delay_ms: 40,
+  resolve_frames: null, resolve_delay_ms: null, cascade_stagger_ms: null,
+};
+const stored = {
+  intensity_multiplier: -1, scramble_frames: 0, scramble_delay_ms: 'fast',
+  resolve_frames: 9999.9, resolve_delay_ms: null, cascade_stagger_ms: 'x',
+  custom_chars: 'ab', charset: 'custom',
+};
+console.log(JSON.stringify(sanitizeCorruptionSettings(stored, defaults)));
+""")
+    assert js["intensity_multiplier"] == 0            # clamped up to 0, stays a float key
+    assert js["scramble_frames"] == 1                 # clamped, integer
+    assert js["scramble_delay_ms"] == 40              # wrong type -> default
+    assert js["resolve_frames"] == 200                # clamped and truncated
+    assert js["resolve_delay_ms"] is None             # nullable "Auto" preserved
+    assert js["cascade_stagger_ms"] is None           # wrong type on nullable -> default (null)
+    assert js["custom_chars"] == "ab"                 # unknown keys preserved
+    assert js["charset"] == "custom"
+    assert js["intensity"] == 0.6                     # untouched default
+
+
+def test_js_sanitize_corruption_settings_handles_missing_or_invalid_stored() -> None:
+    js = _js_json("""
+import { sanitizeCorruptionSettings } from './web/engine.js';
+const defaults = { scramble_frames: 85, resolve_frames: null };
+console.log(JSON.stringify([
+  sanitizeCorruptionSettings(undefined, defaults),
+  sanitizeCorruptionSettings('nope', defaults),
+  sanitizeCorruptionSettings({ scramble_frames: null }, defaults),
+]));
+""")
+    assert js == [
+        {"scramble_frames": 85, "resolve_frames": None},
+        {"scramble_frames": 85, "resolve_frames": None},
+        {"scramble_frames": 85, "resolve_frames": None},
+    ]
+
+
+def test_js_sanitize_pauses() -> None:
+    js = _js_json("""
+import { sanitizePauses } from './web/engine.js';
+const defaults = { '.': 550, '!': 250 };
+console.log(JSON.stringify([
+  sanitizePauses({ '.': 99999, '!': -4, '?': 100 }, defaults),
+  sanitizePauses({ '.': 'slow' }, defaults),
+  sanitizePauses(null, defaults),
+]));
+""")
+    assert js == [
+        {".": 2000, "!": 0, "?": 100},
+        {".": 550, "!": 250},
+        {".": 550, "!": 250},
+    ]
