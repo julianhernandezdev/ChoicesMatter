@@ -208,11 +208,13 @@ Twelve keys live under `"corruption"` in `settings.json`:
 | `charset` | string | `"blocks"` | Active character set — `"blocks"`, `"symbols"`, `"diacritics"`, or `"custom"` |
 | `custom_chars` | string | `"█▓▒░"` | Character pool used only when `charset` is `"custom"` |
 | `animate` | bool | `true` | Scramble-settle animation in typewriter mode; `false` renders statically |
-| `scramble_frames` | int | `85` | Number of scramble frames before the span settles to its final corrupted form |
-| `scramble_delay_ms` | int | `40` | Milliseconds between scramble frames |
-| `resolve_frames` | int or `null` | `null` | Number of frames for a `decay` resolve; falls back to `scramble_frames` when `null` |
-| `resolve_delay_ms` | int or `null` | `null` | Milliseconds between decay frames; falls back to `scramble_delay_ms` when `null` |
-| `cascade_stagger_ms` | int or `null` | `null` | Milliseconds between each character locking in during a `cascade` resolve; falls back to `scramble_delay_ms` when `null` |
+| `scramble_frames` | int 1–200 | `85` | Number of scramble frames before the span settles to its final corrupted form |
+| `scramble_delay_ms` | int 0–1000 | `40` | Milliseconds between scramble frames |
+| `resolve_frames` | int 1–200 or `null` | `null` | Number of frames for a `decay` resolve; falls back to `scramble_frames` when `null` |
+| `resolve_delay_ms` | int 0–1000 or `null` | `null` | Milliseconds between decay frames; falls back to `scramble_delay_ms` when `null` |
+| `cascade_stagger_ms` | int 0–1000 or `null` | `null` | Milliseconds between each character locking in during a `cascade` resolve; falls back to `scramble_delay_ms` when `null` |
+
+The ranges above are enforced identically in the CLI and the web player. Typing an out-of-range number in the settings screen is rejected by the CLI and clamped by the web player; a value read from `settings.json` (CLI) or browser storage (web) is clamped when it is used, so a zero or huge frame count can never break the animation. Float settings (`intensity`, `intensity_multiplier`) must be within 0–1 and are rejected otherwise.
 
 Access these in the CLI via **Settings → 10. Corruption →** from the story picker. The sub-screen exposes all twelve keys, showing `Auto` for any of the three resolve-timing keys left `null`. The `custom_chars` row is dimmed and non-interactive unless `charset` is `"custom"`.
 

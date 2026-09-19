@@ -3,7 +3,18 @@ from pathlib import Path
 
 import pytest
 
-from src.config import load_settings, save_settings, _get_draft_value, _set_draft_value, apply_section_defaults, SETTINGS_SECTIONS
+from src.config import (
+    load_settings,
+    save_settings,
+    _get_draft_value,
+    _set_draft_value,
+    apply_section_defaults,
+    clamp_setting,
+    corruption_timing,
+    SETTING_RANGES,
+    SETTINGS_SECTIONS,
+    _DEFAULTS,
+)
 
 
 def test_returns_defaults_when_file_missing(tmp_path: Path) -> None:
@@ -380,3 +391,84 @@ def test_apply_section_defaults_resets_new_corruption_keys(tmp_path: Path) -> No
     apply_section_defaults(draft, section)
     assert draft["corruption"]["intensity_multiplier"] == 1.0
     assert draft["corruption"]["resolve_frames"] is None
+
+
+# ------------------------------------------------------------------
+# Range registry, clamp_setting, corruption_timing
+# ------------------------------------------------------------------
+
+def _ranged_rows():
+    return [
+        row
+        for section in SETTINGS_SECTIONS
+        for row in section["rows"]
+        if "range" in row
+    ]
+
+
+def test_every_default_lies_within_its_own_range() -> None:
+    """Regression: scramble_frames defaulted to 85 while its UI range was (1, 50)."""
+    for row in _ranged_rows():
+        value = _get_draft_value(_DEFAULTS, row["key"])
+        if value is None:  # nullable "Auto" rows
+            continue
+        lo, hi = row["range"]
+        assert lo <= value <= hi, f"{row['key']} default {value} outside ({lo}, {hi})"
+
+
+def test_frames_rows_have_range_1_to_200() -> None:
+    assert SETTING_RANGES["corruption.scramble_frames"] == (1, 200)
+    assert SETTING_RANGES["corruption.resolve_frames"] == (1, 200)
+
+
+def test_setting_ranges_cover_every_ranged_row() -> None:
+    assert SETTING_RANGES == {row["key"]: row["range"] for row in _ranged_rows()}
+
+
+@pytest.mark.parametrize("value,expected", [(0, 1), (-5, 1), (85, 85), (200, 200), (9999, 200)])
+def test_clamp_setting_frames(value, expected) -> None:
+    assert clamp_setting("corruption.scramble_frames", value) == expected
+
+
+def test_clamp_setting_passes_through_unranged_and_non_numbers() -> None:
+    assert clamp_setting("player_name", 12345) == 12345
+    assert clamp_setting("corruption.scramble_frames", None) is None
+    assert clamp_setting("corruption.scramble_frames", "x") == "x"
+    assert clamp_setting("corruption.scramble_frames", True) is True
+
+
+def test_clamp_setting_punctuation_pause_key_with_dot() -> None:
+    assert clamp_setting("typewriter.punctuation_pauses..", 99999) == 2000
+    assert clamp_setting("typewriter.punctuation_pauses..", -1) == 0
+
+
+def _timing_cfg(**overrides) -> dict:
+    cfg = {"scramble_frames": 85, "scramble_delay_ms": 40,
+           "resolve_frames": None, "resolve_delay_ms": None, "cascade_stagger_ms": None}
+    cfg.update(overrides)
+    return cfg
+
+
+def test_corruption_timing_defaults_fall_back_to_scramble_values() -> None:
+    assert corruption_timing(_timing_cfg()) == {
+        "scramble_frames": 85, "scramble_delay_ms": 40,
+        "resolve_frames": 85, "resolve_delay_ms": 40, "cascade_stagger_ms": 40,
+    }
+
+
+def test_corruption_timing_clamps_everything() -> None:
+    t = corruption_timing(_timing_cfg(
+        scramble_frames=0, scramble_delay_ms=-3,
+        resolve_frames=9999, resolve_delay_ms=5000, cascade_stagger_ms=-1,
+    ))
+    assert t == {
+        "scramble_frames": 1, "scramble_delay_ms": 0,
+        "resolve_frames": 200, "resolve_delay_ms": 1000, "cascade_stagger_ms": 0,
+    }
+
+
+def test_corruption_timing_fallback_uses_clamped_scramble_values() -> None:
+    t = corruption_timing(_timing_cfg(scramble_frames=0, scramble_delay_ms=5000))
+    assert t["resolve_frames"] == 1
+    assert t["resolve_delay_ms"] == 1000
+    assert t["cascade_stagger_ms"] == 1000

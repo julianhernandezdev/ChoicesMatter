@@ -6,6 +6,14 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Settings Clamp Parity (Python ↔ Web)
+- **Fixed** The shipped default `scramble_frames: 85` was outside its own settings range (`1–50`), so it could never be re-entered in the CLI. The frames ranges for `scramble_frames` and `resolve_frames` are now `1–200`
+- **Fixed** The web settings screens had no range checks: the Corruption rows (edited through the section subscreen, which clamped nothing) accepted any non-negative number, and `12abc` was accepted as `12`. Number rows now parse strictly and clamp to the same ranges as the CLI; float rows still reject out-of-range values
+- **Fixed** Stored web settings are sanitised on load, so a zero/huge frame count or a negative `intensity_multiplier` in localStorage can no longer break or invert the corruption animation
+- **Added** `clamp_setting()` and `corruption_timing()` in `src/config.py`; use-time clamps (upper bounds too) for corruption timing, punctuation pauses and picker page size in `src/display.py`
+- **Added** `SETTING_RANGES`, `clampSetting`, `commitSettingValue`, `corruptionTiming`, `corruptionCount`, `sanitizeCorruptionSettings`, `sanitizePauses` in `web/engine.js`, with parity tests against the Python range registry and `corruption_timing()`
+- **Changed** `scramble_frames: 0` (only reachable through hand-edited storage) now means one frame, as in the CLI, instead of skipping the scramble
+
 ### CLAUDE.md Drift Sync
 - **Fixed** CLAUDE.md's Dependency Flow omitted `src/corruption.py` and `main.py`'s use of `src/config.py`; its Display Layer table was missing `get_page_size`, `prompt_protagonist_name` and `show_name_required` and had stale signatures for `show_choices` (`debug_state`), `show_story_picker` (`title`/`page`/`total_pages`), `prompt_story_select` (`has_back`/`total_pages` and the extra return values) and `show_settings_screen` (now sectioned, not just Typewriter)
 - **Added** `tests/test_docs_drift.py` — fails if a public `Display` method or a `src/*.py` module is not mentioned in CLAUDE.md, so the map cannot drift silently. Scope note: only the Module table, Dependency Flow and Display Layer were audited against the code; the Save, Validation and Flag sections were not

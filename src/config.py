@@ -144,9 +144,9 @@ SETTINGS_SECTIONS: list[dict] = [
             {"key": "corruption.charset",                "label": "Character set",        "type": "cycle",  "values": ["blocks", "symbols", "diacritics", "custom"]},
             {"key": "corruption.custom_chars",           "label": "Custom chars",         "type": "custom_chars"},
             {"key": "corruption.animate",                "label": "Animate",              "type": "boolean"},
-            {"key": "corruption.scramble_frames",        "label": "Scramble frames",      "type": "number", "unit": "",   "range": (1, 50)},
+            {"key": "corruption.scramble_frames",        "label": "Scramble frames",      "type": "number", "unit": "",   "range": (1, 200)},
             {"key": "corruption.scramble_delay_ms",      "label": "Scramble delay",       "type": "number", "unit": "ms", "range": (0, 1000)},
-            {"key": "corruption.resolve_frames",         "label": "Resolve frames",       "type": "number", "unit": "",   "range": (1, 50)},
+            {"key": "corruption.resolve_frames",         "label": "Resolve frames",       "type": "number", "unit": "",   "range": (1, 200)},
             {"key": "corruption.resolve_delay_ms",       "label": "Resolve delay",        "type": "number", "unit": "ms", "range": (0, 1000)},
             {"key": "corruption.cascade_stagger_ms",     "label": "Cascade stagger",      "type": "number", "unit": "ms", "range": (0, 1000)},
         ],
@@ -162,6 +162,48 @@ SETTINGS_SECTIONS: list[dict] = [
         ],
     },
 ]
+
+
+SETTING_RANGES: dict[str, tuple] = {
+    row["key"]: row["range"]
+    for section in SETTINGS_SECTIONS
+    for row in section["rows"]
+    if "range" in row
+}
+
+
+def clamp_setting(key: str, value):
+    """Clamp a numeric setting to its registry range.
+
+    Non-numbers (None, str, bool) and keys without a range pass through unchanged.
+    """
+    rng = SETTING_RANGES.get(key)
+    if rng is None or isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    lo, hi = rng
+    return min(max(value, lo), hi)
+
+
+def corruption_timing(cfg_corruption: dict) -> dict[str, int]:
+    """Corruption animation frame counts and delays (ms), clamped to their ranges.
+
+    resolve_frames / resolve_delay_ms / cascade_stagger_ms fall back to the
+    (clamped) scramble values when unset (None).
+    """
+    scramble_frames = clamp_setting("corruption.scramble_frames", cfg_corruption.get("scramble_frames", 8))
+    scramble_delay = clamp_setting("corruption.scramble_delay_ms", cfg_corruption.get("scramble_delay_ms", 60))
+
+    def _or_fallback(key: str, fallback):
+        raw = cfg_corruption.get(key)
+        return clamp_setting(f"corruption.{key}", raw if raw is not None else fallback)
+
+    return {
+        "scramble_frames": scramble_frames,
+        "scramble_delay_ms": scramble_delay,
+        "resolve_frames": _or_fallback("resolve_frames", scramble_frames),
+        "resolve_delay_ms": _or_fallback("resolve_delay_ms", scramble_delay),
+        "cascade_stagger_ms": _or_fallback("cascade_stagger_ms", scramble_delay),
+    }
 
 
 def save_settings(data: dict, path: Path = Path("settings.json")) -> None:

@@ -1209,3 +1209,10 @@ def test_show_reset_selector_feedback_lists_section_names(display):
     result = display._show_reset_selector(draft)
     assert "Typewriter" in result
     assert "Corruption" in result
+
+
+def test_get_page_size_is_clamped_to_registry_range() -> None:
+    d = _make_display_obj({"picker": {"page_size": 9999}})
+    assert d.get_page_size() == 50
+    d = _make_display_obj({"picker": {"page_size": 0}})
+    assert d.get_page_size() == 1

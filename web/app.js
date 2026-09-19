@@ -1,4 +1,4 @@
-import { createRun, currentView, applySets } from "./engine.js";
+import { createRun, currentView, applySets, commitSettingValue, corruptionCount } from "./engine.js";
 import { loadSave, writeSave, deleteSave, loadGallery, recordEnding, clearAllProgress } from "./storage.js";
 import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS } from "./typewriter.js";
 
@@ -155,7 +155,7 @@ function _corruptString(span, cfg) {
     : (_CHARSET_MAP[cfg.charset] || _CHARSET_MAP.blocks);
   if (!charset.length) return span.text;
   var corruptible = [...span.text].map(function(c, i) { return _PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
-  var count = Math.floor(corruptible.length * Math.min(intensity, 1.0));
+  var count = corruptionCount(corruptible.length, intensity);
   if (count === 0) return span.text;
   var positions = mode === "consistent"
     ? _lcgSelect(corruptible.length, count, span.seed)
@@ -1677,15 +1677,9 @@ function startSettingsEdit(rowIndex) {
     if (entered !== null) {
       if (row.type === 'text') {
         if (entered.trim() !== '') setSettingValue(settingsDraft, row.key, entered.trim());
-      } else if (row.type === 'float') {
-        var fnum = parseFloat(entered);
-        if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
       } else {
-        var num = parseInt(entered, 10);
-        if (!isNaN(num)) {
-          if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
-          if (num >= 0) setSettingValue(settingsDraft, row.key, num);
-        }
+        var committed = commitSettingValue(row, entered);
+        if (committed.ok) setSettingValue(settingsDraft, row.key, committed.value);
       }
     }
     renderSettings();
@@ -1721,15 +1715,9 @@ function confirmSettingsEdit() {
     if (valueStr.trim() !== '') {
       setSettingValue(settingsDraft, row.key, valueStr.trim());
     }
-  } else if (row.type === 'float') {
-    var fnum = parseFloat(valueStr);
-    if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
   } else {
-    var num = parseInt(valueStr, 10);
-    if (!isNaN(num)) {
-      if (row.key === 'page_size') num = Math.max(1, Math.min(50, num));
-      if (num >= 0) setSettingValue(settingsDraft, row.key, num);
-    }
+    var committed = commitSettingValue(row, valueStr);
+    if (committed.ok) setSettingValue(settingsDraft, row.key, committed.value);
   }
   settingsEditRow = null;
   pendingInput = '';
@@ -1775,12 +1763,9 @@ function startSectionRowEdit(rowIndex) {
     if (entered !== null) {
       if (row.type === 'text') {
         if (entered.trim() !== '') setSettingValue(settingsDraft, row.key, entered.trim());
-      } else if (row.type === 'float') {
-        var fnum = parseFloat(entered);
-        if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
       } else {
-        var num = parseInt(entered, 10);
-        if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, row.key, num);
+        var committed = commitSettingValue(row, entered);
+        if (committed.ok) setSettingValue(settingsDraft, row.key, committed.value);
       }
     }
     renderSectionSubscreen(currentSectionScreen);
@@ -1813,12 +1798,9 @@ function confirmSectionRowEdit() {
   var valueStr = inlineInput ? inlineInput.value : pendingInput.trim();
   if (row.type === 'text') {
     if (valueStr.trim() !== '') setSettingValue(settingsDraft, row.key, valueStr.trim());
-  } else if (row.type === 'float') {
-    var fnum = parseFloat(valueStr);
-    if (!isNaN(fnum) && fnum >= 0 && fnum <= 1) setSettingValue(settingsDraft, row.key, fnum);
   } else {
-    var num = parseInt(valueStr, 10);
-    if (!isNaN(num) && num >= 0) setSettingValue(settingsDraft, row.key, num);
+    var committed = commitSettingValue(row, valueStr);
+    if (committed.ok) setSettingValue(settingsDraft, row.key, committed.value);
   }
   sectionEditRow = null;
   pendingInput = '';
