@@ -6,6 +6,14 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Settings Clamp Parity (Python ↔ Web)
+- **Fixed** The shipped default `scramble_frames: 85` was outside its own settings range (`1–50`), so it could never be re-entered in the CLI. The frames ranges for `scramble_frames` and `resolve_frames` are now `1–200`
+- **Fixed** The web settings screens had no range checks: the Corruption rows (edited through the section subscreen, which clamped nothing) accepted any non-negative number, and `12abc` was accepted as `12`. Number rows now parse strictly and clamp to the same ranges as the CLI; float rows still reject out-of-range values
+- **Fixed** Stored web settings are sanitised on load, so a zero/huge frame count or a negative `intensity_multiplier` in localStorage can no longer break or invert the corruption animation
+- **Added** `clamp_setting()` and `corruption_timing()` in `src/config.py`; use-time clamps (upper bounds too) for corruption timing, punctuation pauses and picker page size in `src/display.py`
+- **Added** `SETTING_RANGES`, `clampSetting`, `commitSettingValue`, `corruptionTiming`, `corruptionCount`, `sanitizeCorruptionSettings`, `sanitizePauses` in `web/engine.js`, with parity tests against the Python range registry and `corruption_timing()`
+- **Changed** `scramble_frames: 0` (only reachable through hand-edited storage) now means one frame, as in the CLI, instead of skipping the scramble
+
 ### Typewriter Defaults — Engine Parity
 - **Fixed** `web/typewriter.js` `TYPEWRITER_DEFAULTS` disagreed with the CLI's real defaults (`src/config.py` `_DEFAULTS`) — web shipped `delay_ms: 20` and flat `100–200ms` punctuation pauses while the CLI used `delay_ms: 35` and `250–700ms` pauses tuned per character. Web now matches exactly: `delay_ms: 35`, `pauses: {".": 550, "!": 250, "?": 350, "…": 700, "—": 600}`
 - **Fixed** `settings.example.json` had drifted from `src/config.py` `_DEFAULTS` (`page_size: 10` vs. `5`, `delay_ms: 40` vs. `35`, em-dash pause `800` vs. `600`) — reverted the template back in sync with the actual runtime defaults
