@@ -6,6 +6,13 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Protagonist Name Prompt — Fresh-Run Re-prompt (CLI)
+- **Fixed** The CLI only asked for the protagonist name on first launch with no save. Choosing **New game** at the resume prompt silently reused the settings name, and **Play again** silently reused the launch-time name, while the web player prompted in both cases. The prompt now runs at every fresh-run start
+- **Added** `Engine.__init__` `fresh_run_state` param — an optional host-supplied callable invoked at every fresh-run start (no save, New game, play again); it returns the seed-state dict, or `None` to abort back to the picker without touching an existing save. `_resolve_start()` and `_reset()` now return `bool`
+- **Added** `_prompt_name_state(story, display, settings_name)` helper in `main.py`; `_launch_story` no longer prompts up front
+- **Changed** For a story with `name_prompt` and an existing save, "Continue saved game?" is now asked before the name prompt (web order). Continuing still skips the name prompt
+- **Added** regression tests in `tests/test_engine.py` (`fresh_run_state`) and `tests/test_main.py` (`_prompt_name_state`, `_launch_story` wiring)
+
 ### Typewriter Defaults — Engine Parity
 - **Fixed** `web/typewriter.js` `TYPEWRITER_DEFAULTS` disagreed with the CLI's real defaults (`src/config.py` `_DEFAULTS`) — web shipped `delay_ms: 20` and flat `100–200ms` punctuation pauses while the CLI used `delay_ms: 35` and `250–700ms` pauses tuned per character. Web now matches exactly: `delay_ms: 35`, `pauses: {".": 550, "!": 250, "?": 350, "…": 700, "—": 600}`
 - **Fixed** `settings.example.json` had drifted from `src/config.py` `_DEFAULTS` (`page_size: 10` vs. `5`, `delay_ms: 40` vs. `35`, em-dash pause `800` vs. `600`) — reverted the template back in sync with the actual runtime defaults

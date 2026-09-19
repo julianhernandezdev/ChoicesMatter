@@ -25,7 +25,7 @@ The story declares `name_prompt` and `name_default` in its `meta`. Before the fi
 
 ## Launch flow
 
-The prompt fires **after content warnings and before the first node**, only for new games. On save resume, `player_name` is already in the saved state — the prompt is skipped and the saved name is used directly.
+The prompt fires **whenever a fresh run starts**: on first launch with no save, on **New game** at the "Continue saved game?" prompt, and on **Play again** after an ending. It fires **after content warnings and before the first node**. On save resume, `player_name` is already in the saved state — the prompt is skipped and the saved name is used directly. Because the resume question comes first, a player with a save sees "Continue saved game?" before any name prompt.
 
 ### Fallback priority chain
 
@@ -55,25 +55,23 @@ Works in: node text, insets, overlays. Does **not** work in choice `label` field
 
 ## Engine code path
 
-**`initial_state` seeding in `main.py`**:
+**Provider wiring in `main.py`**:
 
 ```python
 settings_name = load_settings().get("player_name", "Felix")
 initial_state: dict[str, bool | int | str] = {"player_name": settings_name}
-
-if story.name_prompt and not save_manager.has_save(story.id):
-    name = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
-    if name is None:
-        return                          # Q → back to picker
-    if not name:
-        name = story.name_default or settings_name or ""
-        if not name:
-            display.show_name_required()
-            return
-    initial_state = {"player_name": name}
-
-Engine(story, save_manager, display, gallery_manager, initial_state=initial_state).run()
+fresh_run_state = (
+    (lambda: _prompt_name_state(story, display, settings_name))
+    if story.name_prompt
+    else None
+)
+Engine(
+    story, save_manager, display, gallery_manager,
+    initial_state=initial_state, fresh_run_state=fresh_run_state,
+).run()
 ```
+
+`_prompt_name_state()` runs the prompt and the fallback chain above. It returns `{"player_name": name}`, or `None` if the player pressed Q or no name could be resolved — the run then aborts back to the picker and any existing save is left untouched.
 
 **`Engine.__init__` `initial_state` parameter** (`src/engine.py:23`):
 
@@ -88,7 +86,7 @@ def __init__(self, ..., initial_state: dict[str, bool | int | str] | None = None
 self._state = dict(self._initial_state)
 ```
 
-This means `player_name` is present from the very first node, and survives play-again resets without re-prompting.
+`_resolve_start()` (new game) and `_reset()` (play again) both go through `_begin_fresh()`, which calls the `fresh_run_state` provider if one was supplied and seeds `_state` from the result; otherwise it seeds from `initial_state`. `player_name` is present from the very first node, and a replay asks for the name again.
 
 **`Story.name_prompt` / `Story.name_default`** (`src/story.py:74–75`) — parsed by `StoryLoader.load()`. Validation rules:
 - `name_prompt` if present: must be a non-empty string
@@ -111,7 +109,8 @@ The web player has `renderNamePrompt()` and `renderAccessibleNamePrompt()` in `w
 | `Story.name_prompt` / `name_default` fields | `src/story.py:74–75` |
 | Validation in `StoryLoader.load()` | `src/story.py:243–280` |
 | `_launch_story()` wiring | `main.py` |
-| `Engine.__init__` `initial_state` param | `src/engine.py:23` |
+| `_prompt_name_state()` | `main.py` |
+| `Engine.__init__` `initial_state` / `fresh_run_state` params | `src/engine.py` |
 | `_resolve_start()` / `_reset()` seeding | `src/engine.py` |
 | `Display.prompt_protagonist_name()` | `src/display.py` |
 | `renderNamePrompt()` / `renderAccessibleNamePrompt()` | `web/app.js` |

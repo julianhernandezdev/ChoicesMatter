@@ -18,8 +18,8 @@ python main.py
 
 | File | Role |
 |---|---|
-| `main.py` | Entry point — story picker, wires together all components |
-| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection; accepts `initial_state` dict to seed state before game loop and on "play again" resets |
+| `main.py` | Entry point — story picker, wires together all components; owns the protagonist name prompt (`_prompt_name_state`) and `player_name` seeding |
+| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection; accepts an `initial_state` dict (default seed state) and an optional `fresh_run_state` callable — a host-supplied provider invoked at every fresh-run start (no save, New game, play again) that returns the seed dict, or `None` to abort back to the picker |
 | `src/story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
 | `src/save.py` | Persistent save state — read/write/delete per story |
 | `src/gallery.py` | Ending gallery — tracks found endings per story across runs |
@@ -58,7 +58,7 @@ main.py
         └── Display (src/display.py)         render calls only
 ```
 
-`src/config.py` is imported only by `src/display.py`.
+`src/config.py` is imported by `src/display.py` and by `main.py` (which reads the saved `player_name` setting).
 
 ## Story JSON Format
 

@@ -1201,9 +1201,9 @@ Fires after content warnings, before the first node. Skipped on save resume — 
 
 ### Engine code path
 
-`main.py` `_launch_story()` reads `settings_name` and builds `initial_state = {"player_name": settings_name}` unconditionally. If `story.name_prompt` is set and no save exists, it fires the prompt and overwrites `initial_state["player_name"]` with the entered name.
+`main.py` `_launch_story()` reads `settings_name` and builds `initial_state = {"player_name": settings_name}` unconditionally. If `story.name_prompt` is set it also passes `Engine` a `fresh_run_state` provider built on `_prompt_name_state()`, which runs the prompt.
 
-`Engine.__init__` stores `initial_state` and seeds `_state` from it in both `_resolve_start()` (new game) and `_reset()` (play-again). `player_name` is present from the first node of every run.
+`Engine` calls the provider at every fresh-run start (`_resolve_start()` with no save or after "New game", and `_reset()` on play-again) through `_begin_fresh()`; without a provider it seeds `_state` from `initial_state`. `player_name` is present from the first node of every run, and the player is asked again on each fresh run.
 
 ### Key references
 
@@ -1211,8 +1211,8 @@ Fires after content warnings, before the first node. Skipped on save resume — 
 |---|---|
 | `Story.name_prompt` / `name_default` | `src/story.py:74–75` |
 | `StoryLoader` validation | `src/story.py:243–280` |
-| `_launch_story()` wiring | `main.py` |
-| `Engine.__init__` `initial_state` param | `src/engine.py:23` |
+| `_launch_story()` / `_prompt_name_state()` wiring | `main.py` |
+| `Engine.__init__` `initial_state` / `fresh_run_state` params | `src/engine.py` |
 | `Display.prompt_protagonist_name()` | `src/display.py` |
 | `renderNamePrompt()` / `renderAccessibleNamePrompt()` | `web/app.js` |
 | Unit tests | `tests/test_story.py`, `tests/test_engine.py`, `tests/test_display.py` |
