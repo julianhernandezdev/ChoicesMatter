@@ -9,7 +9,7 @@ from src.engine import Engine
 from src.gallery import GalleryManager
 from src.save import SaveManager
 from src.config import load_settings
-from src.story import StoryLoader, StoryValidationError
+from src.story import Story, StoryLoader, StoryValidationError
 
 STORIES_DIR = Path("stories")
 SAVES_DIR = Path("saves")
@@ -157,6 +157,24 @@ def _resolve_player_name(entered: str, name_default: str, settings_name: str) ->
     return None
 
 
+def _prompt_name_state(
+    story: Story, display: Display, settings_name: str
+) -> dict[str, bool | int | str] | None:
+    """Run the protagonist name prompt for a fresh run.
+
+    Returns the seed-state dict, or None when the player backed out (Q) or no
+    name could be resolved. In the latter case the player has already been told.
+    """
+    entered = display.prompt_protagonist_name(story.name_prompt or "", prefill=settings_name)
+    if entered is None:
+        return None
+    name = _resolve_player_name(entered, story.name_default or "", settings_name)
+    if name is None:
+        display.show_name_required()
+        return None
+    return {"player_name": name}
+
+
 def _launch_story(
     path: Path,
     errors: dict[Path, str],
@@ -178,16 +196,15 @@ def _launch_story(
             return
     settings_name = load_settings().get("player_name", "Felix")
     initial_state: dict[str, bool | int | str] = {"player_name": settings_name}
-    if story.name_prompt and not save_manager.has_save(story.id):
-        entered = display.prompt_protagonist_name(story.name_prompt, prefill=settings_name)
-        if entered is None:
-            return
-        name = _resolve_player_name(entered, story.name_default or "", settings_name)
-        if name is None:
-            display.show_name_required()
-            return
-        initial_state = {"player_name": name}
-    Engine(story, save_manager, display, gallery_manager, initial_state=initial_state).run()
+    fresh_run_state = (
+        (lambda: _prompt_name_state(story, display, settings_name))
+        if story.name_prompt
+        else None
+    )
+    Engine(
+        story, save_manager, display, gallery_manager,
+        initial_state=initial_state, fresh_run_state=fresh_run_state,
+    ).run()
     display.clear_screen()
 
 

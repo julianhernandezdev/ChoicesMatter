@@ -1,11 +1,19 @@
 import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from main import _build_entries, _load_story_info, _parse_args, _resolve_player_name
+from main import (
+    _build_entries,
+    _launch_story,
+    _load_story_info,
+    _parse_args,
+    _prompt_name_state,
+    _resolve_player_name,
+)
 from src.gallery import GalleryManager
 from src.save import SaveManager, SaveState
 
@@ -138,3 +146,81 @@ def test_resolve_player_name_falls_back_to_story_default_when_no_settings_name()
 
 def test_resolve_player_name_none_when_nothing_available():
     assert _resolve_player_name("", "", "") is None
+
+
+# ---------------------------------------------------------------------------
+# _prompt_name_state
+# ---------------------------------------------------------------------------
+
+def _name_story(name_default: str | None = None) -> SimpleNamespace:
+    return SimpleNamespace(name_prompt="What is your name?", name_default=name_default)
+
+
+def test_prompt_name_state_returns_typed_name():
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = "Casey"
+    assert _prompt_name_state(_name_story(), display, "Felix") == {"player_name": "Casey"}
+    display.prompt_protagonist_name.assert_called_once_with("What is your name?", prefill="Felix")
+
+
+def test_prompt_name_state_empty_input_uses_settings_name():
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = ""
+    assert _prompt_name_state(_name_story("Officer"), display, "Felix") == {"player_name": "Felix"}
+
+
+def test_prompt_name_state_empty_input_falls_back_to_story_default():
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = ""
+    assert _prompt_name_state(_name_story("Officer"), display, "") == {"player_name": "Officer"}
+
+
+def test_prompt_name_state_q_returns_none_without_error_screen():
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = None
+    assert _prompt_name_state(_name_story(), display, "Felix") is None
+    display.show_name_required.assert_not_called()
+
+
+def test_prompt_name_state_unresolvable_shows_error_and_returns_none():
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = ""
+    assert _prompt_name_state(_name_story(), display, "") is None
+    display.show_name_required.assert_called_once_with()
+
+
+# ---------------------------------------------------------------------------
+# _launch_story wiring
+# ---------------------------------------------------------------------------
+
+def test_launch_story_passes_provider_when_story_has_name_prompt(
+    tmp_path: Path, saves_dir: Path, sample_story_dict: dict
+) -> None:
+    sample_story_dict["meta"]["name_prompt"] = "Who are you?"
+    path = tmp_path / "named.json"
+    path.write_text(json.dumps(sample_story_dict), encoding="utf-8")
+    display = MagicMock()
+    display.prompt_protagonist_name.return_value = "Casey"
+
+    with patch("main.Engine") as engine_cls, patch("main.load_settings", return_value={"player_name": "Felix"}):
+        _launch_story(path, {}, SaveManager(saves_dir), GalleryManager(saves_dir), display)
+
+    kwargs = engine_cls.call_args.kwargs
+    assert kwargs["initial_state"] == {"player_name": "Felix"}
+    display.prompt_protagonist_name.assert_not_called()  # no up-front prompt any more
+    assert kwargs["fresh_run_state"]() == {"player_name": "Casey"}
+    display.prompt_protagonist_name.assert_called_once_with("Who are you?", prefill="Felix")
+
+
+def test_launch_story_passes_no_provider_without_name_prompt(
+    valid_story_path: Path, saves_dir: Path
+) -> None:
+    display = MagicMock()
+
+    with patch("main.Engine") as engine_cls, patch("main.load_settings", return_value={"player_name": "Felix"}):
+        _launch_story(valid_story_path, {}, SaveManager(saves_dir), GalleryManager(saves_dir), display)
+
+    kwargs = engine_cls.call_args.kwargs
+    assert kwargs["fresh_run_state"] is None
+    assert kwargs["initial_state"] == {"player_name": "Felix"}
+    display.prompt_protagonist_name.assert_not_called()
