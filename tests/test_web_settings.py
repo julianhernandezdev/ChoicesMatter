@@ -128,3 +128,41 @@ applyDefaults(draft, section);
 console.log(draft.player_name);
 """)
     assert out == 'Zara'
+
+
+# ---------------------------------------------------------------------------
+# loadTypewriterSettings sanitises stored values
+# ---------------------------------------------------------------------------
+
+def _load_with_stored(stored: dict | None) -> dict:
+    stored_js = "null" if stored is None else json.dumps(json.dumps(stored))
+    script = f"""
+globalThis.localStorage = {{ getItem: () => {stored_js}, setItem: () => {{}} }};
+import {{ loadTypewriterSettings }} from './web/typewriter.js';
+console.log(JSON.stringify(loadTypewriterSettings()));
+"""
+    return json.loads(_run(script))
+
+
+def test_load_settings_sanitises_tampered_corruption_values() -> None:
+    s = _load_with_stored({"corruption": {"intensity_multiplier": -1, "scramble_frames": 0,
+                                          "scramble_delay_ms": 99999, "custom_chars": "ab"}})
+    c = s["corruption"]
+    assert c["intensity_multiplier"] == 0
+    assert c["scramble_frames"] == 1
+    assert c["scramble_delay_ms"] == 1000
+    assert c["custom_chars"] == "ab"
+    assert c["resolve_frames"] is None
+
+
+def test_load_settings_keeps_shipped_default_frames() -> None:
+    assert _load_with_stored({"corruption": {}})["corruption"]["scramble_frames"] == 85
+    assert _load_with_stored(None)["corruption"]["scramble_frames"] == 85
+
+
+def test_load_settings_clamps_page_size_and_pauses() -> None:
+    s = _load_with_stored({"page_size": 9999, "pauses": {".": 99999, "!": -4}})
+    assert s["page_size"] == 50
+    assert s["pauses"]["."] == 2000
+    assert s["pauses"]["!"] == 0
+    assert s["pauses"]["?"] == 350  # default retained

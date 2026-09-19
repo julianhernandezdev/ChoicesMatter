@@ -1,3 +1,5 @@
+import { clampSetting, corruptionCount, corruptionTiming, sanitizeCorruptionSettings, sanitizePauses } from "./engine.js";
+
 const SETTINGS_KEY = "choices-matter:typewriter-settings";
 
 export const TYPEWRITER_DEFAULTS = {
@@ -31,15 +33,15 @@ export function loadTypewriterSettings() {
       enabled: typeof stored.enabled === 'boolean' ? stored.enabled : TYPEWRITER_DEFAULTS.enabled,
       delay_ms: typeof stored.delay_ms === 'number' ? stored.delay_ms : TYPEWRITER_DEFAULTS.delay_ms,
       pause_ms: typeof stored.pause_ms === 'number' ? stored.pause_ms : TYPEWRITER_DEFAULTS.pause_ms,
-      pauses: Object.assign({}, TYPEWRITER_DEFAULTS.pauses, stored.pauses || {}),
-      page_size: (typeof stored.page_size === 'number' && stored.page_size >= 1) ? stored.page_size : TYPEWRITER_DEFAULTS.page_size,
+      pauses: sanitizePauses(stored.pauses, TYPEWRITER_DEFAULTS.pauses),
+      page_size: typeof stored.page_size === 'number' && Number.isFinite(stored.page_size)
+        ? Math.trunc(clampSetting('page_size', stored.page_size))
+        : TYPEWRITER_DEFAULTS.page_size,
       accessible_mode: (stored.accessible_mode === true || stored.accessible_mode === false)
         ? stored.accessible_mode
         : TYPEWRITER_DEFAULTS.accessible_mode,
       player_name: typeof stored.player_name === 'string' ? stored.player_name : TYPEWRITER_DEFAULTS.player_name,
-      corruption: stored.corruption && typeof stored.corruption === 'object'
-        ? Object.assign({}, TYPEWRITER_DEFAULTS.corruption, stored.corruption)
-        : Object.assign({}, TYPEWRITER_DEFAULTS.corruption),
+      corruption: sanitizeCorruptionSettings(stored.corruption, TYPEWRITER_DEFAULTS.corruption),
     };
   } catch {
     return {
@@ -110,7 +112,7 @@ function _twCorruptStringRaw(text, intensity, mode, seed, corruption) {
     : (_TW_CHARSET_MAP[corruption.charset] || _TW_CHARSET_MAP.blocks);
   if (!charset.length) return text;
   var corruptible = [...text].map(function(c, i) { return _TW_PUNCT.has(c) ? null : i; }).filter(function(i) { return i !== null; });
-  var count = Math.floor(corruptible.length * Math.min(intensity, 1.0));
+  var count = corruptionCount(corruptible.length, intensity);
   if (count === 0) return text;
   var positions = mode === "consistent"
     ? _twLcgSelect(corruptible.length, count, seed)
@@ -151,6 +153,7 @@ export function startTypewriter(element, textOrSegments) {
   var pauses = settings.pauses || {};
   var delay = settings.delay_ms || 20;
   var pauseMs = settings.pause_ms || 500;
+  var timing = corruptionTiming(corruption);
 
   // Normalize input: plain string → single-element array
   var inputSegments = typeof textOrSegments === 'string' ? [textOrSegments]
@@ -181,8 +184,8 @@ export function startTypewriter(element, textOrSegments) {
     } else {
       // CorruptedSpan
       var rendered = corruption.enabled ? _twCorruptString(seg, corruption) : seg.text;
-      if (corruption.enabled && corruption.animate && corruption.scramble_frames > 0) {
-        playQueue.push({ type: 'scramble', span: seg, frames: corruption.scramble_frames, delay: corruption.scramble_delay_ms, settled: rendered });
+      if (corruption.enabled && corruption.animate) {
+        playQueue.push({ type: 'scramble', span: seg, frames: timing.scrambleFrames, delay: timing.scrambleDelay, settled: rendered });
       } else if (rendered.length > 0) {
         playQueue.push({ type: 'text', text: rendered });
       }
@@ -244,8 +247,8 @@ export function startTypewriter(element, textOrSegments) {
       return;
     }
     if (item.type === 'resolve-decay') {
-      var resolveFrames = corruption.resolve_frames != null ? corruption.resolve_frames : corruption.scramble_frames;
-      var resolveDelay = corruption.resolve_delay_ms != null ? corruption.resolve_delay_ms : corruption.scramble_delay_ms;
+      var resolveFrames = timing.resolveFrames;
+      var resolveDelay = timing.resolveDelay;
       if (scrambleFrame === 0) scrambleBase = element.textContent.slice(0, -item.span.text.length);
       var mode = _twEffectiveMode(item.span.mode, corruption);
       var baseIntensity = _twEffectiveIntensity(item.span.intensity, corruption);
@@ -264,7 +267,7 @@ export function startTypewriter(element, textOrSegments) {
       return;
     }
     if (item.type === 'resolve-cascade') {
-      var cascadeStagger = corruption.cascade_stagger_ms != null ? corruption.cascade_stagger_ms : corruption.scramble_delay_ms;
+      var cascadeStagger = timing.cascadeStagger;
       if (cascadeOrder === null) {
         scrambleBase = element.textContent.slice(0, -item.span.text.length);
         var settledForm = element.textContent.slice(-item.span.text.length);
