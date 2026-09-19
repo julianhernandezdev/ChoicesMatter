@@ -12,7 +12,7 @@ from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
-from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults
+from .config import load_settings, save_settings, SETTINGS_SECTIONS, _get_draft_value, _set_draft_value, apply_section_defaults, clamp_setting, corruption_timing
 from .corruption import (
     CorruptedSpan, TextSegments, CHARSETS, corrupt_string,
     effective_mode, effective_intensity, cascade_reveal_order,
@@ -130,7 +130,7 @@ class Display:
         )
 
     def get_page_size(self) -> int:
-        return max(1, self._cfg.get("picker", {}).get("page_size", 5))
+        return int(clamp_setting("picker.page_size", self._cfg.get("picker", {}).get("page_size", 5)))
 
     def show_story_picker(
         self,
@@ -300,17 +300,18 @@ class Display:
         charset = self._get_charset()
         cfg_corruption = self._cfg.get("corruption", {})
         animate = cfg_corruption.get("animate", True)
-        scramble_frames = max(1, cfg_corruption.get("scramble_frames", 8))
-        scramble_delay = max(0, cfg_corruption.get("scramble_delay_ms", 60)) / 1000
-        _resolve_frames_raw = cfg_corruption.get("resolve_frames")
-        resolve_frames = max(1, _resolve_frames_raw if _resolve_frames_raw is not None else scramble_frames)
-        _resolve_delay_raw = cfg_corruption.get("resolve_delay_ms")
-        resolve_delay = max(0, _resolve_delay_raw if _resolve_delay_raw is not None else cfg_corruption.get("scramble_delay_ms", 60)) / 1000
-        _cascade_stagger_raw = cfg_corruption.get("cascade_stagger_ms")
-        cascade_stagger = max(0, _cascade_stagger_raw if _cascade_stagger_raw is not None else cfg_corruption.get("scramble_delay_ms", 60)) / 1000
+        timing = corruption_timing(cfg_corruption)
+        scramble_frames = timing["scramble_frames"]
+        scramble_delay = timing["scramble_delay_ms"] / 1000
+        resolve_frames = timing["resolve_frames"]
+        resolve_delay = timing["resolve_delay_ms"] / 1000
+        cascade_stagger = timing["cascade_stagger_ms"] / 1000
         pause_s = self._cfg.get("typewriter", {}).get("pause_ms", 500) / 1000
         raw_pauses = self._cfg.get("typewriter", {}).get("punctuation_pauses", {})
-        char_pauses = {k: v / 1000 for k, v in raw_pauses.items()}
+        char_pauses = {
+            k: clamp_setting(f"typewriter.punctuation_pauses.{k}", v) / 1000
+            for k, v in raw_pauses.items()
+        }
         full_assembled = _assemble_text(segments, charset, cfg_corruption)
 
         with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
