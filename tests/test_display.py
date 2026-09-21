@@ -1288,6 +1288,33 @@ def test_show_saga_home_renders_rows_and_hint():
     assert "more to discover" in out
 
 
+_HOME_MARKERS = {"active": "▶", "ready": "●", "finished": "✓", "new": "·"}
+
+
+@pytest.mark.parametrize("state", list(_HOME_MARKERS))
+def test_show_saga_home_marks_each_row_state_with_its_own_glyph(state):
+    d, buf = _real_display()
+    d.show_saga_home(
+        "Demo Saga",
+        [
+            {"label": f"row-{s}", "state": s, "endings_found": 0, "endings_total": 1}
+            for s in _HOME_MARKERS
+        ],
+        more_to_discover=False,
+    )
+    row = next(line for line in buf.getvalue().splitlines() if f"row-{state}" in line)
+    assert _HOME_MARKERS[state] in row
+    for other, glyph in _HOME_MARKERS.items():
+        if other != state:
+            assert glyph not in row
+
+
+def test_show_saga_home_falls_back_to_the_new_marker_for_an_unknown_state():
+    d, buf = _real_display()
+    d.show_saga_home("Demo Saga", [{"label": "odd", "state": "??", "endings_found": 0, "endings_total": 1}], False)
+    assert _HOME_MARKERS["new"] in next(line for line in buf.getvalue().splitlines() if "odd" in line)
+
+
 def test_show_saga_home_omits_hint_when_everything_listed():
     d, buf = _real_display()
     d.show_saga_home("Demo Saga", [{"label": "Only", "state": "new", "endings_found": 0, "endings_total": 1}], False)

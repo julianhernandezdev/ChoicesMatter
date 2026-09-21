@@ -15,9 +15,20 @@ from src.saga import (
 )
 from src.story import StoryLoader
 
-_CASES = json.loads(
+_FIXTURE = json.loads(
     (Path(__file__).parent / "fixtures" / "saga_cases.json").read_text(encoding="utf-8")
-)["cases"]
+)
+_CASES = _FIXTURE["cases"]
+_SEED_ARG_CASES = _FIXTURE["seed_args"]
+
+# Every key of a case's per-saga "expect" block that the harness below checks. The fixture is a
+# conformance artifact for the JS and GDScript ports, so a typo'd key must fail loudly rather
+# than silently assert nothing.
+_EXPECT_KEYS = frozenset({
+    "title", "entry", "chapters", "problems", "has_dangling", "reached", "active",
+    "complete", "stats", "default_chapter", "descendants",
+})
+_SEED_ARG_KEYS = frozenset({"name", "input", "expect", "error"})
 
 
 def _chapter(d: dict) -> ChapterInfo:
@@ -46,11 +57,11 @@ def _progress(d: dict) -> SagaProgress:
     )
 
 
-@pytest.mark.parametrize("case", _CASES, ids=[c["name"] for c in _CASES])
-def test_fixture_case(case: dict) -> None:
+def _check_case(case: dict) -> None:
     graph = SagaGraph.build([_chapter(c) for c in case["chapters"]])
     progress = _progress(case.get("progress", {}))
     for saga_id, exp in case["expect"].items():
+        assert set(exp) <= _EXPECT_KEYS, f"unknown expect key(s) {sorted(set(exp) - _EXPECT_KEYS)} in {exp}"
         saga = graph.sagas[saga_id]
         if "title" in exp:
             assert saga.title == exp["title"]
@@ -74,6 +85,35 @@ def test_fixture_case(case: dict) -> None:
             assert graph.default_chapter(saga, progress) == exp["default_chapter"]
         for story_id, expected in exp.get("descendants", {}).items():
             assert sorted(graph.descendants(story_id)) == expected
+
+
+@pytest.mark.parametrize("case", _CASES, ids=[c["name"] for c in _CASES])
+def test_fixture_case(case: dict) -> None:
+    _check_case(case)
+
+
+def test_fixture_guard_rejects_an_unknown_expect_key() -> None:
+    typo = {"chapters": _CASES[0]["chapters"], "expect": {"s": {"entrry": "a"}}}
+    with pytest.raises(AssertionError, match="unknown expect key"):
+        _check_case(typo)
+
+
+def test_fixture_seed_arg_entries_use_only_known_keys() -> None:
+    for entry in _SEED_ARG_CASES:
+        assert set(entry) <= _SEED_ARG_KEYS, entry
+        assert ("expect" in entry) != bool(entry.get("error")), entry  # exactly one outcome
+
+
+@pytest.mark.parametrize("case", _SEED_ARG_CASES, ids=[c["name"] for c in _SEED_ARG_CASES])
+def test_fixture_seed_arg_case(case: dict) -> None:
+    if case.get("error"):
+        with pytest.raises(ValueError):
+            parse_seed_arg(case["input"])
+        return
+    parsed = parse_seed_arg(case["input"])
+    assert parsed == case["expect"]
+    # ==, not is: True == 1 in Python, so also pin the types the port must reproduce.
+    assert {k: type(v) for k, v in parsed.items()} == {k: type(v) for k, v in case["expect"].items()}
 
 
 def test_chapters_without_saga_id_are_ignored() -> None:

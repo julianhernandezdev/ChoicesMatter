@@ -274,6 +274,28 @@ def test_saga_title_on_a_non_entry_chapter_is_an_error(make_chapter) -> None:
     assert any("not the entry chapter" in e for e in errors)
 
 
+def test_next_story_into_a_different_saga_is_an_error(make_chapter, capsys) -> None:
+    a = make_chapter("a", {"e": {"next_story": "b"}}, saga_id="one", saga_title="One")
+    b = make_chapter("b", {"e": {}}, saga_id="two", saga_title="Two")
+
+    _warnings, errors = validate_sagas([a, b])
+
+    assert errors == ["saga 'one': chapter 'a' node 'e' targets 'b', which belongs to a different saga"]
+    assert main([str(a), str(b)]) == 1
+    assert "belongs to a different saga" in capsys.readouterr().out
+
+
+def test_entry_chapter_of_a_multi_chapter_saga_must_declare_saga_title(make_chapter, capsys) -> None:
+    a = make_chapter("a", {"e": {"next_story": "b"}}, saga_id="s")  # the entry, but no saga_title
+    b = make_chapter("b", {"e": {}}, saga_id="s")
+
+    _warnings, errors = validate_sagas([a, b])
+
+    assert errors == ["saga 's': entry chapter 'a' must declare saga_title"]
+    assert main([str(a), str(b)]) == 1
+    assert "must declare saga_title" in capsys.readouterr().out
+
+
 def test_visited_export_colliding_with_a_target_node_is_an_error(make_chapter) -> None:
     # Every make_chapter chapter has a node named 'start', so exporting visited_start collides.
     a = make_chapter(

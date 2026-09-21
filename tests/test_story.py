@@ -947,6 +947,21 @@ def test_saga_end_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
     assert node.next_story is None
 
 
+@pytest.mark.parametrize("field, value", [("next_story", "ch2"), ("saga_end", True)])
+def test_empty_choices_without_is_ending_still_counts_as_an_ending_for_chain_fields(
+    tmp_path: Path, sample_story_dict: dict, field: str, value
+) -> None:
+    """An empty choices array is an ending even without is_ending, so it may carry chain fields."""
+    data = _saga_dict(sample_story_dict, **{field: value})
+    del data["nodes"]["ending"]["is_ending"]
+    assert data["nodes"]["ending"]["choices"] == []
+
+    node = _load_dict(tmp_path, data).nodes["ending"]
+
+    assert node.is_ending is False
+    assert getattr(node, field) == value
+
+
 def test_next_story_requires_saga_id(tmp_path: Path, sample_story_dict: dict) -> None:
     sample_story_dict["nodes"]["ending"]["next_story"] = "ch2"
     with pytest.raises(StoryValidationError, match="'next_story' requires meta field 'saga_id'"):

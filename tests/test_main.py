@@ -883,6 +883,56 @@ def test_replaying_the_entry_chapter_declined_leaves_all_progress_on_disk(
     assert sm.has_save("ch1") is True
 
 
+def _play_again_at_a_plain_ending(demo_saga: dict[str, Path], saves_dir: Path, confirm: bool):
+    """Real Engine: reach ch1's plain ending, and only THEN put progress downstream and press Play again."""
+    graph = _graph(demo_saga.values())
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    display = MagicMock()
+    display.prompt_choice.return_value = 3  # ch1: go e_a / go e_b / go e_x  ->  the plain dead end
+    display.prompt_replay_confirm.return_value = confirm
+    answers = iter([True, False])
+    asked: list[bool] = []
+
+    def play_again() -> bool:
+        if not asked:  # first ending only: downstream progress appears now
+            sm.write(SaveState(story_id="ch2a", current_node="start", state={"trust": 3}))
+            sm.write_handoff(HandoffRecord(story_id="ch3", from_story="ch2a", state={"trust": 3}))
+        asked.append(True)
+        return next(answers)
+
+    display.prompt_play_again.side_effect = play_again
+    with patch("main.load_settings", return_value={"player_name": "Felix"}):
+        _play_chapter(demo_saga["ch1"], {}, sm, gm, display, graph=graph, seed_override=None)
+    return display, sm, gm
+
+
+def test_play_again_with_downstream_progress_confirms_and_erases_it_when_accepted(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    display, sm, gm = _play_again_at_a_plain_ending(demo_saga, saves_dir, confirm=True)
+
+    display.prompt_replay_confirm.assert_called_once_with(["2A — ch2a", "ch3"])
+    assert sm.has_save("ch2a") is False
+    assert sm.has_handoff("ch3") is False
+    starts = [c for c in display.show_node.call_args_list if c.args[1] == ["ch1 begins."]]
+    assert len(starts) == 2  # the run restarted
+    assert display.prompt_play_again.call_count == 2
+    assert gm.get_found("ch1") == {"e_x"}
+
+
+def test_play_again_with_downstream_progress_leaves_it_alone_when_declined(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    display, sm, _gm = _play_again_at_a_plain_ending(demo_saga, saves_dir, confirm=False)
+
+    display.prompt_replay_confirm.assert_called_once_with(["2A — ch2a", "ch3"])
+    assert sm.load("ch2a").state == {"trust": 3}
+    assert sm.load_handoff("ch3").state == {"trust": 3}
+    starts = [c for c in display.show_node.call_args_list if c.args[1] == ["ch1 begins."]]
+    assert len(starts) == 1  # the run did not restart: it returned to the caller
+    assert display.prompt_play_again.call_count == 1
+
+
 # ---------------------------------------------------------------------------
 # Saga rows in the picker
 # ---------------------------------------------------------------------------

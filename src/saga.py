@@ -124,6 +124,8 @@ class SagaGraph:
                     else:
                         has_dangling = True
             for dup in sorted(duplicates.get(saga_id, ())):
+                # scripts/validate_story.py de-duplicates its own duplicate-id ERROR against this
+                # exact text ("duplicate story id '<id>'"); a rewording must be mirrored there.
                 problems.append(f"duplicate story id '{dup}'")
 
             incoming = {target for targets in internal.values() for target in targets}

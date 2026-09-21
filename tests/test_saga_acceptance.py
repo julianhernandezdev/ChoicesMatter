@@ -14,8 +14,8 @@ from main import _collect_chapter_infos, _run_saga_home
 from src.config import load_settings
 from src.display import Display
 from src.gallery import GalleryManager
-from src.saga import SagaGraph
-from src.save import SaveManager
+from src.saga import SagaGraph, chapter_label_text
+from src.save import HandoffRecord, SaveManager
 
 SAGA_DIR = Path(__file__).resolve().parents[1] / "stories" / "sagas"
 CHAPTERS = [
@@ -172,8 +172,32 @@ def test_declined_confirm_touches_nothing(tmp_path: Path, saves_dir: Path) -> No
     assert not any(sm.has_save(cid) for cid in ALL_CHAPTERS)
 
 
-def test_debug_cold_start_with_seed_override(tmp_path: Path, saves_dir: Path) -> None:
+def _disk_snapshot(saves_dir: Path) -> dict[str, bytes]:
+    """Every file under the saves folder, byte for byte: seeds, galleries and any save."""
+    return {p.name: p.read_bytes() for p in sorted(saves_dir.iterdir())}
+
+
+def test_erase_waits_for_the_name_prompt_even_after_the_replay_confirm(tmp_path: Path, saves_dir: Path) -> None:
+    """Confirm 'y', then back out of the name prompt with Q: nothing may have been erased yet."""
     sm, gm, display, _out, graph = _rig(tmp_path, saves_dir)
+    _play_bridge_route(display, graph, sm, gm)
+    sm.write_handoff(HandoffRecord(story_id=CH2B, from_story=CH1, state={"trust": 1, "player_name": "Casey"}))
+    before = _disk_snapshot(saves_dir)
+    assert {CH2A, CH2B, CH3} <= {cid for cid in ALL_CHAPTERS if sm.has_handoff(cid)}  # progress to lose
+
+    script = _drive(display, graph, sm, gm, {
+        HOME: ["1", "b"],                         # chapter one has downstream seeds
+        CONFIRM: ["y"],                           # accept the replay warning...
+        NAME: ["q"],                              # ...then leave the name prompt: the run aborts
+    })
+
+    assert script.log[:3] == [f"{HOME!r} -> '1'", f"{CONFIRM!r} -> 'y'", f"{NAME!r} -> 'q'"]
+    assert _disk_snapshot(saves_dir) == before    # seeds and galleries untouched, no save created
+    assert not any(sm.has_save(cid) for cid in ALL_CHAPTERS)
+
+
+def test_debug_cold_start_with_seed_override(tmp_path: Path, saves_dir: Path) -> None:
+    sm, gm, display, out, graph = _rig(tmp_path, saves_dir)
     _drive(
         display, graph, sm, gm,
         {
@@ -186,3 +210,9 @@ def test_debug_cold_start_with_seed_override(tmp_path: Path, saves_dir: Path) ->
     assert gm.get_found(CH3) == {"e_win"}
     assert gm.get_found(CH1) == set() and gm.get_found(CH2A) == set() and gm.get_found(CH2B) == set()
     assert not any(sm.has_save(cid) for cid in ALL_CHAPTERS)
+    assert not any(sm.has_handoff(cid) for cid in ALL_CHAPTERS)  # the --seed overlay is never persisted
+    assert not sm.has_handoff(CH3)
+    text = out.getvalue()
+    for cid in ALL_CHAPTERS:                                     # debug lists every chapter, reached or not
+        assert chapter_label_text(graph.chapter(cid)) in text
+    assert "more to discover" not in text

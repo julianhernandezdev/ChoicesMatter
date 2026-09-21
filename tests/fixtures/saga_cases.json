@@ -143,5 +143,21 @@
       "progress": {},
       "expect": {"s": {"chapters": ["a"], "problems": ["duplicate story id 'a'"]}}
     }
+  ],
+  "seed_args": [
+    {"name": "true_is_a_bool", "input": "k=true", "expect": {"k": true}},
+    {"name": "false_is_a_bool", "input": "k=false", "expect": {"k": false}},
+    {"name": "bool_match_is_case_insensitive", "input": "a=TRUE,b=False,c=tRuE", "expect": {"a": true, "b": false, "c": true}},
+    {"name": "digits_are_an_int", "input": "trust=4", "expect": {"trust": 4}},
+    {"name": "a_leading_minus_is_a_negative_int", "input": "delta=-3", "expect": {"delta": -3}},
+    {"name": "zero_is_an_int", "input": "n=0", "expect": {"n": 0}},
+    {"name": "a_leading_plus_is_not_an_int", "input": "delta=+1", "expect": {"delta": "+1"}},
+    {"name": "a_decimal_is_not_an_int", "input": "ratio=1.5", "expect": {"ratio": "1.5"}},
+    {"name": "anything_else_is_a_string", "input": "mood=calm", "expect": {"mood": "calm"}},
+    {"name": "several_pairs_mix_the_types", "input": "trust=4,key_taken=true,mood=calm,delta=-2",
+     "expect": {"trust": 4, "key_taken": true, "mood": "calm", "delta": -2}},
+    {"name": "an_empty_key_is_rejected", "input": "=3", "error": true},
+    {"name": "a_pair_without_equals_is_rejected", "input": "novalue", "error": true},
+    {"name": "an_empty_pair_is_rejected", "input": "a=1,,b=2", "error": true}
   ]
 }
