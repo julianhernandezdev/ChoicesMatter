@@ -1,6 +1,6 @@
 # Engine Feature Reference
 
-All 23 engine features in one place — each illustrated by a numbered example story and documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
+All 24 engine features in one place — each illustrated by a numbered example story and documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
 
 ## Quick Lookup
 
@@ -29,6 +29,7 @@ All 23 engine features in one place — each illustrated by a numbered example s
 | 21 | Variable Text Substitution | `stories/examples/21_variable_text_substitution.json` | `{key}` placeholders replaced at runtime with flag values; missing keys preserved intact |
 | 22 | Protagonist Name Prompt | `stories/examples/22_protagonist_name_prompt.json` | `meta.name_prompt` triggers a pre-game name input; `{player_name}` available in all text fields |
 | 23 | Corrupted Text | `stories/examples/23_corrupted_text.json` | `{corrupt}…{/corrupt}` inline spans with node baseline and scramble-settle typewriter animation |
+| 24 | Chapters and Sagas | `stories/sagas/24_saga_ch1_the_bridge.json` (+3 chapters) | Endings chain into other story files; only exported flags carry over; saga picker row, saga home screen, replay |
 
 ---
 
@@ -1287,3 +1288,21 @@ The effective intensity is `min(author_intensity × cfg_intensity, 1.0)`. Each l
 | Unit tests (27) | `tests/test_corruption.py` |
 | Story + display integration tests | `tests/test_story.py`, `tests/test_display.py` |
 | JS parity tests | `tests/test_web_engine.py` |
+
+---
+
+## 24 — Chapters and Sagas
+
+**Stories:** `stories/sagas/24_saga_ch1_the_bridge.json`, `24_saga_ch2a_the_far_bank.json`, `24_saga_ch2b_the_skiff.json`, `24_saga_ch3_the_last_ferry.json`
+**Feature:** Ending nodes can chain into another chapter (`next_story`, `exports`, `chapter_transition`, `saga_end`); chapters sharing `meta.saga_id` form a saga with its own picker row and saga home screen. Full guide: `education/24_chapters_sagas.md`.
+
+| Code | Location |
+|---|---|
+| `Node.next_story` / `exports` / `chapter_transition` / `saga_end`, `Story.saga_id` / `saga_title` / `chapter_label` | `src/story.py` |
+| `HandoffRecord`, `SaveManager` seed methods | `src/save.py` |
+| `SagaGraph`, `ChapterInfo`, `SagaProgress`, `parse_seed_arg` | `src/saga.py` |
+| `ChainResult`, ending kinds, seed write | `src/engine.py` |
+| `_saga_fresh_run_state`, `_run_saga_home`, `_play_chapter`, saga picker rows | `main.py` |
+| `show_saga_home`, `prompt_saga_select`, `show_chapter_transition`, `prompt_chapter_transition`, `prompt_replay_confirm` | `src/display.py` |
+| `validate_sagas`, `--strict` | `scripts/validate_story.py` |
+| Tests | `tests/test_saga.py`, `tests/test_example_saga.py`, `tests/test_story.py`, `tests/test_save.py`, `tests/test_engine.py`, `tests/test_display.py`, `tests/test_main.py`, `tests/test_validate_story.py` |

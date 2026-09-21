@@ -63,6 +63,9 @@ Two top-level keys: `meta` (story metadata) and `nodes` (a dict of all scenes ke
 | `auto_visited_flags` | No | bool | Default `true`. Set `false` to disable automatic `visited_<node_id>` tracking. |
 | `name_prompt` | No | string | If set, prompts the player for a name before the first node. Stored as `player_name` in state. Use `{player_name}` in any text field. |
 | `name_default` | No | string | Fallback name if player submits empty. Requires `name_prompt`. |
+| `saga_id` | No | string | Groups chapters into a saga. Same value on every chapter. `[A-Za-z0-9_.-]` only. |
+| `saga_title` | No | string | Requires `saga_id`. Set on the saga's first chapter only (the one nothing chains into); forbidden on the others. |
+| `chapter_label` | No | string | Requires `saga_id`. Short label such as `"2A"` shown before the title in the chapter list. |
 
 ---
 
@@ -78,6 +81,12 @@ Two top-level keys: `meta` (story metadata) and `nodes` (a dict of all scenes ke
 | `choice_number_color` | No | `rich` colour name or hex (e.g. `"bright_red"`, `"#ffaa00"`). Default fallback for choice number prefixes on this node. |
 | `insets` | No | Array of inset objects. Rendered inside the story panel. |
 | `overlays` | No | Array of overlay objects. Rendered outside the panel, around the choice list. |
+| `next_story` | No | Ending nodes only; needs `meta.saga_id`. The next chapter's `meta.id`. |
+| `exports` | No | With `next_story`. Exact flag names that carry into the next chapter (may include `visited_<node>`). No `*`; never `player_name`. |
+| `chapter_transition` | No | With `next_story`. `true` = show this node as a normal scene, then chain (no ending screen). |
+| `saga_end` | No | Ending nodes only; needs `meta.saga_id`. `true` marks the saga finale. Cannot be combined with `next_story`. |
+
+**Sagas.** Chapters that share `meta.saga_id` chain through ending nodes carrying `next_story`. Only flags listed in that ending's `exports` reach the next chapter, under the same names (plus `player_name`, always). A chapter reached this way skips its own `name_prompt`. An ending with neither `next_story` nor `saga_end` is an ordinary dead end.
 
 ---
 
@@ -206,6 +215,10 @@ The engine validates before launch and raises errors — stories that fail valid
 - `est_time`: non-empty string if present
 - Do not set `visited_<node_id>` via `sets` unless `meta.auto_visited_flags` is `false`
 - Inline corruption: `{corrupt}` must have a matching `{/corrupt}`; spans cannot be nested; intensity param must be float 0–1; mode must be `consistent` or `random`; intensity must come before mode when both are present
+- `saga_id` `[A-Za-z0-9_.-]` only; `saga_title` and `chapter_label` need `saga_id`
+- `next_story` / `saga_end` need `meta.saga_id` and an ending node; `next_story` may not be the story's own id
+- `exports` / `chapter_transition` need `next_story`; `exports` entries are non-empty, unique, never `*` or `player_name`; `visited_X` needs a node `X` and `auto_visited_flags` on
+- `saga_end: true` cannot be combined with `next_story`, `exports` or `chapter_transition`
 
 ---
 
@@ -326,12 +339,17 @@ The engine validates before launch and raises errors — stories that fail valid
 | `auto_visited_flags` | `meta` | Default true; set false to suppress `visited_*` auto-tracking |
 | `name_prompt` | `meta` | Triggers pre-game name prompt; stores as `player_name` |
 | `name_default` | `meta` | Per-story fallback name; requires `name_prompt` |
+| `saga_id` | `meta` | Groups chapters into a saga (`saga_title`, `chapter_label` optional companions) |
 | `is_ending` | node | Marks terminal node; triggers ending screen |
 | `ending_type` | node | `good`/`bad`/`neutral` — panel colour green/red/yellow |
 | `scene` | node | Location header; carries forward until overridden |
 | `choice_number_color` | node | Node-level fallback for choice number prefix colour |
 | `insets` | node | Inside-panel styled text blocks |
 | `overlays` | node | Outside-panel text around the choice list |
+| `next_story` | node | Ending only: next chapter's `meta.id` (needs `saga_id`) |
+| `exports` | node | With `next_story`: flag names carried into the next chapter |
+| `chapter_transition` | node | With `next_story`: play as a normal scene, no ending screen |
+| `saga_end` | node | Ending only: marks the saga finale (exclusive with `next_story`) |
 | `requires` | choice / inset / overlay | Hides element if flag condition not met |
 | `sets` | choice | Applies flags to state when taken |
 | `color` | choice | Per-choice number prefix colour; overrides node default |

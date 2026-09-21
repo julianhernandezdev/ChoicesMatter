@@ -6,6 +6,18 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Chapters / Sagas (CLI)
+- **Added** Story endings can chain into other story files. New `meta` fields `saga_id`, `saga_title`, `chapter_label` and ending-node fields `next_story`, `exports`, `chapter_transition`, `saga_end`; only exported flags (plus `player_name`) carry over, under their original names
+- **Added** Chapter-entry seeds (`saves/<chapter_id>.handoff.json`), written when a chaining ending is reached and kept until a parent chains in again, so restarting a chapter in any later session keeps the carried flags; "C → clear all save data" removes them
+- **Added** `src/saga.py` — pure `SagaGraph` (entry chapter, depth, descendants, reached/active chapters, stats, completion, problems) with `ChapterInfo`, `SagaProgress` and `parse_seed_arg`
+- **Added** Saga picker rows (`[SAGA]`, `X/Y chapters · X/Y endings`, `✓ Complete`, `· more chapters coming`, `● RESUME`) and a saga home screen; a saga with problems shows as an `-ERROR` row; a chapter file with a duplicate `meta.id` is hidden behind its saga's row (or shown as a non-launchable `-ERROR` row when its saga is not in the graph); replaying a chapter with later progress asks first, then erases that progress (galleries untouched)
+- **Added** `Engine.run()` returns a `ChainResult` when the player continues into the next chapter; `Engine(known_chapter_ids=...)`; `closing` line ("End of saga" / "To be continued") on `show_ending`
+- **Added** `Display.show_saga_home`, `prompt_saga_select`, `show_chapter_transition`, `prompt_chapter_transition` (`[C]ontinue / play [A]gain / [M]enu`), `prompt_replay_confirm`
+- **Added** `--seed key=value,...` (requires `--debug`; cold chapter starts only; never persisted); `--debug` lists every chapter on the saga home screen
+- **Added** Cross-file saga validation in `scripts/validate_story.py` (duplicate ids, cycles, entry chapters, `saga_title`, dangling links, exports, flags no chapter provides) and `--strict`, which promotes only dangling `next_story` links to errors
+- **Added** Four-chapter example saga `stories/sagas/24_saga_*.json` (tracked, CLI-only for now — the web manifest skips `sagas/`) and `education/24_chapters_sagas.md`
+- **Changed** `main.py` picker entries are self-describing (`path` / saga id) instead of relying on list position; `_run_folder_picker` returns the chosen entry
+
 ### Settings Clamp Parity (Python ↔ Web)
 - **Fixed** The shipped default `scramble_frames: 85` was outside its own settings range (`1–50`), so it could never be re-entered in the CLI. The frames ranges for `scramble_frames` and `resolve_frames` are now `1–200`
 - **Fixed** The web settings screens had no range checks: the Corruption rows (edited through the section subscreen, which clamped nothing) accepted any non-negative number, and `12abc` was accepted as `12`. Number rows now parse strictly and clamp to the same ranges as the CLI; float rows still reject out-of-range values

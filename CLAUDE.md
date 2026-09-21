@@ -12,20 +12,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 python main.py
+python main.py --debug --seed trust=3,key_taken=true   # author testing: list every saga chapter, seed cold chapter starts
 ```
 
 ## Module Responsibilities
 
 | File | Role |
 |---|---|
-| `main.py` | Entry point — story picker, wires together all components; owns the protagonist name prompt (`_prompt_name_state`) and `player_name` seeding |
-| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection; accepts an `initial_state` dict (default seed state) and an optional `fresh_run_state` callable — a host-supplied provider invoked at every fresh-run start (no save, New game, play again) that returns the seed dict, or `None` to abort back to the picker |
+| `main.py` | Entry point — story picker, wires together all components; owns the protagonist name prompt (`_prompt_name_state`) and `player_name` seeding; builds the saga graph, saga picker rows and saga home screen, the composed fresh-run provider for saga chapters (confirm → seed → erase last) and the chapter chain loop; each picker entry carries its own target (`path` / saga id) rather than a list position; `--debug` lists every chapter on the saga home screen and `--seed` seeds cold chapter starts (see **Sagas**) |
+| `src/engine.py` | Game loop, navigation, flag state, save triggers, ending detection; accepts an `initial_state` dict (default seed state) and an optional `fresh_run_state` callable — a host-supplied provider invoked at every fresh-run start (no save, New game, play again) that returns the seed dict, or `None` to abort back to the picker; `run()` returns a `ChainResult` when the player continues into the next chapter (else `None`) — `Engine` never launches a story itself; `known_chapter_ids` names the discoverable chapters |
 | `src/story.py` | Data models (`Story`, `Node`, `Choice`, `Overlay`, `Inset`), JSON loader, validation |
-| `src/save.py` | Persistent save state — read/write/delete per story |
+| `src/save.py` | Persistent save state — read/write/delete per story; also chapter-entry seeds (`saves/<chapter_id>.handoff.json`, `HandoffRecord`) |
 | `src/gallery.py` | Ending gallery — tracks found endings per story across runs |
 | `src/display.py` | All `rich` rendering — nothing else imports `rich` |
 | `src/config.py` | Loads and saves `settings.json`, deep-merges with hardcoded defaults |
 | `src/corruption.py` | Resolves `{corrupt}` spans and node-level `corruption` baselines into `TextSegments`; imported by `engine.py` (resolution) and `display.py` (rendering) |
+| `src/saga.py` | Pure saga (chapter graph) logic — `SagaGraph` (entry chapter, depth, descendants, reached/active chapters, stats, completion, `problems`), `ChapterInfo`, `SagaProgress`, `parse_seed_arg`; no I/O; imported by `main.py` and `scripts/validate_story.py` |
 
 ```
 /src                 Python CLI engine package (imported as src.X from main.py and tests/)
@@ -34,6 +36,7 @@ python main.py
                        examples/         (01–20: one file per engine feature)
                        horror/
                        showcase/         (including showcase/sci-fi/)
+                       sagas/            (24_saga_*: the four-chapter example saga — tracked, CLI-only for now)
                        ChoicesMatterGPT/ (GPT-authored stories)
 /tests               Test suite — pytest for Python; tests/test_web_engine.py shells out to Node
                        (subprocess) to exercise web/engine.js directly, so `pytest` alone covers both
@@ -54,6 +57,7 @@ main.py
   └── StoryLoader (src/story.py)             loads + validates JSON
   └── load_settings (src/config.py)          reads settings.json (seeds player_name)
   └── Display (src/display.py)               all terminal rendering
+  └── SagaGraph (src/saga.py)                chapter graph + progress (pure; built from loaded stories)
   └── Engine (src/engine.py)
         └── Story (src/story.py)             data model, node resolver
         └── SaveManager (src/save.py)        read/write save state
@@ -62,7 +66,7 @@ main.py
         └── Display (src/display.py)         render calls only
 ```
 
-`src/config.py` is imported by `src/display.py` and by `main.py` (which reads the saved `player_name` setting). `src/corruption.py` is imported by `src/engine.py` (span resolution) and `src/display.py` (rendering).
+`src/config.py` is imported by `src/display.py` and by `main.py` (which reads the saved `player_name` setting). `src/corruption.py` is imported by `src/engine.py` (span resolution) and `src/display.py` (rendering). `src/saga.py` is imported by `main.py` and `scripts/validate_story.py`. `Engine` never launches a story: it returns a `ChainResult` and the chain loop in `main.py` launches the next chapter.
 
 ## Story JSON Format
 
@@ -82,6 +86,9 @@ Stories have two top-level keys: `meta` and `nodes`.
 | `auto_visited_flags` | No | Defaults to `true`; set to `false` to disable automatic `visited_` flag tracking |
 | `name_prompt` | No | Non-empty string. Triggers a protagonist name prompt after content warnings and before the first node. Prompt is skipped on save resume. |
 | `name_default` | No | Non-empty string. Fallback name used when the player submits empty and no saved `player_name` exists. Requires `name_prompt` to also be set. |
+| `saga_id` | No | Safe-ID string (`[A-Za-z0-9_.-]+`), the same on every chapter of a saga. Chapters sharing it form a saga graph — see **Sagas** below |
+| `saga_title` | No | Requires `saga_id`. Required on the saga's single entry chapter (the one nothing chains into) once the saga has two or more chapters, forbidden on every other chapter |
+| `chapter_label` | No | Requires `saga_id`. Short label shown before the title on the saga home screen (e.g. `2A`, rendered `2A — <title>`); falls back to `title` |
 
 ```json
 {
@@ -107,6 +114,10 @@ Stories have two top-level keys: `meta` and `nodes`.
 | `scene` | No | Location label displayed as a dim Rule header above the story panel; once set, carries forward to nodes without a `scene` key |
 | `choice_number_color` | No | `rich` color name or hex (e.g. `bright_red`, `#ffaa00`) — node-level fallback for choice number prefixes; overridden per-choice by `choice.color` |
 | `corruption` | No | `float` 0–1 or `{ "intensity": float, "mode": "consistent"\|"random", "resolve_style": "decay"\|"cascade" }` — baseline corruption for all text on this node; provides defaults for inline `{corrupt}` spans that omit params |
+| `next_story` | No | Ending nodes only; requires `meta.saga_id`. The target chapter's `meta.id`. See **Sagas** |
+| `exports` | No | With `next_story` only. Exact flag names carried into the next chapter (`visited_<node>` allowed; no `*`, no `player_name`) |
+| `chapter_transition` | No | With `next_story` only. `true` = normal story panel + one keypress instead of the ending screen |
+| `saga_end` | No | Ending nodes only; requires `meta.saga_id`. `true` marks the saga finale; exclusive with the three fields above |
 
 An empty `choices` array is treated as an ending even without `is_ending: true`.
 
@@ -222,6 +233,30 @@ Overlays render around the choice list: `before` above the choices, `after` belo
 
 Flags accumulate within a run and are persisted in the save file. `_reset()` clears them.
 
+## Sagas (Multi-Chapter Stories)
+
+A story ending can chain into another story file. Chapters that share `meta.saga_id` form a **saga** — a directed graph linked by ending-node `next_story` edges. A story without `meta.saga_id` is unaffected.
+
+**Ending kinds** (`Engine._ending_kind`):
+
+| Kind | Trigger | Player sees |
+|---|---|---|
+| `chain` | `next_story` resolves to a discoverable chapter | Ending screen, then `[C]ontinue / play [A]gain / [M]enu` (Enter continues) |
+| `transition` | as `chain`, plus `chapter_transition: true` | Normal story panel + one keypress, then chains (no ending screen, no prompt) |
+| `saga_end` | `saga_end: true` | Ending screen with an `End of saga` closing line, then the ordinary play-again prompt |
+| `dangling` | `next_story` names no discoverable chapter | Ending screen with a `To be continued` closing line, ordinary play-again prompt, no chaining |
+| `plain` | none of the above | Today's ending, e.g. a dead end |
+
+**Chapter-entry seed.** When a `chain` or `transition` ending is reached, `Engine` writes `saves/<next_chapter_id>.handoff.json` — the `exports` flags that are present in state plus `player_name` — *before* it shows the `[C]ontinue / play [A]gain / [M]enu` prompt (or the transition panel), so quitting loses nothing. Choosing play [A]gain at that prompt withdraws the seed just written. Otherwise the seed persists until a parent chapter chains in again, a confirmed replay erases it, or all save data is cleared. It seeds every fresh start of that chapter (New game, Play again, replay) and makes the chapter's own `name_prompt` skip.
+
+**Reached chapter:** the entry chapter, or any chapter that currently has a seed or an active save. The picker shows one row per saga (`[SAGA]`, `● RESUME` while any chapter has an active save, `X/Y chapters · X/Y endings`, `✓ Complete` once a `saga_end` ending is in any chapter's gallery, `· more chapters coming` while a `next_story` dangles). Selecting it opens the **saga home screen** — reached chapters ordered by depth then title, with a `…more to discover` line when others exist; Enter takes the default (the most recently active chapter, else the entry). Non-entry chapters never appear as picker or folder rows. A saga with problems renders as an `-ERROR` row that shows the problems when selected. A chapter file whose `meta.id` duplicates another chapter's is hidden when its saga is listed (the saga's `-ERROR` row carries the `duplicate story id` message), or shown as a non-launchable `-ERROR` row when its saga is not in the graph.
+
+**Replay.** Any fresh start of a chapter (home-screen replay, New game, Play again) whose downstream chapters (reachable by `next_story`) hold a save or seed asks `prompt_replay_confirm`, then erases those saves and seeds. The provider order is confirm → resolve the seed → erase last, so aborting the name prompt erases nothing. Galleries are never touched. Invariant: a chapter with an active save has no downstream progress (debug cold starts can violate it).
+
+**`player_name`** always carries implicitly; a seeded chapter skips its `name_prompt`. `main.py` runs the chain loop and builds one composed `fresh_run_state` provider per saga chapter.
+
+**Authoring/testing.** `--debug` lists every chapter of a saga on the saga home screen; a chapter with no seed is a cold start. `--seed key=value,...` requires `--debug` (`true`/`false` → bool, integers → int, else string), overlays flags on cold starts only (a fresh start where the chapter has no seed) and is never persisted. Example: `stories/sagas/24_saga_*.json`; guide: `education/24_chapters_sagas.md`.
+
 ## Validation Rules
 
 `StoryLoader` validates before the engine starts. It raises `StoryValidationError` on:
@@ -245,6 +280,12 @@ Flags accumulate within a run and are persisted in the save file. `_reset()` cle
 - `name_default` present but not a non-empty string
 - `corruption` (node field): float not in `[0.0, 1.0]`; dict containing unknown keys (only `intensity`, `mode`, and `resolve_style` are allowed); dict `intensity` not a float in `[0.0, 1.0]`; dict `mode` not `"consistent"` or `"random"`; dict `resolve_style` not `"decay"` or `"cascade"`; any other type
 - `{corrupt}` inline span: unclosed `{corrupt}` open tag; stray `{/corrupt}` without matching open; nested `{corrupt}` spans; intensity param not parseable as float in `[0.0, 1.0]`; mode param not `"consistent"` or `"random"`; resolve_style param not `"decay"` or `"cascade"`
+- `saga_id` not matching `[A-Za-z0-9_.-]+`; `saga_title` / `chapter_label` not a non-empty string, or present without `saga_id`
+- `next_story` / `saga_end` without `meta.saga_id`, on a non-ending node, or of the wrong type; `next_story` naming the story's own `id`
+- `exports` / `chapter_transition` without `next_story`; `exports` not a list of non-empty strings, or containing `*`, `player_name` or a duplicate, or a `visited_X` that names no node (or with `auto_visited_flags: false`)
+- `saga_end: true` combined with `next_story`, `exports` or `chapter_transition`
+
+Cross-file saga problems are not per-file `StoryValidationError`s. `SagaGraph.problems` reports duplicate chapter `meta.id`, a `next_story` target in another saga, a cycle, several entry chapters, and `saga_title` missing on the entry chapter or present on a non-entry one; `main.py` shows them as the saga's `-ERROR` row and `scripts/validate_story.py` reports them as `ERROR`. The validator alone also errors on an exported `visited_X` where the target chapter has its own node `X`.
 
 Fail fast at load with a clear error — never mid-game. In `main.py`, validation is lazy (on selection, not startup) — broken stories show as `-ERROR` and can still be selected to display the error message.
 
@@ -262,6 +303,11 @@ Fail fast at load with a clear error — never mid-game. In `main.py`, validatio
 - **Structure:** `story_id`, `endings_found` (sorted list of node IDs)
 - **Displayed:** story picker shows `X/Y endings` (or `X/?` for single-ending stories)
 
+**Chapter-entry seed** (`/saves/<story_id>.handoff.json`):
+- **Written:** when a `chain` or `transition` ending is reached, for the *next* chapter: `story_id`, `from_story`, `state` (exported flags + `player_name`), `timestamp`
+- **Not deleted** on the chapter's first autosave. Replaced when a parent chains in again; erased by a confirmed replay of an earlier chapter; withdrawn if the player picks play [A]gain at the chain prompt; removed by "C → clear all save data"
+- A corrupt or unreadable seed file is treated as absent
+
 ## Display Layer
 
 All `rich` calls are isolated in `display.py`. Named methods:
@@ -272,10 +318,12 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | `clear_screen()` | — |
 | `show_node(story_title, node_text, before_insets, after_insets, current_scene=None)` | Story panel; renders dim Rule above panel when `current_scene` is set |
 | `show_choices(choices, before_overlays, after_overlays, choice_number_color=None, debug_state=None)` | Overlays wrap the choice list; staggers when typewriter is on; number color resolved as `choice.color → choice_number_color → "cyan"`; when `--debug` is on and `debug_state` (the flag dict) is given, a debug panel follows the choices |
-| `show_ending(node_text, ending_type, overlays)` | Overlays appear before the ending panel |
+| `show_ending(node_text, ending_type, overlays, closing=None)` | Overlays appear before the ending panel; `closing` adds a dim centered line below it (`End of saga` / `To be continued`) |
 | `show_save_indicator()` | — |
+| `show_saga_home(saga_title, rows, more_to_discover)` | Saga home screen: one numbered row per listed chapter (`rows` items carry `label`, `state`, `endings_found`, `endings_total`; marker `▶` active save / `●` seed ready / `✓` endings found / `·` new) plus an optional `…more to discover` line |
+| `show_chapter_transition(story_title, node_text, before_insets, after_insets, current_scene, overlays)` | Renders a `chapter_transition` node as a normal story panel (insets shown, overlays before it), then waits for Enter |
 | `show_content_warnings(title, warnings)` | Warning panel before story launch; returns True (proceed) / False (back) |
-| `show_story_picker(entries, title="Select a Story", page=0, total_pages=1)` | Renders one page of entries; shows the prev/next/first-page hint when `total_pages > 1` |
+| `show_story_picker(entries, title="Select a Story", page=0, total_pages=1)` | Renders one page of entries; shows the prev/next/first-page hint when `total_pages > 1`. Saga entries (`type: "saga"`) render a `[SAGA]` badge, `● RESUME` when any chapter has an active save (`has_save`), `X/Y chapters · X/Y endings`, `✓ Complete` and `· more chapters coming`; an errored saga or duplicate-id chapter renders `-ERROR` |
 | `get_page_size()` | Stories per picker page — `picker.page_size` from settings |
 | `show_no_stories()` | — |
 | `show_picker_error(name, message)` | — |
@@ -289,6 +337,9 @@ All `rich` calls are isolated in `display.py`. Named methods:
 | `prompt_clear_confirm()` | Returns True/False |
 | `prompt_choice(choices)` | Returns 1-based int or None (Q to menu) |
 | `prompt_play_again()` | Returns True/False |
+| `prompt_saga_select(count, default_index)` | Returns a 1-based chapter index (Enter takes `default_index`) or `"back"` (B / Q) |
+| `prompt_chapter_transition()` | After a chaining ending, shows `[C]ontinue / play [A]gain / [M]enu` and returns `"continue"` (also Enter), `"again"` or `"menu"` |
+| `prompt_replay_confirm(chapter_titles)` | Prints `Restarting this chapter will erase your progress in: <titles>.` then `Continue? [Y/N]` before erasing downstream chapter progress; returns bool (Enter = no) |
 
 Ending color map: `good` → bright green, `bad` → bright red, `neutral` → bright yellow.
 
@@ -460,6 +511,7 @@ In web accessible mode, all corruption is stripped and original text is shown. T
 - `settings.json` is gitignored (per-user). `settings.example.json` is committed as a template.
 - Numeric settings are range-limited. A row's `range` in `SETTINGS_SECTIONS` (`src/config.py`) is mirrored by `SETTING_RANGES` in `web/engine.js`; `tests/test_web_engine.py` fails if the two tables differ, or if a default falls outside its own range. Add a ranged row on both sides, and keep the default inside the range. Use time clamps through `config.clamp_setting` / `corruption_timing` (Python) and `clampSetting` / `corruptionTiming` (JS).
 - `tests/test_web.py` runs against the deployed GitHub Pages site, not the local checkout — it cannot verify local `web/` changes. Use the Node-backed tests plus a localhost browser run (serve the repo root; `index.html` is not in `web/`).
+- `stories/sagas/` is CLI-only for now: it is listed in `SKIP_DIRS` in `scripts/sync_stories.py` and `_GITIGNORED_STORY_DIRS` in `tests/test_web_player_assets.py`, so the web manifest skips it until web saga support lands.
 
 ## Exploration Tooling
 
@@ -481,7 +533,7 @@ Drop a `.json` file into `/stories/`. No code changes needed.
 
 ## Extension Points
 
-- **Story validator CLI:** `python scripts/validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python scripts/validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments.
+- **Story validator CLI:** `python scripts/validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python scripts/validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments. Cross-file saga checks run over the files passed together (pass all of a saga's files at once): graph problems and a colliding exported `visited_X` are errors; dangling `next_story` links, exports nothing sets, flags a chapter needs that no parent provides, and a chapter with no chaining or `saga_end` ending are warnings. `--strict` promotes only dangling links to errors. A lone chapter of a `saga_id` gets one "pass sibling chapters together" warning and skips the dangling, export, missing-flag, `saga_title` and `visited_` checks, but still gets the no-chaining warning. A duplicate saga chapter `meta.id` is always one error naming the id and files.
 - **Multiple save slots:** Change `SaveManager` to accept a slot index; save path becomes `<story_id>.<slot>.save.json`.
 - **Graph branching (convergent nodes):** No engine changes needed — just point multiple `next` values at the same node ID.
 - **Godot / host engine binding:** The v1.0 deliverable. A GDScript port reads the same `.json` files and emits signals defined in `docs/superpowers/specs/godot-signal-api.md` (not yet written). Format-changing backlog items (Chapters, Cross-Story Persistent State, Asset Association Layer) must ship before the signal API is frozen. Do not introduce new top-level `node` fields or new reserved flag namespaces without considering their GDScript surface.
