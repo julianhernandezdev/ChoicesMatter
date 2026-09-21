@@ -38,6 +38,33 @@ class SaveState:
         )
 
 
+@dataclass
+class HandoffRecord:
+    """A chapter's persisted starting state: exported flags plus player_name."""
+
+    story_id: str
+    from_story: str
+    state: dict[str, bool | int | str] = field(default_factory=dict)
+    timestamp: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "story_id": self.story_id,
+            "from_story": self.from_story,
+            "state": self.state,
+            "timestamp": self.timestamp,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> HandoffRecord:
+        return cls(
+            story_id=data["story_id"],
+            from_story=data["from_story"],
+            state=dict(data.get("state", {})),
+            timestamp=data.get("timestamp", ""),
+        )
+
+
 class SaveManager:
     def __init__(self, saves_dir: Path) -> None:
         self.saves_dir = saves_dir
@@ -68,9 +95,38 @@ class SaveManager:
         if path.exists():
             path.unlink()
 
+    def handoff_path(self, story_id: str) -> Path:
+        self._validate_story_id(story_id)
+        return self.saves_dir / f"{story_id}.handoff.json"
+
+    def has_handoff(self, story_id: str) -> bool:
+        return self.load_handoff(story_id) is not None
+
+    def load_handoff(self, story_id: str) -> HandoffRecord | None:
+        """Return the seed for a chapter, or None when missing or unreadable."""
+        path = self.handoff_path(story_id)
+        if not path.exists():
+            return None
+        try:
+            return HandoffRecord.from_dict(json.loads(path.read_text(encoding="utf-8")))
+        except (ValueError, KeyError, TypeError, OSError):
+            return None
+
+    def write_handoff(self, record: HandoffRecord) -> None:
+        record.timestamp = datetime.now(timezone.utc).isoformat()
+        self.handoff_path(record.story_id).write_text(
+            json.dumps(record.to_dict(), indent=2), encoding="utf-8"
+        )
+
+    def delete_handoff(self, story_id: str) -> None:
+        path = self.handoff_path(story_id)
+        if path.exists():
+            path.unlink()
+
     def clear_all(self) -> None:
-        for p in self.saves_dir.glob("*.save.json"):
-            p.unlink()
+        for pattern in ("*.save.json", "*.handoff.json"):
+            for p in self.saves_dir.glob(pattern):
+                p.unlink()
 
     def _validate_story_id(self, story_id: str) -> None:
         if not isinstance(story_id, str) or not _SAFE_STORY_ID.fullmatch(story_id):

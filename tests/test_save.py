@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.save import SaveManager, SaveState
+from src.save import HandoffRecord, SaveManager, SaveState
 
 
 def test_has_save_false_when_missing(saves_dir: Path) -> None:
@@ -72,3 +72,53 @@ def test_save_path_rejects_unsafe_story_ids(saves_dir: Path, bad_story_id: str) 
     sm = SaveManager(saves_dir)
     with pytest.raises(ValueError, match="story_id"):
         sm.save_path(bad_story_id)
+
+
+def test_handoff_roundtrip(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write_handoff(HandoffRecord(story_id="ch2", from_story="ch1", state={"trust": 3, "player_name": "Casey"}))
+    loaded = sm.load_handoff("ch2")
+    assert loaded is not None
+    assert loaded.story_id == "ch2"
+    assert loaded.from_story == "ch1"
+    assert loaded.state == {"trust": 3, "player_name": "Casey"}
+    assert loaded.timestamp != ""
+    assert sm.has_handoff("ch2") is True
+    assert (saves_dir / "ch2.handoff.json").exists()
+
+
+def test_handoff_missing_is_none(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    assert sm.load_handoff("ch2") is None
+    assert sm.has_handoff("ch2") is False
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"story_id": "ch2"}', '{"story_id": "ch2", "from_story": "a", "state": 5}'])
+def test_corrupt_handoff_is_treated_as_absent(saves_dir: Path, content: str) -> None:
+    (saves_dir / "ch2.handoff.json").write_text(content, encoding="utf-8")
+    sm = SaveManager(saves_dir)
+    assert sm.load_handoff("ch2") is None
+    assert sm.has_handoff("ch2") is False
+
+
+def test_delete_handoff(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write_handoff(HandoffRecord(story_id="ch2", from_story="ch1"))
+    sm.delete_handoff("ch2")
+    assert sm.has_handoff("ch2") is False
+    sm.delete_handoff("ch2")  # silent when already gone
+
+
+def test_handoff_path_rejects_unsafe_ids(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    with pytest.raises(ValueError):
+        sm.handoff_path("../evil")
+
+
+def test_clear_all_removes_handoffs_and_saves(saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write(SaveState(story_id="ch1", current_node="start"))
+    sm.write_handoff(HandoffRecord(story_id="ch2", from_story="ch1"))
+    sm.clear_all()
+    assert sm.has_save("ch1") is False
+    assert sm.has_handoff("ch2") is False
