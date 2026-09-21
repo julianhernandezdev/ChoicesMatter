@@ -149,13 +149,19 @@ def validate_sagas(paths: list[Path], strict: bool = False) -> tuple[list[str], 
             if problem in graph_duplicate_messages:
                 continue
             errors.append(f"saga '{saga.saga_id}': {problem}")
-        if len(saga.chapters) < 2:
+        # A lone chapter (no sibling among the validated files) cannot be told apart from a
+        # mid-saga chapter, so every check that needs saga context is skipped for it: the
+        # per-edge dangling warnings, the export-never-set warning (it would false-positive
+        # on a chapter that re-exports a flag its parent set), and the missing-flag warning.
+        # The saga_title checks live in SagaGraph and already only apply with 2+ chapters.
+        # The no-chaining warning is decidable from one file alone, so it always runs.
+        is_lone = len(saga.chapters) < 2
+        if is_lone:
             warnings.append(
                 f"saga '{saga.saga_id}': no sibling chapter among validated files "
                 f"(only '{saga.chapters[0]}') — pass sibling chapters together to check "
                 "saga-wide consistency"
             )
-            continue
 
         members = {cid: graph.chapter(cid) for cid in saga.chapters}
         parent_exports: dict[str, set[str]] = {cid: set() for cid in saga.chapters}
@@ -169,28 +175,33 @@ def validate_sagas(paths: list[Path], strict: bool = False) -> tuple[list[str], 
             set_here = _flags_set(story)
             provided = set_here | parent_exports[cid] | {"player_name"}
 
-            for edge in info.edges:
-                if edge.target not in graph.known_ids:
-                    message = (
-                        f"chapter '{cid}' node '{edge.node_id}' next_story '{edge.target}' "
-                        "matches no chapter among validated files"
-                    )
-                    (errors if strict else warnings).append(message)
-                for name in edge.exports:
-                    if name.startswith("visited_"):
-                        target = stories.get(edge.target)
-                        node = name[len("visited_"):]
-                        if target is not None and edge.target in members and node in target.nodes:
-                            errors.append(
-                                f"chapter '{cid}' node '{edge.node_id}' exports '{name}', but "
-                                f"chapter '{edge.target}' has its own node '{node}' "
-                                "(the carried flag would read as a real visit)"
-                            )
-                    elif name not in set_here and name not in parent_exports[cid]:
-                        warnings.append(
-                            f"chapter '{cid}' node '{edge.node_id}' exports '{name}' but nothing "
-                            f"in '{cid}' sets it and no parent chapter exports it"
+            if not is_lone:
+                for edge in info.edges:
+                    if edge.target not in graph.known_ids:
+                        message = (
+                            f"chapter '{cid}' node '{edge.node_id}' next_story '{edge.target}' "
+                            "matches no chapter among validated files"
                         )
+                        (errors if strict else warnings).append(message)
+                    for name in edge.exports:
+                        if name.startswith("visited_"):
+                            target = stories.get(edge.target)
+                            node = name[len("visited_"):]
+                            if (
+                                target is not None
+                                and edge.target in members
+                                and node in target.nodes
+                            ):
+                                errors.append(
+                                    f"chapter '{cid}' node '{edge.node_id}' exports '{name}', "
+                                    f"but chapter '{edge.target}' has its own node '{node}' "
+                                    "(the carried flag would read as a real visit)"
+                                )
+                        elif name not in set_here and name not in parent_exports[cid]:
+                            warnings.append(
+                                f"chapter '{cid}' node '{edge.node_id}' exports '{name}' but "
+                                f"nothing in '{cid}' sets it and no parent chapter exports it"
+                            )
 
             if not info.edges and not info.saga_end_nodes:
                 warnings.append(
@@ -198,6 +209,8 @@ def validate_sagas(paths: list[Path], strict: bool = False) -> tuple[list[str], 
                     "so the saga cannot progress from it"
                 )
 
+            if is_lone:
+                continue
             for flag, node_id in _flags_needed(story).items():
                 if flag in provided:
                     continue

@@ -389,6 +389,72 @@ def test_lone_chapter_skips_dangling_flag_and_title_checks(make_chapter) -> None
     assert "pass sibling chapters together" in warnings[0]
 
 
+def test_lone_chapter_with_no_chaining_still_gets_the_no_chaining_warning(make_chapter) -> None:
+    # Decidable from one file alone, so the lone-chapter skip does not cover it.
+    solo = make_chapter("solo", {"e": {}}, saga_id="l")
+
+    warnings, errors = validate_sagas([solo])
+
+    assert errors == []
+    assert len(warnings) == 2
+    assert sum("pass sibling chapters together" in w for w in warnings) == 1
+    assert any("chapter 'solo' has no chaining or saga_end ending" in w for w in warnings)
+
+
+def test_lone_chapter_with_a_saga_end_ending_gets_no_no_chaining_warning(make_chapter) -> None:
+    solo = make_chapter("solo", {"e": {"saga_end": True}}, saga_id="l")
+    warnings, errors = validate_sagas([solo])
+    assert errors == []
+    assert len(warnings) == 1
+    assert "pass sibling chapters together" in warnings[0]
+
+
+def test_main_lone_chapter_no_chaining_warning_never_fails_the_run(make_chapter, capsys) -> None:
+    solo = make_chapter("solo", {"e": {}}, saga_id="l")
+    assert main([str(solo)]) == 0
+    assert main([str(solo), "--strict"]) == 0
+    out = capsys.readouterr().out
+    assert "pass sibling chapters together" in out
+    assert "has no chaining or saga_end ending" in out
+    assert "ERROR" not in out
+
+
+def test_lone_chapter_dangling_link_is_skipped_even_under_strict(make_chapter) -> None:
+    lone = make_chapter("lone", {"e": {"next_story": "elsewhere"}}, saga_id="l")
+
+    warnings, errors = validate_sagas([lone], strict=True)
+
+    assert errors == []
+    assert not any("matches no chapter" in w for w in warnings)
+    assert len(warnings) == 1
+    assert main([str(lone), "--strict"]) == 0
+
+
+def test_lone_chapter_re_exporting_a_flag_it_never_sets_does_not_warn(make_chapter) -> None:
+    # A parent chapter may have set it; the validator cannot tell from a lone file.
+    lone = make_chapter("lone", {"e": {"next_story": "elsewhere", "exports": ["trust"]}}, saga_id="l")
+
+    warnings, _errors = validate_sagas([lone])
+
+    assert not any("exports 'trust'" in w for w in warnings)
+
+
+def test_lone_warning_is_emitted_once_per_saga_id(make_chapter) -> None:
+    one = make_chapter("one", {"e": {"next_story": "elsewhere"}}, saga_id="s1")
+    two = make_chapter("two", {"e": {}}, saga_id="s2")
+
+    warnings, errors = validate_sagas([one, two])
+
+    assert errors == []
+    assert sum("pass sibling chapters together" in w for w in warnings) == 2
+    assert any("saga 's1'" in w and "pass sibling" in w for w in warnings)
+    assert any("saga 's2'" in w and "pass sibling" in w for w in warnings)
+    # Only the chapter that really has no chaining and no saga_end gets that warning.
+    assert [w for w in warnings if "no chaining" in w] == [
+        "chapter 'two' has no chaining or saga_end ending, so the saga cannot progress from it"
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Duplicate meta.id among saga chapters is always an ERROR, reported once
 # ---------------------------------------------------------------------------
