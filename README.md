@@ -337,7 +337,7 @@ Add `name_prompt` to `meta` to ask the player for a name before the first node:
 
 ### Sagas (Multi-Chapter Stories)
 
-A story can end by handing the player into another story file. Give every chapter the same `meta.saga_id`, give the **first** chapter (the one nothing chains into) a `saga_title`, and mark chaining endings with `next_story`:
+A story can end by handing the player into another story file. Give every chapter the same `meta.saga_id` and mark chaining endings with `next_story`. Once a saga has two or more chapters, the **first** chapter (the one nothing chains into) must have a `saga_title` and every other chapter must not:
 
 ```json
 "e_left": {

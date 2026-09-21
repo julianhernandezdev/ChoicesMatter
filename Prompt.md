@@ -64,7 +64,7 @@ Two top-level keys: `meta` (story metadata) and `nodes` (a dict of all scenes ke
 | `name_prompt` | No | string | If set, prompts the player for a name before the first node. Stored as `player_name` in state. Use `{player_name}` in any text field. |
 | `name_default` | No | string | Fallback name if player submits empty. Requires `name_prompt`. |
 | `saga_id` | No | string | Groups chapters into a saga. Same value on every chapter. `[A-Za-z0-9_.-]` only. |
-| `saga_title` | No | string | Requires `saga_id`. Set on the saga's first chapter only (the one nothing chains into); forbidden on the others. |
+| `saga_title` | No | string | Requires `saga_id`. Required on the saga's single entry chapter (the one nothing chains into) and forbidden on every other chapter, once the saga has two or more chapters. |
 | `chapter_label` | No | string | Requires `saga_id`. Short label such as `"2A"` shown before the title in the chapter list. |
 
 ---

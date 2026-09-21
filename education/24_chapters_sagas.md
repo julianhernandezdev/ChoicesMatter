@@ -28,7 +28,7 @@ Chapter three's bell choice requires `trust: 2`, so it is hidden after "Drift". 
 | Field | Notes |
 |---|---|
 | `saga_id` | Same on every chapter |
-| `saga_title` | Only on the first chapter (the one nothing chains into) once the saga has two or more chapters |
+| `saga_title` | Required on the single entry chapter (the one nothing chains into) and forbidden on every other chapter, once the saga has two or more chapters |
 | `chapter_label` | Optional short label (`"2A"`) shown before the title on the saga home screen |
 
 ## Ending-node fields
@@ -53,8 +53,9 @@ If you export `visited_bridge`, the next chapter must not have its own node call
 ## What the player sees
 
 - One `[SAGA]` row in the picker (`● RESUME` while any chapter has an active save): `X/Y chapters · X/Y endings`, `✓ Complete` after a `saga_end`, `· more chapters coming` while a `next_story` points at a chapter that isn't installed yet.
-- Selecting it opens the saga home screen: the chapters reached so far (each marked `▶` in progress, `●` ready to start, `✓` finished, `·` new), plus a `…more to discover` line while others remain. Enter picks the default chapter, the one you played most recently.
+- Selecting it opens the saga home screen: the chapters reached so far (each marked `▶` active save, else `●` seed pending (ready to start), else `✓` has gallery endings and no save or seed, else `·` new), plus a `…more to discover` line while others remain. Enter picks the default chapter: the one whose save or seed was written most recently (a chapter you were seeded into but have not started yet counts), else the entry chapter.
 - At a chaining ending: the ending screen, then `[C]ontinue / play [A]gain / [M]enu`. A `chapter_transition` node skips that prompt: the scene plays and one keypress moves you on (2A's `e_go` does this). The finale prints "End of saga".
+- Content warnings, if a chapter declares any, are shown every time a chapter launches, including when it is chained into.
 - Restarting a chapter that has later chapters in progress prints `Restarting this chapter will erase your progress in: <titles>.` and asks `Continue? [Y/N]`, then erases that later progress. Ending galleries are never touched.
 
 ## Testing a late chapter
