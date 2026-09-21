@@ -223,12 +223,17 @@ def _prompt_name_state(
 
 
 def _collect_chapter_infos(paths: Iterable[Path]) -> list[ChapterInfo]:
-    """Load every story and keep the saga chapters. Stories that fail to load are skipped."""
+    """Load every story and keep the saga chapters. Stories that fail to load are skipped.
+
+    "Fail to load" includes a file that cannot be read or decoded (OSError; UnicodeDecodeError
+    is a ValueError): StoryLoader.load only wraps JSON syntax errors, and this runs over every
+    story in every folder on each picker refresh, so one bad file must not take the picker down.
+    """
     infos: list[ChapterInfo] = []
     for path in paths:
         try:
             story = StoryLoader.load(path)
-        except StoryValidationError:
+        except (StoryValidationError, OSError, ValueError):
             continue
         if story.saga_id:
             infos.append(chapter_info_from_story(story))
@@ -316,9 +321,15 @@ def _saga_fresh_run_state(
         if record is None and seed_override:
             seed.update(seed_override)
 
-        for cid in at_risk:  # the only mutation, and only once a seed exists
-            save_manager.delete(cid)
-            save_manager.delete_handoff(cid)
+        # The only mutation, and only once a seed exists. Best-effort: a file that cannot be
+        # deleted (locked, read-only) is left behind rather than aborting the run half-erased;
+        # the leftover is harmless and is erased again by the next replay.
+        for cid in at_risk:
+            for erase in (save_manager.delete, save_manager.delete_handoff):
+                try:
+                    erase(cid)
+                except OSError:
+                    pass
         return seed
 
     return provider
@@ -364,7 +375,7 @@ def _launch_story(
         known_chapter_ids=known_chapter_ids,
     ).run()
     display.clear_screen()
-    return result if isinstance(result, ChainResult) else None
+    return result
 
 
 def _play_chapter(

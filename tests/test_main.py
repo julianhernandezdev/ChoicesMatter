@@ -220,6 +220,7 @@ def test_launch_story_passes_provider_when_story_has_name_prompt(
     display.prompt_protagonist_name.return_value = "Casey"
 
     with patch("main.Engine") as engine_cls, patch("main.load_settings", return_value={"player_name": "Felix"}):
+        engine_cls.return_value.run.return_value = None
         _launch_story(path, {}, SaveManager(saves_dir), GalleryManager(saves_dir), display)
 
     kwargs = engine_cls.call_args.kwargs
@@ -235,6 +236,7 @@ def test_launch_story_passes_no_provider_without_name_prompt(
     display = MagicMock()
 
     with patch("main.Engine") as engine_cls, patch("main.load_settings", return_value={"player_name": "Felix"}):
+        engine_cls.return_value.run.return_value = None
         _launch_story(valid_story_path, {}, SaveManager(saves_dir), GalleryManager(saves_dir), display)
 
     kwargs = engine_cls.call_args.kwargs
@@ -295,6 +297,59 @@ def test_collect_chapter_infos_skips_plain_and_broken_stories(
     broken.write_text("not json", encoding="utf-8")
     infos = _collect_chapter_infos([valid_story_path, broken, *demo_saga.values()])
     assert sorted(i.story_id for i in infos) == ["ch1", "ch2a", "ch2b", "ch3"]
+
+
+def _unreadable_files(directory: Path) -> list[Path]:
+    """A non-UTF-8 file and a 'file' that cannot be read at all (a directory named *.json)."""
+    directory.mkdir(parents=True, exist_ok=True)
+    mojibake = directory / "mojibake.json"
+    mojibake.write_bytes(b'{"meta": {"id": "cafe"}}' + bytes([0xFF, 0xFE]))
+    unreadable = directory / "unreadable.json"
+    unreadable.mkdir()
+    return [mojibake, unreadable]
+
+
+def test_collect_chapter_infos_tolerates_undecodable_and_unreadable_files(
+    demo_saga: dict[str, Path], tmp_path: Path
+) -> None:
+    bad = _unreadable_files(tmp_path / "bad")
+    infos = _collect_chapter_infos([bad[0], demo_saga["ch1"], bad[1]])
+    assert [i.story_id for i in infos] == ["ch1"]  # a file that cannot be read is treated as absent
+
+
+def test_top_level_picker_refresh_survives_unreadable_files_in_a_folder(
+    demo_saga: dict[str, Path], tmp_path: Path, saves_dir: Path
+) -> None:
+    stories = _stage_stories(tmp_path, demo_saga.values(), folder="horror")
+    _unreadable_files(stories / "horror")
+    root_paths, folders = StoryLoader.discover_with_folders(stories)
+    all_paths = root_paths + [p for paths in folders.values() for p in paths]
+
+    chapters = _collect_chapter_infos(all_paths)
+    graph = SagaGraph.build(chapters)
+    entries = _build_top_level_entries(
+        root_paths, folders, {}, SaveManager(saves_dir), GalleryManager(saves_dir), graph,
+        _build_progress(chapters, SaveManager(saves_dir), GalleryManager(saves_dir)), chapters,
+    )
+
+    assert [e["type"] for e in entries] == ["folder"]  # ch2a..ch3 are hidden in the saga row's folder
+    assert sorted(i.story_id for i in chapters) == ["ch1", "ch2a", "ch2b", "ch3"]
+    assert graph.sagas["demo"].problems == ()
+
+
+def test_main_still_lists_the_good_stories_when_a_folder_holds_unreadable_files(
+    demo_saga: dict[str, Path], valid_story_path: Path, tmp_path: Path, saves_dir: Path
+) -> None:
+    stories = _stage_stories(tmp_path, [valid_story_path])
+    horror = stories / "horror"
+    horror.mkdir()
+    shutil.copy(demo_saga["ch1"], horror / "ch1.json")
+    _unreadable_files(horror)
+
+    display, _cls, _engine = _drive_main([], stories, saves_dir, story_select=[None])
+
+    entries = display.show_story_picker.call_args_list[0].args[0]
+    assert [(e["type"], e["label"]) for e in entries] == [("story", "Test Story"), ("folder", "horror")]
 
 
 def test_build_progress_reads_saves_seeds_galleries(demo_saga: dict[str, Path], saves_dir: Path) -> None:
@@ -519,6 +574,59 @@ def test_provider_erases_only_after_the_name_prompt_has_returned(make_chapter, s
     assert sm.has_handoff("p3") is False
 
 
+class _FailingSaves(SaveManager):
+    """SaveManager whose delete / delete_handoff raise PermissionError for one (operation, chapter)."""
+
+    def __init__(self, saves_dir: Path, op: str, story_id: str) -> None:
+        super().__init__(saves_dir)
+        self._op = op
+        self._story_id = story_id
+
+    def delete(self, story_id: str) -> None:
+        if (self._op, story_id) == ("delete", self._story_id):
+            raise PermissionError("locked")
+        super().delete(story_id)
+
+    def delete_handoff(self, story_id: str) -> None:
+        if (self._op, story_id) == ("delete_handoff", self._story_id):
+            raise PermissionError("locked")
+        super().delete_handoff(story_id)
+
+
+@pytest.mark.parametrize("op", ["delete", "delete_handoff"])
+@pytest.mark.parametrize("failing", ["ch2a", "ch2b"])
+def test_provider_erase_is_best_effort_when_a_downstream_delete_fails(
+    demo_saga: dict[str, Path], saves_dir: Path, op: str, failing: str
+) -> None:
+    """An OSError on one downstream file must not abort the run or stop the remaining erasures."""
+    sm = _FailingSaves(saves_dir, op, failing)
+    for cid in ("ch2a", "ch2b", "ch3"):
+        sm.write(SaveState(story_id=cid, current_node="start"))
+        sm.write_handoff(HandoffRecord(story_id=cid, from_story="x", state={"k": 1}))
+    sm.write_handoff(HandoffRecord(story_id="ch1", from_story="x", state={"player_name": "Own"}))
+    display = MagicMock()
+    display.prompt_replay_confirm.return_value = True
+
+    seed = _provider(demo_saga["ch1"], _graph(demo_saga.values()), sm, display)()
+
+    assert seed == {"player_name": "Own"}
+    for cid in ("ch2a", "ch2b", "ch3"):
+        assert sm.save_path(cid).exists() is ((op, cid) == ("delete", failing))
+        assert sm.handoff_path(cid).exists() is ((op, cid) == ("delete_handoff", failing))
+    assert sm.has_handoff("ch1") is True  # the chapter's own seed is never touched
+
+
+def test_provider_erase_does_not_swallow_non_oserrors(demo_saga: dict[str, Path], saves_dir: Path) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write(SaveState(story_id="ch2a", current_node="start"))
+    display = MagicMock()
+    display.prompt_replay_confirm.return_value = True
+
+    with patch.object(SaveManager, "delete", side_effect=RuntimeError("bug")):
+        with pytest.raises(RuntimeError):
+            _provider(demo_saga["ch1"], _graph(demo_saga.values()), sm, display)()
+
+
 class _RecordingSaves(SaveManager):
     """SaveManager that logs every mutation and every read of the given chapter's own seed."""
 
@@ -687,6 +795,7 @@ def test_launch_story_shows_content_warnings_and_can_back_out(
     display.show_content_warnings.return_value = False
 
     with patch("main.Engine") as engine_cls:
+        engine_cls.return_value.run.return_value = None
         result = _launch_story(
             path, {}, SaveManager(saves_dir), GalleryManager(saves_dir), display,
             graph=_graph([path]),
