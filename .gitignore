@@ -16,7 +16,25 @@ build/
 htmlcov/
 
 # Superpowers brainstorm / specs (local only)
-docs/
+# docs/ is local-only by default. The project-management files listed below are the
+# only ones tracked; anything else in docs/projectmanagement/ stays local until listed.
+docs/*
+!docs/projectmanagement/
+docs/projectmanagement/*
+!docs/projectmanagement/Architecture.md
+!docs/projectmanagement/BACKLOG.md
+!docs/projectmanagement/BOARD.md
+!docs/projectmanagement/Dependencies.md
+!docs/projectmanagement/GameConcept.md
+!docs/projectmanagement/GLOSSARY.md
+!docs/projectmanagement/PIPELINE.md
+!docs/projectmanagement/POSTMORTEMS.md
+!docs/projectmanagement/PROCESS.md
+!docs/projectmanagement/ProjectChecklist.md
+!docs/projectmanagement/ProjectManagement.md
+!docs/projectmanagement/release.md
+!docs/projectmanagement/RISKS.md
+!docs/projectmanagement/RUNBOOK.md
 .superpowers/
 
 

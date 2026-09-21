@@ -458,6 +458,8 @@ In web accessible mode, all corruption is stripped and original text is shown. T
 - One save slot per story — avoids slot-management UI.
 - Save is deleted on ending — a save at an ending node would require distinguishing "just reached" from "resuming at", adding edge cases for no benefit.
 - `settings.json` is gitignored (per-user). `settings.example.json` is committed as a template.
+- Numeric settings are range-limited. A row's `range` in `SETTINGS_SECTIONS` (`src/config.py`) is mirrored by `SETTING_RANGES` in `web/engine.js`; `tests/test_web_engine.py` fails if the two tables differ, or if a default falls outside its own range. Add a ranged row on both sides, and keep the default inside the range. Use time clamps through `config.clamp_setting` / `corruption_timing` (Python) and `clampSetting` / `corruptionTiming` (JS).
+- `tests/test_web.py` runs against the deployed GitHub Pages site, not the local checkout — it cannot verify local `web/` changes. Use the Node-backed tests plus a localhost browser run (serve the repo root; `index.html` is not in `web/`).
 
 ## Exploration Tooling
 
