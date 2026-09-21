@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "id": "saga_demo_ch2a",
+    "title": "Chapter Two: The Far Bank",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "landing",
+    "est_time": "5 min",
+    "name_prompt": "Who crosses the river tonight?",
+    "saga_id": "saga_demo",
+    "chapter_label": "2A"
+  },
+  "nodes": {
+    "landing": {
+      "text": "{visited_bridge?The bridge still sways behind you.|You did not come by the bridge.} The far bank is quiet, {player_name}. A lantern hangs from a post at the head of a muddy path.",
+      "scene": "The far bank",
+      "choices": [
+        { "label": "Follow the lantern path", "next": "e_go", "sets": { "trust": "+1" } },
+        { "label": "Call out to the stranger you helped", "next": "call", "requires": { "trust": 2 } }
+      ]
+    },
+    "call": {
+      "text": "Your voice carries over the water. Somewhere behind you, a voice you almost recognise answers: this way.",
+      "choices": [
+        { "label": "Follow the answering voice", "next": "e_go", "sets": { "trust": "+1" } }
+      ]
+    },
+    "e_go": {
+      "text": "The path ends at a jetty. At the end of the jetty an iron arm holds a ship's bell. Below it, the ferry is waiting, engine ticking in the dark.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "saga_demo_ch3",
+      "exports": ["trust"],
+      "chapter_transition": true
+    }
+  }
+}

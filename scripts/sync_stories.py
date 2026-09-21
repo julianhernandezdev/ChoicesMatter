@@ -19,7 +19,8 @@ ROOT = pathlib.Path(__file__).parent.parent
 STORIES_DIR = ROOT / "stories"
 OUTPUT = ROOT / "web" / "stories.json"
 
-SKIP_DIRS = {"examples", "showcase"}
+# "sagas" is CLI-only until web saga support lands.
+SKIP_DIRS = {"examples", "showcase", "sagas"}
 
 
 def story_title(path: pathlib.Path) -> str:

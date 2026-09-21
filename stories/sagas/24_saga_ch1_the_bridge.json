@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "id": "saga_demo_ch1",
+    "title": "Chapter One: The Bridge",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "arrival",
+    "est_time": "5 min",
+    "name_prompt": "Who crosses the river tonight?",
+    "name_default": "the traveller",
+    "saga_id": "saga_demo",
+    "saga_title": "The Last Ferry"
+  },
+  "nodes": {
+    "arrival": {
+      "text": "The last ferry has stopped running, {player_name}. The river is wide and black. Upstream, a rope bridge sags between two posts. Downstream, a ferryman's hut sits dark at the water's edge.",
+      "scene": "The riverbank",
+      "choices": [
+        { "label": "Cross the rope bridge", "next": "bridge" },
+        { "label": "Knock at the ferryman's hut", "next": "hut" }
+      ]
+    },
+    "bridge": {
+      "text": "The ropes creak under your weight. Halfway across, a stranger is stuck on the planks, gripping the rail with both hands and staring at the water.",
+      "choices": [
+        { "label": "Help them across", "next": "e_left", "sets": { "trust": "+2" } },
+        { "label": "Push past them", "next": "e_fall" }
+      ]
+    },
+    "hut": {
+      "text": "The hut is empty. A skiff is tied up at the back, its oars neatly stowed, as if someone meant to come back for it.",
+      "choices": [
+        { "label": "Take the skiff", "next": "e_right", "sets": { "trust": "+1" } }
+      ]
+    },
+    "e_left": {
+      "text": "You reach the far post together. The stranger says nothing, but does not let go of your sleeve until the bridge is behind you.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good",
+      "next_story": "saga_demo_ch2a",
+      "exports": ["trust", "visited_bridge"]
+    },
+    "e_right": {
+      "text": "The skiff slides out into the dark water. The far bank is a single lantern, very small, and a long way off.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "saga_demo_ch2b",
+      "exports": ["trust"]
+    },
+    "e_fall": {
+      "text": "The plank gives way under the stranger's weight, and yours. The river is colder than the dark.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    }
+  }
+}

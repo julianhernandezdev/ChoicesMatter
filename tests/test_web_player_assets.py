@@ -6,7 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-_GITIGNORED_STORY_DIRS = {"examples", "showcase"}
+# "sagas" is tracked but CLI-only until web saga support lands.
+_GITIGNORED_STORY_DIRS = {"examples", "showcase", "sagas"}
 
 def _story_paths() -> list[str]:
     return sorted(
