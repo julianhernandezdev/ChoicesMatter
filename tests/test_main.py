@@ -1333,3 +1333,167 @@ def test_saga_entries_and_home_rows_render_through_the_real_display(
     assert "Demo Saga" in out and "SAGA" in out and "RESUME" in out
     assert "2/4 chapters" in out
     assert "2A" in out and "more to discover" in out
+
+
+# ---------------------------------------------------------------------------
+# Duplicate meta.id chapter files (the loser is not a chapter the graph knows)
+# ---------------------------------------------------------------------------
+
+def _copy_chapter(src: Path, name: str, **meta) -> Path:
+    """Copy a chapter file under a new file name, optionally overriding meta fields."""
+    data = json.loads(src.read_text(encoding="utf-8"))
+    data["meta"].update(meta)
+    dest = src.with_name(name)
+    dest.write_text(json.dumps(data), encoding="utf-8")
+    return dest
+
+
+def _dup_state(paths, saves_dir: Path):
+    infos = _collect_chapter_infos(list(paths))  # full list: duplicates are NOT deduped here
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    return infos, SagaGraph.build(infos), _build_progress(infos, sm, gm), sm, gm
+
+
+def test_a_duplicate_of_a_chapter_in_a_known_saga_is_hidden_and_the_saga_row_carries_the_error(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", title="Chapter Two Copy")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+
+    entries = _build_entries(paths, {}, sm, gm, graph, progress, infos)
+
+    assert len(entries) == 1
+    assert entries[0]["type"] == "saga"
+    assert entries[0]["error"] is True
+    assert any("duplicate story id 'ch2a'" in problem for problem in entries[0]["problems"])
+    assert all(e["path"] != dup for e in entries)
+
+
+def test_a_hidden_duplicate_stays_hidden_in_a_different_folder(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+    folders = {"sagas": list(demo_saga.values()), "extras": [dup]}
+
+    entries = _build_top_level_entries([], folders, {}, sm, gm, graph, progress, infos)
+
+    assert [(e["type"], e["label"]) for e in entries] == [("folder", "sagas")]
+    assert entries[0]["story_count"] == 1
+
+
+def test_folder_picker_hides_a_duplicate_of_a_known_chapter(demo_saga: dict[str, Path], saves_dir: Path) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+    display = _folder_display(["back"])
+
+    _run_folder_picker("f", paths, {}, sm, gm, display, graph, progress, infos)
+
+    shown = display.show_story_picker.call_args.args[0]
+    assert [(e["label"], e["error"]) for e in shown] == [("Demo Saga", True)]
+
+
+def test_a_duplicate_whose_saga_is_not_in_the_graph_becomes_an_error_row(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    """The copy declares its own saga_id, so SagaGraph drops it and that saga never forms."""
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", saga_id="solo", title="Chapter Two Copy")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+    assert "solo" not in graph.sagas
+
+    entries = _build_entries(paths, {}, sm, gm, graph, progress, infos)
+
+    assert [e["index"] for e in entries] == [1, 2]
+    saga_row, dup_row = entries
+    assert saga_row["type"] == "saga" and saga_row["error"] is True
+    assert dup_row["path"] == dup
+    assert dup_row["error"] is True
+    assert dup_row.get("type") != "story"
+    assert "duplicate story id 'ch2a'" in dup_row["message"]
+
+
+def test_opening_an_orphan_duplicate_reports_the_error_and_never_launches(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", saga_id="solo")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+    dup_row = _build_entries(paths, {}, sm, gm, graph, progress, infos)[1]
+    display = MagicMock()
+
+    with patch("main._play_chapter") as play, patch("main._launch_story") as launch:
+        _open_entry(dup_row, graph, {}, sm, gm, display, debug=False, seed_override=None)
+
+    play.assert_not_called()
+    launch.assert_not_called()
+    name, message = display.show_picker_error.call_args.args
+    assert name == "ch2a_copy.json"
+    assert "duplicate story id 'ch2a'" in message
+
+
+def test_folder_picker_reports_an_orphan_duplicate_without_returning_it(
+    demo_saga: dict[str, Path], saves_dir: Path
+) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", saga_id="solo")
+    paths = [*demo_saga.values(), dup]
+    infos, graph, progress, sm, gm = _dup_state(paths, saves_dir)
+    display = _folder_display([2, "back"])
+
+    assert _run_folder_picker("f", paths, {}, sm, gm, display, graph, progress, infos) is None
+
+    name, message = display.show_picker_error.call_args.args
+    assert name == "ch2a_copy.json"
+    assert "duplicate story id 'ch2a'" in message
+
+
+def test_plain_stories_are_unaffected_by_the_duplicate_check(
+    valid_story_path: Path, saves_dir: Path
+) -> None:
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    infos = _collect_chapter_infos([valid_story_path])
+    graph = SagaGraph.build(infos)
+
+    with_graph = _build_entries([valid_story_path], {}, sm, gm, graph, _build_progress(infos, sm, gm), infos)
+
+    assert with_graph == _build_entries([valid_story_path], {}, sm, gm)
+    assert with_graph[0]["type"] == "story" and with_graph[0]["error"] is False
+
+
+def test_main_never_lets_an_orphan_duplicate_reach_the_saga_provider(
+    demo_saga: dict[str, Path], tmp_path: Path, saves_dir: Path
+) -> None:
+    sm = SaveManager(saves_dir)
+    sm.write(SaveState(story_id="ch2a", current_node="start"))
+    sm.write_handoff(HandoffRecord(story_id="ch3", from_story="ch2a", state={"trust": 3}))
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", saga_id="solo", title="Chapter Two Copy")
+    stories = _stage_stories(tmp_path, [*demo_saga.values(), dup])
+
+    display, _cls, engine_cls = _drive_main([], stories, saves_dir, story_select=[2, None])
+
+    rows = display.show_story_picker.call_args_list[0].args[0]
+    assert [(r["error"], r.get("type")) for r in rows] == [(True, "saga"), (True, None)]
+    engine_cls.assert_not_called()
+    display.prompt_replay_confirm.assert_not_called()
+    assert display.show_picker_error.call_args.args[0] == "ch2a_copy.json"
+    assert sm.has_save("ch2a") and sm.has_handoff("ch3")  # nothing erased
+
+
+def test_main_hides_a_known_saga_duplicate_and_the_saga_gate_still_blocks_play(
+    demo_saga: dict[str, Path], tmp_path: Path, saves_dir: Path
+) -> None:
+    dup = _copy_chapter(demo_saga["ch2a"], "ch2a_copy.json", title="Chapter Two Copy")
+    stories = _stage_stories(tmp_path, [*demo_saga.values(), dup], folder="sagas")
+
+    display, _cls, engine_cls = _drive_main(
+        [], stories, saves_dir, story_select=[1, 1, "back", None]  # folder, saga row, back, quit
+    )
+
+    folder_rows = display.show_story_picker.call_args_list[1].args[0]
+    assert [(r["label"], r["error"]) for r in folder_rows] == [("Demo Saga", True)]
+    engine_cls.assert_not_called()
+    label, message = display.show_picker_error.call_args.args
+    assert label == "Demo Saga" and "duplicate story id 'ch2a'" in message

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
 from src.display import Display
@@ -84,7 +84,7 @@ def main() -> None:
         progress = _build_progress(chapters, save_manager, gallery_manager)
 
         full_entries = _build_top_level_entries(
-            root_paths, folders, errors, save_manager, gallery_manager, graph, progress
+            root_paths, folders, errors, save_manager, gallery_manager, graph, progress, chapters
         )
         page_size = display.get_page_size()
         total_entries = len(full_entries)
@@ -127,7 +127,7 @@ def main() -> None:
         if chosen_entry.get("type") == "folder":
             chosen_entry = _run_folder_picker(
                 chosen_entry["label"], folders[chosen_entry["label"]], errors,
-                save_manager, gallery_manager, display, graph, progress,
+                save_manager, gallery_manager, display, graph, progress, chapters,
             )
             if chosen_entry is None:
                 continue
@@ -147,9 +147,10 @@ def _run_folder_picker(
     display: Display,
     graph: SagaGraph | None = None,
     progress: SagaProgress | None = None,
+    chapters: Sequence[ChapterInfo] | None = None,
 ) -> dict | None:
     """Show the contents of a folder. Returns the chosen entry dict, or None (back)."""
-    full_entries = _build_entries(paths, errors, save_manager, gallery_manager, graph, progress)
+    full_entries = _build_entries(paths, errors, save_manager, gallery_manager, graph, progress, chapters)
     page = 0
     while True:
         display.clear_screen()
@@ -178,7 +179,10 @@ def _run_folder_picker(
             if chosen_entry.get("type") == "saga":
                 display.show_picker_error(chosen_entry["label"], "; ".join(chosen_entry["problems"]))
             else:
-                display.show_picker_error(chosen_entry["path"].name, errors[chosen_entry["path"]])
+                display.show_picker_error(
+                    chosen_entry["path"].name,
+                    chosen_entry.get("message") or errors[chosen_entry["path"]],
+                )
             continue
         return chosen_entry
 
@@ -389,12 +393,40 @@ def _play_chapter(
         )
 
 
-def _saga_layout(graph: SagaGraph | None) -> tuple[dict[Path, Saga], set[Path]]:
-    """anchors: path -> the saga rendered there; hidden: chapter paths folded into a saga row."""
+def _duplicate_chapters(
+    graph: SagaGraph | None, chapters: Sequence[ChapterInfo] | None
+) -> dict[Path, tuple[ChapterInfo, ChapterInfo]]:
+    """Files the graph rejected because their meta.id was already taken: path -> (loser, winner).
+
+    `chapters` is the full list _collect_chapter_infos returned (it does not dedupe);
+    SagaGraph.build keeps the first chapter per story id and drops the rest.
+    """
+    duplicates: dict[Path, tuple[ChapterInfo, ChapterInfo]] = {}
+    if graph is None:
+        return duplicates
+    for info in chapters or ():
+        winner = graph.chapter(info.story_id)
+        if winner is not None and winner.path != info.path:
+            duplicates[info.path] = (info, winner)
+    return duplicates
+
+
+def _saga_layout(
+    graph: SagaGraph | None, chapters: Sequence[ChapterInfo] | None = None
+) -> tuple[dict[Path, Saga], set[Path]]:
+    """anchors: path -> the saga rendered there; hidden: chapter paths folded into a saga row.
+
+    A duplicate-id file whose saga is in the graph is hidden too: it is a chapter of that
+    saga, and the saga's own error row already reports the duplicate. A duplicate whose saga
+    is NOT in the graph is left visible so _build_entries can show it as an error row.
+    """
     anchors: dict[Path, Saga] = {}
     hidden: set[Path] = set()
     if graph is None:
         return anchors, hidden
+    for path, (loser, _winner) in _duplicate_chapters(graph, chapters).items():
+        if loser.saga_id in graph.sagas:
+            hidden.add(path)
     for saga in graph.sagas.values():
         paths = [info.path for info in graph.chapters_of(saga)]
         anchor = graph.chapter(saga.entry).path if saga.entry else paths[0]
@@ -434,9 +466,10 @@ def _build_top_level_entries(
     gallery_manager: GalleryManager,
     graph: SagaGraph | None = None,
     progress: SagaProgress | None = None,
+    chapters: Sequence[ChapterInfo] | None = None,
 ) -> list[dict]:
-    entries = _build_entries(root_paths, errors, save_manager, gallery_manager, graph, progress)
-    _anchors, hidden = _saga_layout(graph)
+    entries = _build_entries(root_paths, errors, save_manager, gallery_manager, graph, progress, chapters)
+    _anchors, hidden = _saga_layout(graph, chapters)
     index = len(entries)
     for name, paths in folders.items():
         visible = sum(1 for p in paths if p not in hidden)
@@ -454,8 +487,10 @@ def _build_entries(
     gallery_manager: GalleryManager,
     graph: SagaGraph | None = None,
     progress: SagaProgress | None = None,
+    chapters: Sequence[ChapterInfo] | None = None,
 ) -> list[dict]:
-    anchors, hidden = _saga_layout(graph)
+    anchors, hidden = _saga_layout(graph, chapters)
+    duplicates = _duplicate_chapters(graph, chapters)
     progress = progress or SagaProgress()
     entries: list[dict] = []
     for path in paths:
@@ -464,6 +499,16 @@ def _build_entries(
         index = len(entries) + 1
         if path in anchors and graph is not None:
             entries.append(_saga_entry(anchors[path], graph, progress, index))
+            continue
+        if path in duplicates:  # saga-tagged file the graph did not adopt: never playable
+            _loser, winner = duplicates[path]
+            message = (
+                f"duplicate story id '{winner.story_id}': already used by '{winner.path.name}', "
+                "so this file is ignored"
+            )
+            entries.append(
+                {"index": index, "label": path.stem, "error": True, "path": path, "message": message}
+            )
             continue
         if path in errors:
             entries.append({"index": index, "label": path.stem, "error": True, "path": path})
@@ -566,6 +611,9 @@ def _open_entry(
             graph.sagas[entry["saga_id"]], graph, errors, save_manager, gallery_manager, display,
             debug=debug, seed_override=seed_override,
         )
+        return
+    if entry.get("message"):  # a rejected duplicate-id chapter: report it, never launch it
+        display.show_picker_error(entry["path"].name, entry["message"])
         return
     _play_chapter(
         entry["path"], errors, save_manager, gallery_manager, display,
