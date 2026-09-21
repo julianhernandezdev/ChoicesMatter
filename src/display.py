@@ -151,7 +151,9 @@ class Display:
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  [bold]📁 {label}/[/bold]")
                 self.console.print(f"      [dim]{count} {noun}[/dim]")
             elif entry.get("error"):
-                self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
+                # A saga row's label is the author-supplied saga title; a plain story's is its file stem.
+                shown = escape(label) if entry.get("type") == "saga" else label
+                self.console.print(f"  [dim]{num}.[/dim] [red]{shown}  [italic]-ERROR[/italic][/red]")
             elif entry.get("type") == "saga":
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
                 complete = "  [green]✓ Complete[/green]" if entry.get("complete") else ""
@@ -190,8 +192,9 @@ class Display:
             self.console.print()
 
     def show_picker_error(self, name: str, message: str) -> None:
+        # name / message can carry author text (a saga title, node ids in a problem list).
         self.console.print(
-            f"\n  [bold red]Error loading '{name}':[/bold red] {message}\n"
+            f"\n  [bold red]Error loading '{escape(name)}':[/bold red] {escape(message)}\n"
         )
 
     # ------------------------------------------------------------------

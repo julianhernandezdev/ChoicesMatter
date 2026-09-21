@@ -1423,3 +1423,28 @@ def test_saga_copy_is_not_double_escaped_by_title_escaping():
     d.show_story_picker([{"index": 1, "type": "saga", "label": "Plain", "error": False}])
     assert "Plain  [SAGA]" in buf.getvalue()
     assert "\\" not in buf.getvalue()
+
+
+# Final fix wave: an errored saga row / error message carries author-supplied text.
+
+@pytest.mark.parametrize("title", ["Part [/x] One", "Ends with [/]", "The [beta] Bridge"])
+def test_saga_error_row_escapes_the_author_title(title):
+    d, buf = _real_display()
+    d.show_story_picker([{"index": 1, "type": "saga", "label": title, "error": True}])
+    out = buf.getvalue()
+    assert f"1. {title}  -ERROR" in out
+
+
+def test_non_saga_error_row_renders_exactly_as_before():
+    d, buf = _real_display()
+    d.show_story_picker([{"index": 1, "label": "broken", "error": True, "path": Path("broken.json")}])
+    assert "  1. broken  -ERROR" in buf.getvalue()
+
+
+@pytest.mark.parametrize("text", ["Part [/x] One", "The [beta] Bridge"])
+def test_show_picker_error_escapes_author_text(text):
+    d, buf = _real_display()
+    d.show_picker_error(text, f"multiple entry chapters: {text}")
+    out = buf.getvalue()
+    assert f"Error loading '{text}':" in out
+    assert f"multiple entry chapters: {text}" in out
