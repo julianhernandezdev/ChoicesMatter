@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import argparse
 import math
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from src.display import Display
-from src.engine import Engine
+from src.engine import ChainResult, Engine
 from src.gallery import GalleryManager
+from src.saga import (
+    ChapterInfo,
+    SagaGraph,
+    SagaProgress,
+    chapter_info_from_story,
+    chapter_label_text,
+    parse_seed_arg,
+)
 from src.save import SaveManager
 from src.config import load_settings
 from src.story import Story, StoryLoader, StoryValidationError
@@ -15,12 +24,34 @@ STORIES_DIR = Path("stories")
 SAVES_DIR = Path("saves")
 
 
-def _parse_args() -> dict:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Choices Matter text adventure engine")
     parser.add_argument("--debug", action="store_true", help="Show debug overlay")
     parser.add_argument("--all", action="store_true", help="Include visited_* flags in debug panel")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--seed",
+        metavar="K=V,...",
+        help="With --debug: seed flags when a chapter is started cold (e.g. trust=3,key=true)",
+    )
+    return parser
+
+
+def _parse_args() -> dict:
+    args = _build_parser().parse_args()
     return {"enabled": args.debug, "all": args.debug and args.all}
+
+
+def _parse_seed_override() -> dict[str, bool | int | str] | None:
+    parser = _build_parser()
+    args = parser.parse_args()
+    if args.seed is None:
+        return None
+    if not args.debug:
+        parser.error("--seed requires --debug")
+    try:
+        return parse_seed_arg(args.seed)
+    except ValueError as exc:
+        parser.error(f"--seed: {exc}")
 
 
 def main() -> None:
@@ -175,37 +206,161 @@ def _prompt_name_state(
     return {"player_name": name}
 
 
+def _collect_chapter_infos(paths: Iterable[Path]) -> list[ChapterInfo]:
+    """Load every story and keep the saga chapters. Stories that fail to load are skipped."""
+    infos: list[ChapterInfo] = []
+    for path in paths:
+        try:
+            story = StoryLoader.load(path)
+        except StoryValidationError:
+            continue
+        if story.saga_id:
+            infos.append(chapter_info_from_story(story))
+    return infos
+
+
+def _save_timestamp(save_manager: SaveManager, story_id: str) -> str:
+    try:
+        save = save_manager.load(story_id)
+    except (ValueError, KeyError, TypeError, OSError):
+        return ""
+    return save.timestamp if save else ""
+
+
+def _build_progress(
+    chapters: Iterable[ChapterInfo],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+) -> SagaProgress:
+    saves: set[str] = set()
+    seeds: set[str] = set()
+    found: dict[str, frozenset[str]] = {}
+    activity: dict[str, str] = {}
+    for info in chapters:
+        story_id = info.story_id
+        stamps: list[str] = []
+        if save_manager.has_save(story_id):
+            saves.add(story_id)
+            stamps.append(_save_timestamp(save_manager, story_id))
+        record = save_manager.load_handoff(story_id)
+        if record is not None:
+            seeds.add(story_id)
+            stamps.append(record.timestamp)
+        found[story_id] = frozenset(gallery_manager.get_found(story_id))
+        if stamps:
+            activity[story_id] = max(stamps)
+    return SagaProgress(frozenset(saves), frozenset(seeds), found, activity)
+
+
+def _saga_fresh_run_state(
+    story: Story,
+    graph: SagaGraph,
+    save_manager: SaveManager,
+    display: Display,
+    settings_name: str,
+    seed_override: dict[str, bool | int | str] | None,
+) -> Callable[[], dict[str, bool | int | str] | None]:
+    """Provider for Engine's fresh_run_state: confirm, resolve the seed, erase last."""
+
+    def provider() -> dict[str, bool | int | str] | None:
+        at_risk = [
+            cid
+            for cid in sorted(graph.descendants(story.id))
+            if save_manager.has_save(cid) or save_manager.has_handoff(cid)
+        ]
+        if at_risk:
+            titles = [chapter_label_text(graph.chapter(cid)) for cid in at_risk]
+            if not display.prompt_replay_confirm(titles):
+                return None
+
+        record = save_manager.load_handoff(story.id)
+        if record is not None:
+            seed = dict(record.state)
+        elif story.name_prompt:
+            resolved = _prompt_name_state(story, display, settings_name)
+            if resolved is None:
+                return None
+            seed = resolved
+        else:
+            seed = {"player_name": settings_name}
+        if record is None and seed_override:
+            seed.update(seed_override)
+
+        for cid in at_risk:  # the only mutation, and only once a seed exists
+            save_manager.delete(cid)
+            save_manager.delete_handoff(cid)
+        return seed
+
+    return provider
+
+
 def _launch_story(
     path: Path,
     errors: dict[Path, str],
     save_manager: SaveManager,
     gallery_manager: GalleryManager,
     display: Display,
-) -> None:
+    *,
+    graph: SagaGraph | None = None,
+    seed_override: dict[str, bool | int | str] | None = None,
+) -> ChainResult | None:
     if path in errors:
         display.show_picker_error(path.name, errors[path])
-        return
+        return None
     try:
         story = StoryLoader.load(path)
     except StoryValidationError as e:
         errors[path] = str(e)
         display.show_picker_error(path.name, str(e))
-        return
+        return None
     if story.warnings:
         if not display.show_content_warnings(story.title, story.warnings):
-            return
+            return None
     settings_name = load_settings().get("player_name", "Felix")
     initial_state: dict[str, bool | int | str] = {"player_name": settings_name}
-    fresh_run_state = (
-        (lambda: _prompt_name_state(story, display, settings_name))
-        if story.name_prompt
-        else None
-    )
-    Engine(
+    known_chapter_ids: Iterable[str] = ()
+    if story.saga_id and graph is not None:
+        fresh_run_state = _saga_fresh_run_state(
+            story, graph, save_manager, display, settings_name, seed_override
+        )
+        known_chapter_ids = graph.known_ids
+    elif story.name_prompt:
+        fresh_run_state = lambda: _prompt_name_state(story, display, settings_name)
+    else:
+        fresh_run_state = None
+    result = Engine(
         story, save_manager, display, gallery_manager,
         initial_state=initial_state, fresh_run_state=fresh_run_state,
+        known_chapter_ids=known_chapter_ids,
     ).run()
     display.clear_screen()
+    return result if isinstance(result, ChainResult) else None
+
+
+def _play_chapter(
+    path: Path,
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+    display: Display,
+    *,
+    graph: SagaGraph,
+    seed_override: dict[str, bool | int | str] | None,
+) -> None:
+    """Launch a chapter, then keep launching whatever it chains into."""
+    result = _launch_story(
+        path, errors, save_manager, gallery_manager, display,
+        graph=graph, seed_override=seed_override,
+    )
+    while result is not None:
+        info = graph.chapter(result.next_story)
+        if info is None:
+            return
+        display.clear_screen()
+        result = _launch_story(
+            info.path, errors, save_manager, gallery_manager, display,
+            graph=graph, seed_override=seed_override,
+        )
 
 
 def _build_top_level_entries(
