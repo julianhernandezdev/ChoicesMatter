@@ -1275,3 +1275,34 @@ def test_known_chapter_ids_turn_a_dangling_link_into_a_chain(saves_dir: Path) ->
     display = _chain_display("continue")
     engine = Engine(story, SaveManager(saves_dir), display, known_chapter_ids=["chapter_two"])
     assert engine.run() == ChainResult(next_story="chapter_two", from_story="test_story")
+
+
+def test_chain_writes_seed_before_the_transition_prompt(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"])
+    display = _chain_display()
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    seen: list[dict] = []
+
+    def _answer() -> str:
+        record = sm.load_handoff("chapter_two")
+        seen.append({
+            "has_handoff": sm.has_handoff("chapter_two"),
+            "state": record.state if record else None,
+            "has_save": sm.has_save("test_story"),
+            "found": gm.get_found("test_story"),
+        })
+        return "continue"
+
+    display.prompt_chapter_transition.side_effect = _answer
+    engine = Engine(story, sm, display, gm, known_chapter_ids={"chapter_two"})
+
+    result = engine.run()
+
+    assert result == ChainResult(next_story="chapter_two", from_story="test_story")
+    # Everything is already durable when the prompt is on screen, so quitting then loses nothing.
+    assert seen == [{
+        "has_handoff": True,
+        "state": {"trust": 3},
+        "has_save": False,
+        "found": {"end"},
+    }]
