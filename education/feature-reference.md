@@ -1305,4 +1305,4 @@ The effective intensity is `min(author_intensity × cfg_intensity, 1.0)`. Each l
 | `_saga_fresh_run_state`, `_run_saga_home`, `_play_chapter`, saga picker rows | `main.py` |
 | `show_saga_home`, `prompt_saga_select`, `show_chapter_transition`, `prompt_chapter_transition`, `prompt_replay_confirm` | `src/display.py` |
 | `validate_sagas`, `--strict` | `scripts/validate_story.py` |
-| Tests | `tests/test_saga.py`, `tests/test_example_saga.py`, `tests/test_story.py`, `tests/test_save.py`, `tests/test_engine.py`, `tests/test_display.py`, `tests/test_main.py`, `tests/test_validate_story.py` |
+| Tests | `tests/test_saga.py`, `tests/test_example_saga.py`, `tests/test_saga_acceptance.py`, `tests/test_story.py`, `tests/test_save.py`, `tests/test_engine.py`, `tests/test_display.py`, `tests/test_main.py`, `tests/test_validate_story.py` |
