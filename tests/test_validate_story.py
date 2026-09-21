@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -218,6 +221,24 @@ def test_lone_chapter_gets_one_warning_and_no_errors(demo_saga: dict[str, Path])
     assert errors == []
     assert len(warnings) == 1
     assert "pass sibling chapters together" in warnings[0]
+
+
+def test_lone_chapter_warning_is_ascii_only(demo_saga: dict[str, Path]) -> None:
+    warnings, _errors = validate_sagas([demo_saga["ch1"]])
+    assert all(w.isascii() for w in warnings), warnings
+
+
+def test_validator_output_survives_a_legacy_console_encoding(demo_saga: dict[str, Path]) -> None:
+    """On a cp437 console a non-ASCII character in a message would crash the run with a traceback."""
+    script = Path(__file__).resolve().parent.parent / "scripts" / "validate_story.py"
+    env = {**os.environ, "PYTHONIOENCODING": "cp437"}
+    result = subprocess.run(
+        [sys.executable, str(script), str(demo_saga["ch1"])],
+        capture_output=True, text=True, env=env, cwd=script.parent.parent,
+    )
+    assert "UnicodeEncodeError" not in result.stderr, result.stderr
+    assert result.returncode == 0
+    assert "pass sibling chapters together" in result.stdout
 
 
 def test_dangling_next_story_warns_and_strict_makes_it_an_error(demo_saga: dict[str, Path]) -> None:

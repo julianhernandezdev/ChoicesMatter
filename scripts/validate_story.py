@@ -159,7 +159,7 @@ def validate_sagas(paths: list[Path], strict: bool = False) -> tuple[list[str], 
         if is_lone:
             warnings.append(
                 f"saga '{saga.saga_id}': no sibling chapter among validated files "
-                f"(only '{saga.chapters[0]}') — pass sibling chapters together to check "
+                f"(only '{saga.chapters[0]}') - pass sibling chapters together to check "
                 "saga-wide consistency"
             )
 
