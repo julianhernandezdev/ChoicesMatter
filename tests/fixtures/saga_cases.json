@@ -109,6 +109,32 @@
       "expect": {"s": {"title": "Solo", "entry": "a", "problems": []}}
     },
     {
+      "name": "entry_chapter_missing_saga_title_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s",
+         "edges": [{"node_id": "end", "target": "b"}], "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {
+        "entry": "a", "chapters": ["a", "b"],
+        "problems": ["entry chapter 'a' must declare saga_title"]
+      }}
+    },
+    {
+      "name": "saga_title_on_a_non_entry_chapter_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S",
+         "edges": [{"node_id": "end", "target": "b"}], "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s", "saga_title": "Stray", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {
+        "title": "S", "entry": "a", "chapters": ["a", "b"],
+        "problems": ["chapter 'b' declares saga_title but is not the entry chapter"]
+      }}
+    },
+    {
       "name": "duplicate_story_id_is_a_problem",
       "chapters": [
         {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S", "ending_count": 1},
