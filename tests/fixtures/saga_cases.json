@@ -1,0 +1,121 @@
+{
+  "cases": [
+    {
+      "name": "linear_fresh",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "Saga A",
+         "edges": [{"node_id": "end", "target": "b"}], "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s",
+         "saga_end_nodes": ["fin"], "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {
+        "title": "Saga A", "entry": "a", "chapters": ["a", "b"], "problems": [], "has_dangling": false,
+        "reached": ["a"], "active": [], "complete": false,
+        "stats": {"chapters_reached": 1, "chapters_total": 2, "endings_found": 0, "endings_total": 2},
+        "default_chapter": "a",
+        "descendants": {"a": ["b"], "b": []}
+      }}
+    },
+    {
+      "name": "branch_and_converge_with_progress",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "Demo",
+         "edges": [{"node_id": "e1", "target": "b1"}, {"node_id": "e2", "target": "b2"}], "ending_count": 3},
+        {"story_id": "b1", "title": "B1", "saga_id": "s",
+         "edges": [{"node_id": "e", "target": "c"}], "ending_count": 1},
+        {"story_id": "b2", "title": "B2", "saga_id": "s",
+         "edges": [{"node_id": "e", "target": "c"}], "ending_count": 1},
+        {"story_id": "c", "title": "C", "saga_id": "s", "saga_end_nodes": ["win"], "ending_count": 2}
+      ],
+      "progress": {"saves": ["b1"], "found": {"a": ["e1"]}, "activity": {"b1": "2026-01-02T00:00:00+00:00"}},
+      "expect": {"s": {
+        "entry": "a", "chapters": ["a", "b1", "b2", "c"], "problems": [], "has_dangling": false,
+        "reached": ["a", "b1"], "active": ["b1"], "complete": false,
+        "stats": {"chapters_reached": 2, "chapters_total": 4, "endings_found": 1, "endings_total": 7},
+        "default_chapter": "b1",
+        "descendants": {"a": ["b1", "b2", "c"], "b1": ["c"], "b2": ["c"], "c": []}
+      }}
+    },
+    {
+      "name": "complete_once_a_saga_end_is_found",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "Saga A",
+         "edges": [{"node_id": "end", "target": "b"}], "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s", "saga_end_nodes": ["fin"], "ending_count": 1}
+      ],
+      "progress": {"seeds": ["b"], "found": {"b": ["fin"]}, "activity": {"b": "2026-01-03T00:00:00+00:00"}},
+      "expect": {"s": {
+        "reached": ["a", "b"], "active": ["b"], "complete": true,
+        "stats": {"chapters_reached": 2, "chapters_total": 2, "endings_found": 1, "endings_total": 2},
+        "default_chapter": "b"
+      }}
+    },
+    {
+      "name": "cycle_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S",
+         "edges": [{"node_id": "end", "target": "b"}], "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s",
+         "edges": [{"node_id": "end", "target": "a"}], "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {"entry": null, "chapters": ["a", "b"], "problems": ["cycle: a -> b -> a"]}}
+    },
+    {
+      "name": "two_entry_chapters_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S", "ending_count": 1},
+        {"story_id": "b", "title": "B", "saga_id": "s", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {
+        "entry": null, "chapters": ["a", "b"],
+        "problems": ["multiple entry chapters (nothing chains into them): a, b"]
+      }}
+    },
+    {
+      "name": "target_in_another_saga_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s1", "saga_title": "S1",
+         "edges": [{"node_id": "end", "target": "x"}], "ending_count": 1},
+        {"story_id": "x", "title": "X", "saga_id": "s2", "saga_title": "S2", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {
+        "s1": {"entry": "a", "has_dangling": false,
+               "problems": ["chapter 'a' node 'end' targets 'x', which belongs to a different saga"]},
+        "s2": {"entry": "x", "problems": []}
+      }
+    },
+    {
+      "name": "dangling_target_is_not_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S",
+         "edges": [{"node_id": "end", "target": "zzz"}], "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {
+        "problems": [], "has_dangling": true,
+        "stats": {"chapters_reached": 1, "chapters_total": 1, "endings_found": 0, "endings_total": 1}
+      }}
+    },
+    {
+      "name": "single_chapter_without_title_falls_back_to_its_title",
+      "chapters": [
+        {"story_id": "a", "title": "Solo", "saga_id": "s", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {"title": "Solo", "entry": "a", "problems": []}}
+    },
+    {
+      "name": "duplicate_story_id_is_a_problem",
+      "chapters": [
+        {"story_id": "a", "title": "A", "saga_id": "s", "saga_title": "S", "ending_count": 1},
+        {"story_id": "a", "title": "A again", "saga_id": "s", "ending_count": 1}
+      ],
+      "progress": {},
+      "expect": {"s": {"chapters": ["a"], "problems": ["duplicate story id 'a'"]}}
+    }
+  ]
+}
