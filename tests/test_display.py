@@ -1216,3 +1216,168 @@ def test_get_page_size_is_clamped_to_registry_range() -> None:
     assert d.get_page_size() == 50
     d = _make_display_obj({"picker": {"page_size": 0}})
     assert d.get_page_size() == 1
+
+
+# ------------------------------------------------------------------
+# Sagas
+# ------------------------------------------------------------------
+
+def _real_display() -> tuple[Display, StringIO]:
+    d = Display()
+    d._cfg.setdefault("typewriter", {})["enabled"] = False
+    buf = StringIO()
+    d.console = Console(file=buf, width=100, force_terminal=False)
+    return d, buf
+
+
+def _printed(display) -> str:
+    return " ".join(str(c) for c in display.console.print.call_args_list)
+
+
+def test_show_ending_prints_closing_line(display):
+    display._cfg.setdefault("typewriter", {})["enabled"] = False
+    display.show_ending(["The end."], "good", closing="End of saga")
+    assert "End of saga" in _printed(display)
+
+
+def test_show_ending_without_closing_prints_no_closing(display):
+    display._cfg.setdefault("typewriter", {})["enabled"] = False
+    display.show_ending(["The end."], "good")
+    assert "End of saga" not in _printed(display)
+
+
+def test_saga_row_renders_with_valid_markup():
+    d, buf = _real_display()
+    d.show_story_picker([{
+        "index": 1, "type": "saga", "label": "Demo Saga", "error": False, "has_save": True,
+        "chapters_reached": 2, "chapters_total": 4, "endings_found": 1, "endings_total": 7,
+        "complete": True, "more_coming": True, "author": "Tester", "version": "1.0",
+    }])
+    out = buf.getvalue()
+    assert "Demo Saga" in out
+    assert "[SAGA]" in out
+    assert "RESUME" in out
+    assert "2/4 chapters" in out
+    assert "1/7 endings" in out
+    assert "Complete" in out
+    assert "more chapters coming" in out
+    assert "by Tester" in out
+
+
+def test_saga_row_with_problems_renders_as_error():
+    d, buf = _real_display()
+    d.show_story_picker([{"index": 1, "type": "saga", "label": "Broken Saga", "error": True}])
+    assert "-ERROR" in buf.getvalue()
+
+
+def test_show_saga_home_renders_rows_and_hint():
+    d, buf = _real_display()
+    d.show_saga_home(
+        "Demo Saga",
+        [
+            {"label": "Chapter One", "state": "finished", "endings_found": 1, "endings_total": 3},
+            {"label": "2A — The Far Bank", "state": "active", "endings_found": 0, "endings_total": 1},
+        ],
+        more_to_discover=True,
+    )
+    out = buf.getvalue()
+    assert "Demo Saga" in out
+    assert "Chapter One" in out
+    assert "2A — The Far Bank" in out
+    assert "1/3 endings" in out
+    assert "more to discover" in out
+
+
+def test_show_saga_home_omits_hint_when_everything_listed():
+    d, buf = _real_display()
+    d.show_saga_home("Demo Saga", [{"label": "Only", "state": "new", "endings_found": 0, "endings_total": 1}], False)
+    assert "more to discover" not in buf.getvalue()
+
+
+def test_prompt_saga_select_number(display):
+    display.console.input.return_value = "2"
+    assert display.prompt_saga_select(3, 1) == 2
+
+
+def test_prompt_saga_select_enter_takes_default(display):
+    display.console.input.return_value = ""
+    assert display.prompt_saga_select(3, 2) == 2
+
+
+@pytest.mark.parametrize("raw", ["b", "q", "back"])
+def test_prompt_saga_select_back(display, raw):
+    display.console.input.return_value = raw
+    assert display.prompt_saga_select(3, 1) == "back"
+
+
+def test_prompt_saga_select_re_prompts_on_invalid(display):
+    display.console.input.side_effect = ["x", "9", "3"]
+    assert display.prompt_saga_select(3, 1) == 3
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("c", "continue"), ("", "continue"), ("a", "again"), ("again", "again"), ("m", "menu"), ("q", "menu"),
+])
+def test_prompt_chapter_transition(display, raw, expected):
+    display.console.input.return_value = raw
+    assert display.prompt_chapter_transition() == expected
+
+
+def test_prompt_chapter_transition_re_prompts_on_invalid(display):
+    display.console.input.side_effect = ["zzz", "a"]
+    assert display.prompt_chapter_transition() == "again"
+
+
+@pytest.mark.parametrize("raw,expected", [("y", True), ("yes", True), ("n", False), ("", False)])
+def test_prompt_replay_confirm(display, raw, expected):
+    display.console.input.return_value = raw
+    assert display.prompt_replay_confirm(["Chapter Two", "Chapter Three"]) is expected
+    assert "Chapter Two, Chapter Three" in _printed(display)
+
+
+def test_prompt_replay_confirm_re_prompts_on_invalid(display):
+    display.console.input.side_effect = ["maybe", "y"]
+    assert display.prompt_replay_confirm(["Chapter Two"]) is True
+
+
+def test_show_chapter_transition_renders_panel_and_waits(display):
+    display._cfg.setdefault("typewriter", {})["enabled"] = False
+    display.show_chapter_transition("Story", ["The bridge ends."], [], [], "The bank", [])
+    display.console.print.assert_called()
+    display.console.input.assert_called_once()
+
+
+# Controller ruling 1: the rendered PLAIN TEXT of these prompts is spec copy (8.3).
+
+def _rendered_prompt(call, raw: str) -> str:
+    """Run a Display prompt against a real Console; return everything it rendered."""
+    d, buf = _real_display()
+    with patch("builtins.input", return_value=raw):
+        call(d)
+    return buf.getvalue()
+
+
+def test_chapter_transition_prompt_plain_text_is_spec_copy():
+    out = _rendered_prompt(lambda d: d.prompt_chapter_transition(), "c")
+    assert "[C]ontinue / play [A]gain / [M]enu" in out
+
+
+def test_replay_confirm_plain_text_is_spec_copy():
+    out = _rendered_prompt(lambda d: d.prompt_replay_confirm(["Chapter Two", "Chapter Three"]), "n")
+    assert "Restarting this chapter will erase your progress in: Chapter Two, Chapter Three." in out
+    assert out.rstrip().endswith("Continue? [Y/N]")
+
+
+def test_show_ending_closing_line_renders_below_panel():
+    d, buf = _real_display()
+    d.show_ending(["The end."], "good", closing="To be continued")
+    out = buf.getvalue()
+    assert "To be continued" in out
+    assert out.index("To be continued") > out.index("The end.")
+
+
+def test_saga_badge_renders_without_stray_backslash():
+    d, buf = _real_display()
+    d.show_story_picker([{"index": 1, "type": "saga", "label": "Demo Saga", "error": False}])
+    assert "Demo Saga  [SAGA]" in buf.getvalue()
+    assert r"\[SAGA]" not in buf.getvalue()

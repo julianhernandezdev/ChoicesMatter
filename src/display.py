@@ -151,20 +151,26 @@ class Display:
                 self.console.print(f"      [dim]{count} {noun}[/dim]")
             elif entry.get("error"):
                 self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
+            elif entry.get("type") == "saga":
+                resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
+                complete = "  [green]✓ Complete[/green]" if entry.get("complete") else ""
+                self.console.print(
+                    f"  [bold cyan]{num}.[/bold cyan]  {label}  "
+                    f"[bold magenta][SAGA][/bold magenta]{resume}"
+                )
+                self._print_byline(entry)
+                stats = (
+                    f"{entry.get('chapters_reached', 0)}/{entry.get('chapters_total', 0)} chapters · "
+                    f"{entry.get('endings_found', 0)}/{entry.get('endings_total', 0)} endings"
+                )
+                if entry.get("more_coming"):
+                    stats += " · more chapters coming"
+                self.console.print(f"      [dim]{stats}[/dim]{complete}")
             else:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
                 warn = "  [yellow][!][/yellow]" if entry.get("has_warnings") else ""
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  {label}{warn}{resume}")
-                author = entry.get("author", "")
-                version = entry.get("version", "")
-                if author or version:
-                    byline = " · ".join(
-                        part for part in (
-                            f"by {_truncate_author(author)}" if author else "",
-                            f"v{version}" if version else "",
-                        ) if part
-                    )
-                    self.console.print(f"      [dim]{byline}[/dim]")
+                self._print_byline(entry)
                 node_count = entry.get("node_count", 0)
                 ending_count = entry.get("ending_count", 0)
                 endings_found = entry.get("endings_found", 0)
@@ -253,6 +259,7 @@ class Display:
         node_text: TextSegments,
         ending_type: str,
         overlays: list[Overlay] | None = None,
+        closing: str | None = None,
     ) -> None:
         color = _ENDING_COLORS.get(ending_type, "bright_yellow")
         label = ending_type.upper()
@@ -275,6 +282,42 @@ class Display:
             assembled = _assemble_text(node_text, charset, cfg_corruption)
             self.console.print(make(assembled))
         self.console.print()
+        if closing:
+            self.console.print(f"[dim italic]{closing}[/dim italic]", justify="center")
+            self.console.print()
+
+    def show_saga_home(self, saga_title: str, rows: list[dict], more_to_discover: bool) -> None:
+        markers = {
+            "active": "[bold green]▶[/bold green]",
+            "ready": "[bold yellow]●[/bold yellow]",
+            "finished": "[green]✓[/green]",
+            "new": "[dim]·[/dim]",
+        }
+        self.console.print(Rule(f"[bold cyan]{saga_title}[/bold cyan]"))
+        self.console.print()
+        for i, row in enumerate(rows, start=1):
+            marker = markers.get(row.get("state", "new"), markers["new"])
+            self.console.print(f"  [bold cyan]{i}.[/bold cyan]  {marker} {row['label']}")
+            self.console.print(
+                f"      [dim]{row.get('endings_found', 0)}/{row.get('endings_total', 0)} endings[/dim]"
+            )
+        if more_to_discover:
+            self.console.print("\n  [dim]…more to discover[/dim]")
+        self.console.print()
+
+    def show_chapter_transition(
+        self,
+        story_title: str,
+        node_text: TextSegments,
+        before_insets: list[Inset] | None = None,
+        after_insets: list[Inset] | None = None,
+        current_scene: str | None = None,
+        overlays: list[Overlay] | None = None,
+    ) -> None:
+        for overlay in (overlays or []):
+            self._render_overlay(overlay)
+        self.show_node(story_title, node_text, before_insets, after_insets, current_scene)
+        self.console.input("  [dim]Press Enter to continue…[/dim] ")
 
     def show_save_indicator(self) -> None:
         self.console.print("  [dim green]✓ Progress saved.[/dim green]")
@@ -282,6 +325,18 @@ class Display:
     # ------------------------------------------------------------------
     # Internal rendering helpers
     # ------------------------------------------------------------------
+
+    def _print_byline(self, entry: dict) -> None:
+        author = entry.get("author", "")
+        version = entry.get("version", "")
+        if author or version:
+            byline = " · ".join(
+                part for part in (
+                    f"by {_truncate_author(author)}" if author else "",
+                    f"v{version}" if version else "",
+                ) if part
+            )
+            self.console.print(f"      [dim]{byline}[/dim]")
 
     def _typewriter_delay(self) -> float:
         cfg = self._cfg.get("typewriter", {})
@@ -917,5 +972,49 @@ class Display:
             if raw in ("y", "yes"):
                 return True
             if raw in ("n", "no"):
+                return False
+            self.console.print("  [red]Press Y or N.[/red]")
+
+    def prompt_saga_select(self, count: int, default_index: int) -> int | str:
+        """Return a 1-based chapter index, or 'back'."""
+        while True:
+            raw = self.console.input(
+                f"  [bold]Chapter (1-{count}, Enter = {default_index}, "
+                "[cyan]B[/cyan] back):[/bold] "
+            ).strip().lower()
+            if raw == "":
+                return default_index
+            if raw in ("b", "q", "back"):
+                return "back"
+            if raw.isdigit() and 1 <= int(raw) <= count:
+                return int(raw)
+            self.console.print(f"  [red]Enter a number between 1 and {count}, or B to go back.[/red]")
+
+    def prompt_chapter_transition(self) -> str:
+        """Return 'continue', 'again' or 'menu'."""
+        while True:
+            raw = self.console.input(
+                "  [bold][green][C][/green]ontinue / play [yellow][A][/yellow]gain / "
+                "[cyan][M][/cyan]enu[/bold] "
+            ).strip().lower()
+            if raw in ("c", "continue", ""):
+                return "continue"
+            if raw in ("a", "again"):
+                return "again"
+            if raw in ("m", "menu", "q"):
+                return "menu"
+            self.console.print("  [red]Press C, A or M.[/red]")
+
+    def prompt_replay_confirm(self, chapter_titles: list[str]) -> bool:
+        """Return True if the player confirms erasing progress in the listed chapters."""
+        listing = ", ".join(chapter_titles)
+        self.console.print(
+            f"\n  [yellow]Restarting this chapter will erase your progress in: {listing}.[/yellow]"
+        )
+        while True:
+            raw = self.console.input("  [bold]Continue? [Y/N][/bold] ").strip().lower()
+            if raw in ("y", "yes"):
+                return True
+            if raw in ("n", "no", ""):
                 return False
             self.console.print("  [red]Press Y or N.[/red]")
