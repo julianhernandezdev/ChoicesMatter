@@ -9,6 +9,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+from rich.markup import escape
 from rich.rule import Rule
 from rich import box
 
@@ -155,10 +156,10 @@ class Display:
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
                 complete = "  [green]✓ Complete[/green]" if entry.get("complete") else ""
                 self.console.print(
-                    f"  [bold cyan]{num}.[/bold cyan]  {label}  "
+                    f"  [bold cyan]{num}.[/bold cyan]  {escape(label)}  "
                     f"[bold magenta][SAGA][/bold magenta]{resume}"
                 )
-                self._print_byline(entry)
+                self._print_byline(entry, escape_values=True)
                 stats = (
                     f"{entry.get('chapters_reached', 0)}/{entry.get('chapters_total', 0)} chapters · "
                     f"{entry.get('endings_found', 0)}/{entry.get('endings_total', 0)} endings"
@@ -293,11 +294,11 @@ class Display:
             "finished": "[green]✓[/green]",
             "new": "[dim]·[/dim]",
         }
-        self.console.print(Rule(f"[bold cyan]{saga_title}[/bold cyan]"))
+        self.console.print(Rule(f"[bold cyan]{escape(saga_title)}[/bold cyan]"))
         self.console.print()
         for i, row in enumerate(rows, start=1):
             marker = markers.get(row.get("state", "new"), markers["new"])
-            self.console.print(f"  [bold cyan]{i}.[/bold cyan]  {marker} {row['label']}")
+            self.console.print(f"  [bold cyan]{i}.[/bold cyan]  {marker} {escape(row['label'])}")
             self.console.print(
                 f"      [dim]{row.get('endings_found', 0)}/{row.get('endings_total', 0)} endings[/dim]"
             )
@@ -326,14 +327,15 @@ class Display:
     # Internal rendering helpers
     # ------------------------------------------------------------------
 
-    def _print_byline(self, entry: dict) -> None:
+    def _print_byline(self, entry: dict, escape_values: bool = False) -> None:
         author = entry.get("author", "")
         version = entry.get("version", "")
         if author or version:
+            esc = escape if escape_values else (lambda s: s)
             byline = " · ".join(
                 part for part in (
-                    f"by {_truncate_author(author)}" if author else "",
-                    f"v{version}" if version else "",
+                    f"by {esc(_truncate_author(author))}" if author else "",
+                    f"v{esc(version)}" if version else "",
                 ) if part
             )
             self.console.print(f"      [dim]{byline}[/dim]")
@@ -1007,7 +1009,7 @@ class Display:
 
     def prompt_replay_confirm(self, chapter_titles: list[str]) -> bool:
         """Return True if the player confirms erasing progress in the listed chapters."""
-        listing = ", ".join(chapter_titles)
+        listing = ", ".join(escape(title) for title in chapter_titles)
         self.console.print(
             f"\n  [yellow]Restarting this chapter will erase your progress in: {listing}.[/yellow]"
         )

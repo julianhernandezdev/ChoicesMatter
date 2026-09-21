@@ -1381,3 +1381,45 @@ def test_saga_badge_renders_without_stray_backslash():
     d.show_story_picker([{"index": 1, "type": "saga", "label": "Demo Saga", "error": False}])
     assert "Demo Saga  [SAGA]" in buf.getvalue()
     assert r"\[SAGA]" not in buf.getvalue()
+
+
+# Fix round 1: author-supplied titles must be escaped, never parsed as rich markup.
+
+@pytest.mark.parametrize("title", ["Part [/x]", "Ends with [/]", "The [beta] Bridge"])
+def test_show_saga_home_escapes_author_titles(title):
+    d, buf = _real_display()
+    d.show_saga_home(
+        title,
+        [{"label": title, "state": "new", "endings_found": 0, "endings_total": 1}],
+        more_to_discover=False,
+    )
+    out = buf.getvalue()
+    assert out.count(title) == 2  # once in the header rule, once in the row
+
+
+@pytest.mark.parametrize("title", ["Part [/x]", "Ends with [/]", "The [beta] Bridge"])
+def test_prompt_replay_confirm_escapes_chapter_titles(title):
+    out = _rendered_prompt(lambda d: d.prompt_replay_confirm([title, "Chapter Three"]), "n")
+    assert f"progress in: {title}, Chapter Three." in out
+    assert out.rstrip().endswith("Continue? [Y/N]")
+
+
+@pytest.mark.parametrize("title", ["Part [/x]", "Ends with [/]", "The [beta] Bridge"])
+def test_saga_picker_row_escapes_author_titles(title):
+    d, buf = _real_display()
+    d.show_story_picker([{
+        "index": 1, "type": "saga", "label": title, "error": False,
+        "chapters_reached": 1, "chapters_total": 2, "endings_found": 0, "endings_total": 2,
+        "author": title, "version": title,
+    }])
+    out = buf.getvalue()
+    assert f"{title}  [SAGA]" in out
+    assert f"by {title}" in out
+    assert f"v{title}" in out
+
+
+def test_saga_copy_is_not_double_escaped_by_title_escaping():
+    d, buf = _real_display()
+    d.show_story_picker([{"index": 1, "type": "saga", "label": "Plain", "error": False}])
+    assert "Plain  [SAGA]" in buf.getvalue()
+    assert "\\" not in buf.getvalue()
