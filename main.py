@@ -10,6 +10,7 @@ from src.engine import ChainResult, Engine
 from src.gallery import GalleryManager
 from src.saga import (
     ChapterInfo,
+    Saga,
     SagaGraph,
     SagaProgress,
     chapter_info_from_story,
@@ -58,6 +59,8 @@ def main() -> None:
     STORIES_DIR.mkdir(exist_ok=True)
     SAVES_DIR.mkdir(exist_ok=True)
 
+    # Parse (and reject) launch arguments before any screen is drawn.
+    seed_override = _parse_seed_override()
     debug = _parse_args()
     display = Display(debug=debug)
     display.clear_screen()
@@ -75,7 +78,14 @@ def main() -> None:
             display.show_no_stories()
             return
 
-        full_entries = _build_top_level_entries(root_paths, folders, errors, save_manager, gallery_manager)
+        all_paths = root_paths + [p for paths in folders.values() for p in paths]
+        chapters = _collect_chapter_infos(all_paths)
+        graph = SagaGraph.build(chapters)
+        progress = _build_progress(chapters, save_manager, gallery_manager)
+
+        full_entries = _build_top_level_entries(
+            root_paths, folders, errors, save_manager, gallery_manager, graph, progress
+        )
         page_size = display.get_page_size()
         total_entries = len(full_entries)
         total_pages = max(1, math.ceil(total_entries / page_size))
@@ -112,21 +122,20 @@ def main() -> None:
                 display.show_clear_complete()
             continue
 
-        full_idx = start + (selection - 1)
-        chosen_entry = full_entries[full_idx]
+        chosen_entry = full_entries[start + (selection - 1)]
 
         if chosen_entry.get("type") == "folder":
-            folder_name = chosen_entry["label"]
-            folder_paths = folders[folder_name]
-            chosen_path = _run_folder_picker(
-                folder_name, folder_paths, errors, save_manager, gallery_manager, display
+            chosen_entry = _run_folder_picker(
+                chosen_entry["label"], folders[chosen_entry["label"]], errors,
+                save_manager, gallery_manager, display, graph, progress,
             )
-            if chosen_path is None:
+            if chosen_entry is None:
                 continue
-        else:
-            chosen_path = root_paths[full_idx]
 
-        _launch_story(chosen_path, errors, save_manager, gallery_manager, display)
+        _open_entry(
+            chosen_entry, graph, errors, save_manager, gallery_manager, display,
+            debug=debug["enabled"], seed_override=seed_override,
+        )
 
 
 def _run_folder_picker(
@@ -136,9 +145,11 @@ def _run_folder_picker(
     save_manager: SaveManager,
     gallery_manager: GalleryManager,
     display: Display,
-) -> Path | None:
-    """Show the contents of a folder. Returns chosen Path or None (back)."""
-    full_entries = _build_entries(paths, errors, save_manager, gallery_manager)
+    graph: SagaGraph | None = None,
+    progress: SagaProgress | None = None,
+) -> dict | None:
+    """Show the contents of a folder. Returns the chosen entry dict, or None (back)."""
+    full_entries = _build_entries(paths, errors, save_manager, gallery_manager, graph, progress)
     page = 0
     while True:
         display.clear_screen()
@@ -162,13 +173,14 @@ def _run_folder_picker(
         if selection == "first_page":
             page = 0
             continue
-        full_idx = start + (selection - 1)
-        chosen_entry = full_entries[full_idx]
-        chosen_path = paths[full_idx]
+        chosen_entry = full_entries[start + (selection - 1)]
         if chosen_entry.get("error"):
-            display.show_picker_error(chosen_path.name, errors[chosen_path])
+            if chosen_entry.get("type") == "saga":
+                display.show_picker_error(chosen_entry["label"], "; ".join(chosen_entry["problems"]))
+            else:
+                display.show_picker_error(chosen_entry["path"].name, errors[chosen_entry["path"]])
             continue
-        return chosen_path
+        return chosen_entry
 
 
 def _resolve_player_name(entered: str, name_default: str, settings_name: str) -> str | None:
@@ -219,12 +231,26 @@ def _collect_chapter_infos(paths: Iterable[Path]) -> list[ChapterInfo]:
     return infos
 
 
+def _stamp(value: object) -> str:
+    """Coerce a save/seed timestamp to a string. A hand-edited "timestamp": null comes back
+    from from_dict as None, and None cannot be compared with the ISO strings around it."""
+    return str(value) if value else ""
+
+
 def _save_timestamp(save_manager: SaveManager, story_id: str) -> str:
     try:
         save = save_manager.load(story_id)
     except (ValueError, KeyError, TypeError, OSError):
         return ""
-    return save.timestamp if save else ""
+    return _stamp(save.timestamp) if save else ""
+
+
+def _found_endings(gallery_manager: GalleryManager, story_id: str) -> frozenset[str]:
+    """Gallery endings for a chapter; a corrupt gallery file counts as nothing found."""
+    try:
+        return frozenset(gallery_manager.get_found(story_id))
+    except (ValueError, TypeError, AttributeError, OSError):
+        return frozenset()
 
 
 def _build_progress(
@@ -245,8 +271,8 @@ def _build_progress(
         record = save_manager.load_handoff(story_id)
         if record is not None:
             seeds.add(story_id)
-            stamps.append(record.timestamp)
-        found[story_id] = frozenset(gallery_manager.get_found(story_id))
+            stamps.append(_stamp(record.timestamp))
+        found[story_id] = _found_endings(gallery_manager, story_id)
         if stamps:
             activity[story_id] = max(stamps)
     return SagaProgress(frozenset(saves), frozenset(seeds), found, activity)
@@ -363,22 +389,61 @@ def _play_chapter(
         )
 
 
+def _saga_layout(graph: SagaGraph | None) -> tuple[dict[Path, Saga], set[Path]]:
+    """anchors: path -> the saga rendered there; hidden: chapter paths folded into a saga row."""
+    anchors: dict[Path, Saga] = {}
+    hidden: set[Path] = set()
+    if graph is None:
+        return anchors, hidden
+    for saga in graph.sagas.values():
+        paths = [info.path for info in graph.chapters_of(saga)]
+        anchor = graph.chapter(saga.entry).path if saga.entry else paths[0]
+        anchors[anchor] = saga
+        hidden.update(p for p in paths if p != anchor)
+    return anchors, hidden
+
+
+def _saga_entry(saga: Saga, graph: SagaGraph, progress: SagaProgress, index: int) -> dict:
+    stats = graph.stats(saga, progress)
+    anchor = graph.chapter(saga.entry) if saga.entry else graph.chapters_of(saga)[0]
+    return {
+        "index": index,
+        "type": "saga",
+        "saga_id": saga.saga_id,
+        "path": anchor.path,
+        "label": saga.title,
+        "error": bool(saga.problems),
+        "problems": list(saga.problems),
+        "has_save": any(cid in progress.saves for cid in saga.chapters),
+        "chapters_reached": stats.chapters_reached,
+        "chapters_total": stats.chapters_total,
+        "endings_found": stats.endings_found,
+        "endings_total": stats.endings_total,
+        "complete": graph.is_complete(saga, progress),
+        "more_coming": saga.has_dangling,
+        "author": anchor.author,
+        "version": anchor.version,
+    }
+
+
 def _build_top_level_entries(
     root_paths: list[Path],
     folders: dict[str, list[Path]],
     errors: dict[Path, str],
     save_manager: SaveManager,
     gallery_manager: GalleryManager,
+    graph: SagaGraph | None = None,
+    progress: SagaProgress | None = None,
 ) -> list[dict]:
-    entries = _build_entries(root_paths, errors, save_manager, gallery_manager)
-    offset = len(root_paths)
-    for i, (name, paths) in enumerate(folders.items(), start=1):
-        entries.append({
-            "index": offset + i,
-            "type": "folder",
-            "label": name,
-            "story_count": len(paths),
-        })
+    entries = _build_entries(root_paths, errors, save_manager, gallery_manager, graph, progress)
+    _anchors, hidden = _saga_layout(graph)
+    index = len(entries)
+    for name, paths in folders.items():
+        visible = sum(1 for p in paths if p not in hidden)
+        if visible == 0:
+            continue
+        index += 1
+        entries.append({"index": index, "type": "folder", "label": name, "story_count": visible})
     return entries
 
 
@@ -387,11 +452,21 @@ def _build_entries(
     errors: dict[Path, str],
     save_manager: SaveManager,
     gallery_manager: GalleryManager,
+    graph: SagaGraph | None = None,
+    progress: SagaProgress | None = None,
 ) -> list[dict]:
-    entries = []
-    for i, path in enumerate(paths, start=1):
+    anchors, hidden = _saga_layout(graph)
+    progress = progress or SagaProgress()
+    entries: list[dict] = []
+    for path in paths:
+        if path in hidden:
+            continue
+        index = len(entries) + 1
+        if path in anchors and graph is not None:
+            entries.append(_saga_entry(anchors[path], graph, progress, index))
+            continue
         if path in errors:
-            entries.append({"index": i, "label": path.stem, "error": True})
+            entries.append({"index": index, "label": path.stem, "error": True, "path": path})
             continue
 
         info = _load_story_info(path)
@@ -407,7 +482,9 @@ def _build_entries(
                 pass
 
         entries.append({
-            "index": i,
+            "index": index,
+            "type": "story",
+            "path": path,
             "label": title,
             "error": False,
             "has_save": has_save,
@@ -420,6 +497,80 @@ def _build_entries(
             "version": version,
         })
     return entries
+
+
+def _home_row(info: ChapterInfo, progress: SagaProgress) -> dict:
+    story_id = info.story_id
+    if story_id in progress.saves:
+        state = "active"
+    elif story_id in progress.seeds:
+        state = "ready"
+    elif progress.found.get(story_id):
+        state = "finished"
+    else:
+        state = "new"
+    return {
+        "label": chapter_label_text(info),
+        "state": state,
+        "endings_found": len(progress.found.get(story_id, ())),
+        "endings_total": info.ending_count,
+    }
+
+
+def _run_saga_home(
+    saga: Saga,
+    graph: SagaGraph,
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+    display: Display,
+    *,
+    debug: bool = False,
+    seed_override: dict[str, bool | int | str] | None = None,
+) -> None:
+    while True:
+        infos = graph.chapters_of(saga)
+        progress = _build_progress(infos, save_manager, gallery_manager)
+        listed = list(saga.chapters) if debug else list(graph.reached(saga, progress))
+        rows = [_home_row(graph.chapter(cid), progress) for cid in listed]
+        default = graph.default_chapter(saga, progress)
+        default_index = listed.index(default) + 1 if default in listed else 1
+        display.clear_screen()
+        display.show_saga_home(saga.title, rows, len(listed) < len(saga.chapters))
+        selection = display.prompt_saga_select(len(rows), default_index)
+        if selection == "back":
+            display.clear_screen()
+            return
+        _play_chapter(
+            graph.chapter(listed[selection - 1]).path, errors, save_manager, gallery_manager, display,
+            graph=graph, seed_override=seed_override,
+        )
+
+
+def _open_entry(
+    entry: dict,
+    graph: SagaGraph,
+    errors: dict[Path, str],
+    save_manager: SaveManager,
+    gallery_manager: GalleryManager,
+    display: Display,
+    *,
+    debug: bool,
+    seed_override: dict[str, bool | int | str] | None,
+) -> None:
+    if entry.get("type") == "saga":
+        if entry.get("error"):
+            display.show_picker_error(entry["label"], "; ".join(entry["problems"]))
+            return
+        _run_saga_home(
+            graph.sagas[entry["saga_id"]], graph, errors, save_manager, gallery_manager, display,
+            debug=debug, seed_override=seed_override,
+        )
+        return
+    _play_chapter(
+        entry["path"], errors, save_manager, gallery_manager, display,
+        graph=graph, seed_override=seed_override,
+    )
 
 
 def _load_story_info(path: Path) -> tuple[str, str, int, int, str, bool, str, str]:
