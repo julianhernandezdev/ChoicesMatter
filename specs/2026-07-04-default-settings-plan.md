@@ -1,5 +1,7 @@
 # Default Settings & Section Registry — Implementation Plan
 
+**Status:** Complete. All 8 tasks shipped (see CHANGELOG `[Unreleased]` → "Default Settings & Section Registry"). Checkboxes ticked retroactively on 2026-11-10 after checking each task against the code.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Introduce a `SETTINGS_SECTIONS` registry on both platforms that drives settings rendering, sub-screen navigation, and a "Reset to Defaults" feature with a checkbox selector.
@@ -49,7 +51,7 @@
 
 ---
 
-- [ ] **Step 1: Write failing tests for `_get_draft_value` and `_set_draft_value`**
+- [x] **Step 1: Write failing tests for `_get_draft_value` and `_set_draft_value`**
 
 Add to `tests/test_config.py`:
 
@@ -100,14 +102,14 @@ def test_set_draft_value_corruption():
     assert draft["corruption"]["intensity"] == 0.5
 ```
 
-- [ ] **Step 2: Run tests — verify they fail**
+- [x] **Step 2: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_config.py -k "get_draft_value or set_draft_value" -v
 ```
 Expected: `ImportError` or `NameError` — functions not yet defined.
 
-- [ ] **Step 3: Write failing tests for `apply_section_defaults` and `SETTINGS_SECTIONS`**
+- [x] **Step 3: Write failing tests for `apply_section_defaults` and `SETTINGS_SECTIONS`**
 
 Add to `tests/test_config.py`:
 
@@ -171,14 +173,14 @@ def test_settings_sections_rows_have_required_fields():
             assert "type" in row
 ```
 
-- [ ] **Step 4: Run tests — verify they fail**
+- [x] **Step 4: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_config.py -k "apply_section_defaults or settings_sections" -v
 ```
 Expected: `ImportError` — symbols not yet defined.
 
-- [ ] **Step 5: Implement helpers and `SETTINGS_SECTIONS` in `src/config.py`**
+- [x] **Step 5: Implement helpers and `SETTINGS_SECTIONS` in `src/config.py`**
 
 Add after the `_DEFAULTS` block (before `save_settings`):
 
@@ -272,21 +274,21 @@ SETTINGS_SECTIONS: list[dict] = [
 ]
 ```
 
-- [ ] **Step 6: Run all new tests — verify they pass**
+- [x] **Step 6: Run all new tests — verify they pass**
 
 ```
 python -m pytest tests/test_config.py -k "get_draft or set_draft or apply_section or settings_sections" -v
 ```
 Expected: all pass.
 
-- [ ] **Step 7: Run full test suite — verify no regressions**
+- [x] **Step 7: Run full test suite — verify no regressions**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all existing tests still pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```
 git add src/config.py tests/test_config.py
@@ -307,7 +309,7 @@ git commit -m "feat(config): add SETTINGS_SECTIONS registry and draft value help
 
 ---
 
-- [ ] **Step 1: Write failing tests for `_format_row_value`**
+- [x] **Step 1: Write failing tests for `_format_row_value`**
 
 Add to `tests/test_display.py`:
 
@@ -346,14 +348,14 @@ def test_format_row_value_text(display):
     assert "Felix" in result
 ```
 
-- [ ] **Step 2: Run tests — verify they fail**
+- [x] **Step 2: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_display.py -k "format_row_value" -v
 ```
 Expected: `AttributeError` — method not yet defined.
 
-- [ ] **Step 3: Add `_format_row_value` and `_edit_row` to `Display` in `src/display.py`**
+- [x] **Step 3: Add `_format_row_value` and `_edit_row` to `Display` in `src/display.py`**
 
 Add these two methods inside the `Display` class (place near the existing `_settings_edit_speed`):
 
@@ -424,14 +426,14 @@ def _edit_row(self, draft: dict, row: dict) -> None:
         _set_draft_value(draft, key, values[(idx + 1) % len(values)])
 ```
 
-- [ ] **Step 4: Run format_row_value tests — verify they pass**
+- [x] **Step 4: Run format_row_value tests — verify they pass**
 
 ```
 python -m pytest tests/test_display.py -k "format_row_value" -v
 ```
 Expected: all pass.
 
-- [ ] **Step 5: Rewrite `show_settings_screen` to iterate `SETTINGS_SECTIONS`**
+- [x] **Step 5: Rewrite `show_settings_screen` to iterate `SETTINGS_SECTIONS`**
 
 Replace the entire `show_settings_screen` method in `src/display.py`. The new version builds a `row_map` from section registry:
 
@@ -497,7 +499,7 @@ def show_settings_screen(self) -> None:
                     self._edit_row(draft, row)
 ```
 
-- [ ] **Step 6: Remove the four now-replaced methods**
+- [x] **Step 6: Remove the four now-replaced methods**
 
 Delete these methods from `src/display.py`:
 - `_settings_edit_pause`
@@ -507,14 +509,14 @@ Delete these methods from `src/display.py`:
 
 (Keep `_settings_edit_speed` — it is still called via `_edit_row` for `speed_presets` type.)
 
-- [ ] **Step 7: Run full test suite — verify no regressions**
+- [x] **Step 7: Run full test suite — verify no regressions**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```
 git add src/display.py tests/test_display.py
@@ -535,7 +537,7 @@ git commit -m "feat(display): refactor show_settings_screen from registry; add _
 
 ---
 
-- [ ] **Step 1: Write failing tests for `_section_subscreen`**
+- [x] **Step 1: Write failing tests for `_section_subscreen`**
 
 Add to `tests/test_display.py`:
 
@@ -585,14 +587,14 @@ def test_section_subscreen_r_cancel_no_change(display):
     assert draft["corruption"]["intensity"] == 0.1
 ```
 
-- [ ] **Step 2: Run tests — verify they fail**
+- [x] **Step 2: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_display.py -k "section_subscreen" -v
 ```
 Expected: `AttributeError` — method not yet defined.
 
-- [ ] **Step 3: Implement `_section_subscreen` in `src/display.py`**
+- [x] **Step 3: Implement `_section_subscreen` in `src/display.py`**
 
 Add the method inside the `Display` class:
 
@@ -665,21 +667,21 @@ def _section_subscreen(self, section: dict, draft: dict) -> str:
                     self._edit_row(draft, row)
 ```
 
-- [ ] **Step 4: Run section_subscreen tests — verify they pass**
+- [x] **Step 4: Run section_subscreen tests — verify they pass**
 
 ```
 python -m pytest tests/test_display.py -k "section_subscreen" -v
 ```
 Expected: all pass.
 
-- [ ] **Step 5: Run full test suite**
+- [x] **Step 5: Run full test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/display.py tests/test_display.py
@@ -700,7 +702,7 @@ git commit -m "feat(display): add generic _section_subscreen with S/X/M/Q/R nav"
 
 ---
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Add to `tests/test_display.py`:
 
@@ -748,14 +750,14 @@ def test_show_reset_selector_feedback_lists_section_names(display):
     assert "Corruption" in result
 ```
 
-- [ ] **Step 2: Run tests — verify they fail**
+- [x] **Step 2: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_display.py -k "show_reset_selector" -v
 ```
 Expected: `AttributeError` — method not yet defined.
 
-- [ ] **Step 3: Implement `_show_reset_selector` in `src/display.py`**
+- [x] **Step 3: Implement `_show_reset_selector` in `src/display.py`**
 
 ```python
 def _show_reset_selector(self, draft: dict) -> str:
@@ -800,21 +802,21 @@ def _show_reset_selector(self, draft: dict) -> str:
                 checked[n - 1] = not checked[n - 1]
 ```
 
-- [ ] **Step 4: Run all new tests — verify they pass**
+- [x] **Step 4: Run all new tests — verify they pass**
 
 ```
 python -m pytest tests/test_display.py -k "show_reset_selector" -v
 ```
 Expected: all pass.
 
-- [ ] **Step 5: Run full test suite**
+- [x] **Step 5: Run full test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/display.py tests/test_display.py
@@ -834,7 +836,7 @@ git commit -m "feat(display): add _show_reset_selector with checkbox UI and R ke
 
 ---
 
-- [ ] **Step 1: Create `tests/test_web_settings.py` with failing tests**
+- [x] **Step 1: Create `tests/test_web_settings.py` with failing tests**
 
 ```python
 """Tests for web/app.js settings registry and applyDefaults — run via Node.js."""
@@ -969,7 +971,7 @@ console.log(draft.player_name);
     assert out == 'Zara'
 ```
 
-- [ ] **Step 2: Run tests — verify they fail**
+- [x] **Step 2: Run tests — verify they fail**
 
 ```
 python -m pytest tests/test_web_settings.py -v
@@ -983,7 +985,7 @@ python -m pytest tests/test_web_settings.py -v
 ```
 Expected: all pass (they test the inlined reference implementation).
 
-- [ ] **Step 3: Add `SETTINGS_SECTIONS` to `web/app.js`**
+- [x] **Step 3: Add `SETTINGS_SECTIONS` to `web/app.js`**
 
 In `web/app.js`, replace the entire `var SETTINGS_ROWS = [...]` block (lines 206–224) with:
 
@@ -1073,7 +1075,7 @@ function applyDefaults(draft, section) {
 }
 ```
 
-- [ ] **Step 4: Update `renderSettings` to handle `nav` row type**
+- [x] **Step 4: Update `renderSettings` to handle `nav` row type**
 
 In `renderSettings`, find the display value assignment block (around line 661) and add a case for `nav`:
 
@@ -1084,7 +1086,7 @@ In `renderSettings`, find the display value assignment block (around line 661) a
 
 Place this before the final `else` that handles `unit`.
 
-- [ ] **Step 5: Update `startSettingsEdit` to navigate on `nav` rows**
+- [x] **Step 5: Update `startSettingsEdit` to navigate on `nav` rows**
 
 In `startSettingsEdit` (around line 1288), add at the top of the function body:
 
@@ -1097,18 +1099,18 @@ if (row.type === 'nav') {
 
 Place this before the existing `if (row.key === 'delay_ms') { renderSpeedPresets(); return; }` line.
 
-- [ ] **Step 6: Run web settings tests against the new app.js code**
+- [x] **Step 6: Run web settings tests against the new app.js code**
 
 The `test_web_settings.py` tests inline their own definitions, so they still pass. Optionally open the browser and verify the settings screen shows nav rows for Typewriter, Corruption, and Accessibility, and inline rows for Display and Player.
 
-- [ ] **Step 7: Run full Python test suite**
+- [x] **Step 7: Run full Python test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass (no Python breakage from JS changes).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```
 git add web/app.js tests/test_web_settings.py
@@ -1128,7 +1130,7 @@ git commit -m "feat(web): add SETTINGS_SECTIONS registry, derive SETTINGS_ROWS, 
 
 ---
 
-- [ ] **Step 1: Add module-level variables near the top of `web/app.js`** (after existing var declarations around line 34):
+- [x] **Step 1: Add module-level variables near the top of `web/app.js`** (after existing var declarations around line 34):
 
 ```js
 var currentSectionScreen = null;
@@ -1137,7 +1139,7 @@ var sectionEditRow = null;
 var speedPresetsReturn = null;
 ```
 
-- [ ] **Step 2: Add `renderSectionSubscreen` to `web/app.js`** (after `renderSpeedPresets`):
+- [x] **Step 2: Add `renderSectionSubscreen` to `web/app.js`** (after `renderSpeedPresets`):
 
 ```js
 function renderSectionSubscreen(section) {
@@ -1199,7 +1201,7 @@ function renderSectionSubscreen(section) {
 }
 ```
 
-- [ ] **Step 3: Wire click handler for section rows**
+- [x] **Step 3: Wire click handler for section rows**
 
 In the `app.addEventListener('click', ...)` block (around line 1454), add a new case after `'settings-row'`:
 
@@ -1208,7 +1210,7 @@ In the `app.addEventListener('click', ...)` block (around line 1454), add a new 
   startSectionRowEdit(Number(button.dataset.row));
 ```
 
-- [ ] **Step 4: Add `startSectionRowEdit`, `confirmSectionRowEdit`, `cancelSectionRowEdit`**
+- [x] **Step 4: Add `startSectionRowEdit`, `confirmSectionRowEdit`, `cancelSectionRowEdit`**
 
 Add after `cancelSettingsEdit`:
 
@@ -1303,7 +1305,7 @@ function cancelSectionRowEdit() {
 }
 ```
 
-- [ ] **Step 5: Update `renderSpeedPresets` exit path to respect `speedPresetsReturn`**
+- [x] **Step 5: Update `renderSpeedPresets` exit path to respect `speedPresetsReturn`**
 
 In `renderSpeedPresets`, find the two places that call `renderSettings()` after a preset is picked (in the click handler and in `handleSubmit` for `'settings-speed'`). Both should be changed to:
 
@@ -1314,7 +1316,7 @@ else renderSettings();
 
 Apply this to both: the `SPEED_PRESETS` click handler in `renderSpeedPresets`, and the `sp >= 1` branch in `handleSubmit` `'settings-speed'` case.
 
-- [ ] **Step 6: Add `renderAccessibleSectionSubscreen`** (after `renderAccessibleSpeedPresets`):
+- [x] **Step 6: Add `renderAccessibleSectionSubscreen`** (after `renderAccessibleSpeedPresets`):
 
 ```js
 function renderAccessibleSectionSubscreen(section) {
@@ -1389,14 +1391,14 @@ function renderAccessibleSectionSubscreen(section) {
 }
 ```
 
-- [ ] **Step 7: Run full test suite**
+- [x] **Step 7: Run full test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```
 git add web/app.js
@@ -1415,7 +1417,7 @@ git commit -m "feat(web): add renderSectionSubscreen, renderAccessibleSectionSub
 
 ---
 
-- [ ] **Step 1: Add `'settings-section'` to `promptPrefix`**
+- [x] **Step 1: Add `'settings-section'` to `promptPrefix`**
 
 In `promptPrefix` (around line 255), add before the final `return '&gt; '`:
 
@@ -1428,7 +1430,7 @@ if (currentScreen === 'settings-section') return '&gt; ';
 if (currentScreen === 'settings-reset')   return '&gt; ';
 ```
 
-- [ ] **Step 2: Add `'settings-section'` case to `handleSubmit`**
+- [x] **Step 2: Add `'settings-section'` case to `handleSubmit`**
 
 In `handleSubmit`, after the `'settings-speed'` block (after line 1552), add:
 
@@ -1465,7 +1467,7 @@ In `handleSubmit`, after the `'settings-speed'` block (after line 1552), add:
   }
 ```
 
-- [ ] **Step 3: Add `renderSectionResetConfirm`**
+- [x] **Step 3: Add `renderSectionResetConfirm`**
 
 Add after `renderSectionSubscreen`:
 
@@ -1502,7 +1504,7 @@ Add a case for `'settings-section-reset'` in `handleSubmit` (after the `'setting
   renderSectionSubscreen(currentSectionScreen);
 ```
 
-- [ ] **Step 4: Handle Enter/Escape in keydown handler for section edit**
+- [x] **Step 4: Handle Enter/Escape in keydown handler for section edit**
 
 In the `keydown` event listener (around line 1555), find the `settings` row-edit block:
 
@@ -1524,7 +1526,7 @@ if (currentScreen === 'settings-section' && sectionEditRow !== null) {
 }
 ```
 
-- [ ] **Step 5: Handle mobile capture for section edit**
+- [x] **Step 5: Handle mobile capture for section edit**
 
 In `mobileCapture.addEventListener('input', ...)` (around line 1636), add a case before the default `pendingInput = mobileCapture.value` fallthrough:
 
@@ -1560,14 +1562,14 @@ if (currentScreen === 'settings-section' && sectionEditRow !== null) {
 }
 ```
 
-- [ ] **Step 6: Run full test suite**
+- [x] **Step 6: Run full test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```
 git add web/app.js
@@ -1586,14 +1588,14 @@ git commit -m "feat(web): wire section subscreen input dispatch — S/X/M/Q/R/nu
 
 ---
 
-- [ ] **Step 1: Add module-level `resetChecked` variable** (near the other module vars added in Task 6):
+- [x] **Step 1: Add module-level `resetChecked` variable** (near the other module vars added in Task 6):
 
 ```js
 var resetChecked = {};
 var resetFeedback = '';
 ```
 
-- [ ] **Step 2: Add `renderResetSelector` and `renderResetSelectorView`** (after `renderSectionResetConfirm`):
+- [x] **Step 2: Add `renderResetSelector` and `renderResetSelectorView`** (after `renderSectionResetConfirm`):
 
 ```js
 function renderResetSelector() {
@@ -1677,7 +1679,7 @@ function renderAccessibleResetSelector() {
 }
 ```
 
-- [ ] **Step 3: Add `'settings-reset'` case to `handleSubmit`** (after the `'settings-section-reset'` block):
+- [x] **Step 3: Add `'settings-reset'` case to `handleSubmit`** (after the `'settings-section-reset'` block):
 
 ```js
 } else if (currentScreen === 'settings-reset') {
@@ -1702,7 +1704,7 @@ function renderAccessibleResetSelector() {
   }
 ```
 
-- [ ] **Step 4: Wire `data-action="reset-toggle"` in the click handler**
+- [x] **Step 4: Wire `data-action="reset-toggle"` in the click handler**
 
 In `app.addEventListener('click', ...)`, add after the `'section-row'` case:
 
@@ -1717,7 +1719,7 @@ In `app.addEventListener('click', ...)`, add after the `'section-row'` case:
   }
 ```
 
-- [ ] **Step 5: Add R key to main settings screen and show `resetFeedback`**
+- [x] **Step 5: Add R key to main settings screen and show `resetFeedback`**
 
 In `handleSubmit`, in the `'settings'` block (around line 1526), add the R case and feedback:
 
@@ -1730,7 +1732,7 @@ In `handleSubmit`, in the `'settings'` block (around line 1526), add the R case 
   if (ns >= 1 && ns <= SETTINGS_ROWS.length) startSettingsEdit(ns - 1);
 ```
 
-- [ ] **Step 6: Show `resetFeedback` in `renderSettings`**
+- [x] **Step 6: Show `resetFeedback` in `renderSettings`**
 
 In `renderSettings`, update the footer hint to include `R` and show feedback if set. Find the `footer-hint` div string and update it:
 
@@ -1746,14 +1748,14 @@ resetFeedback = '';
 updatePrompt();
 ```
 
-- [ ] **Step 7: Run full test suite**
+- [x] **Step 7: Run full test suite**
 
 ```
 python -m pytest tests/ -x -q
 ```
 Expected: all pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```
 git add web/app.js

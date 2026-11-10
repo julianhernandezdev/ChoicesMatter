@@ -6,6 +6,10 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Docs Status Sync
+- **Fixed** `SUGGESTIONS.md` listed Variable Text Substitution as Under Consideration and Corrupted Text Rendering as In-Flight; both shipped in v0.11.0 and now sit under Shipped. Corrupted Text's description now matches the shipped `{corrupt}` span syntax instead of the original named-style proposal. Counts corrected (the table said 9 under consideration while the heading said 10)
+- **Fixed** `specs/2026-07-04-default-settings-plan.md` had all 59 steps unticked though every task shipped; ticked after checking each task against the code, and marked both the plan and design spec as implemented
+
 ### Settings Clamp Parity (Python ↔ Web)
 - **Fixed** The shipped default `scramble_frames: 85` was outside its own settings range (`1–50`), so it could never be re-entered in the CLI. The frames ranges for `scramble_frames` and `resolve_frames` are now `1–200`
 - **Fixed** The web settings screens had no range checks: the Corruption rows (edited through the section subscreen, which clamped nothing) accepted any non-negative number, and `12abc` was accepted as `12`. Number rows now parse strictly and clamp to the same ranges as the CLI; float rows still reject out-of-range values

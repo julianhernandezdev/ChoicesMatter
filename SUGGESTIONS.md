@@ -9,23 +9,13 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 | Status | Count |
 |---|---|
-| Under Consideration | 9 |
-| In-Flight | 1 |
-| Shipped | 15 |
+| Under Consideration | 8 |
+| In-Flight | 0 |
+| Shipped | 17 |
 
 ---
 
-## Under Consideration (10)
-
-### Variable Text Substitution
-
-**What:** Authors write `{player_name}` or `{item}` inside node `text` and the engine substitutes the matching value from the player's current flag state.
-
-**Why:** Enables personalisation and callbacks to earlier choices without full node branching — one node can address the player by a name they chose three scenes ago.
-
-**Suggested by:** maintainer
-
----
+## Under Consideration (8)
 
 ### Story Graph Visualizer
 
@@ -93,6 +83,8 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 **Why:** Completes keyboard parity with a real terminal; mouse click already works, arrow selection is the natural complement.
 
+**Note:** Today the web picker uses Up/Down only to change pages; arrow-key selection is not built.
+
 **Suggested by:** maintainer
 
 ---
@@ -107,11 +99,17 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-## In-Flight (1)
+## In-Flight (0)
+
+_Nothing in flight._
+
+---
+
+## Shipped (17)
 
 ### Corrupted Text Rendering
 
-**What:** A `"corrupted"` named style on insets and overlays renders text with glitch substitutions — random `█`, `▓`, `░` swaps and stutter repeats. Intensity is configurable.
+**What:** Authors wrap phrases in `{corrupt}…{/corrupt}` spans in any text field (node, inset, overlay) to render them with glitch substitutions, with optional per-span `intensity`, `mode` (`consistent`/`random`) and `resolve_style` (`decay`/`cascade`). A node-level `corruption` field sets a baseline. Charset, animation and timing are configurable in settings; reader mode and `enabled: false` strip it. Shipped in v0.11.0 (resolve effect later). The original proposal was a `"corrupted"` named style on insets and overlays; inline spans replaced it.
 
 **Why:** A pure display effect for institutional horror or degraded-signal aesthetics — the underlying text is unchanged, so it degrades gracefully.
 
@@ -119,7 +117,15 @@ The maintainer reviews Issues and PRs regularly. Promising Issues get graduated 
 
 ---
 
-## Shipped (15)
+### Variable Text Substitution
+
+**What:** Authors write `{player_name}` or `{item}` inside any `text` field (node, inset, overlay) and the engine substitutes the matching value from the player's current flag state. Runs before conditional inline text, so substituted values can appear inside `{flag?…}` branches. Shipped in v0.11.0.
+
+**Why:** Enables personalisation and callbacks to earlier choices without full node branching — one node can address the player by a name they chose three scenes ago.
+
+**Suggested by:** maintainer
+
+---
 
 ### WCAG 2.1 Level AA Accessible Mode (Web Player)
 
