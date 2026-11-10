@@ -1,0 +1,283 @@
+{
+  "suite": "sets",
+  "format": 1,
+  "description": "apply_sets(sets, state) -> state. Applied when a choice is taken. expect is the full resulting state.",
+  "cases": [
+    {
+      "id": "empty-sets",
+      "state": {
+        "a": 1
+      },
+      "sets": {},
+      "expect": {
+        "a": 1
+      },
+      "why": "No sets means state is unchanged."
+    },
+    {
+      "id": "bool-new",
+      "state": {},
+      "sets": {
+        "k": true
+      },
+      "expect": {
+        "k": true
+      },
+      "why": "Boolean assignment."
+    },
+    {
+      "id": "bool-overwrite",
+      "state": {
+        "k": true
+      },
+      "sets": {
+        "k": false
+      },
+      "expect": {
+        "k": false
+      },
+      "why": "Boolean assignment overwrites."
+    },
+    {
+      "id": "bool-false-on-missing",
+      "state": {},
+      "sets": {
+        "k": false
+      },
+      "expect": {
+        "k": false
+      },
+      "why": "Setting false creates the key, which is what makes requires false satisfiable."
+    },
+    {
+      "id": "int-absolute",
+      "state": {
+        "k": 2
+      },
+      "sets": {
+        "k": 5
+      },
+      "expect": {
+        "k": 5
+      },
+      "why": "A JSON integer is an absolute assignment, not a delta."
+    },
+    {
+      "id": "int-absolute-negative",
+      "state": {},
+      "sets": {
+        "k": -3
+      },
+      "expect": {
+        "k": -3
+      },
+      "why": "The JSON integer -3 is an absolute assignment; only the string \"-3\" is a delta."
+    },
+    {
+      "id": "int-overwrites-bool",
+      "state": {
+        "k": true
+      },
+      "sets": {
+        "k": 0
+      },
+      "expect": {
+        "k": 0
+      },
+      "why": "Assignment replaces the value and its type."
+    },
+    {
+      "id": "string-assign",
+      "state": {},
+      "sets": {
+        "k": "red"
+      },
+      "expect": {
+        "k": "red"
+      },
+      "why": "String assignment."
+    },
+    {
+      "id": "string-empty",
+      "state": {
+        "k": "red"
+      },
+      "sets": {
+        "k": ""
+      },
+      "expect": {
+        "k": ""
+      },
+      "why": "The empty string is a valid value."
+    },
+    {
+      "id": "string-digits-not-delta",
+      "state": {
+        "k": 1
+      },
+      "sets": {
+        "k": "5"
+      },
+      "expect": {
+        "k": "5"
+      },
+      "why": "A string without a leading sign is a plain string, even if it is all digits."
+    },
+    {
+      "id": "string-true-stays-string",
+      "state": {},
+      "sets": {
+        "k": "true"
+      },
+      "expect": {
+        "k": "true"
+      },
+      "why": "Strings are never coerced to booleans."
+    },
+    {
+      "id": "delta-plus",
+      "state": {
+        "k": 2
+      },
+      "sets": {
+        "k": "+1"
+      },
+      "expect": {
+        "k": 3
+      },
+      "why": "A signed-digit string adds to the current integer."
+    },
+    {
+      "id": "delta-minus",
+      "state": {
+        "k": 2
+      },
+      "sets": {
+        "k": "-2"
+      },
+      "expect": {
+        "k": 0
+      },
+      "why": "A signed-digit string subtracts from the current integer."
+    },
+    {
+      "id": "delta-on-missing",
+      "state": {},
+      "sets": {
+        "k": "+1"
+      },
+      "expect": {
+        "k": 1
+      },
+      "why": "A missing flag counts as 0 for deltas."
+    },
+    {
+      "id": "delta-below-zero",
+      "state": {
+        "k": 1
+      },
+      "sets": {
+        "k": "-3"
+      },
+      "expect": {
+        "k": -2
+      },
+      "why": "Results may be negative; there is no clamping."
+    },
+    {
+      "id": "delta-on-bool",
+      "state": {
+        "k": true
+      },
+      "sets": {
+        "k": "+1"
+      },
+      "expect": {
+        "k": 1
+      },
+      "why": "A boolean is not an integer; any non-integer value counts as 0 for deltas."
+    },
+    {
+      "id": "delta-on-string",
+      "state": {
+        "k": "red"
+      },
+      "sets": {
+        "k": "+2"
+      },
+      "expect": {
+        "k": 2
+      },
+      "why": "A non-integer value counts as 0 for deltas."
+    },
+    {
+      "id": "delta-zero-creates-key",
+      "state": {},
+      "sets": {
+        "k": "+0"
+      },
+      "expect": {
+        "k": 0
+      },
+      "why": "A zero delta still writes the key as the integer 0."
+    },
+    {
+      "id": "delta-leading-zeros",
+      "state": {
+        "k": 1
+      },
+      "sets": {
+        "k": "+007"
+      },
+      "expect": {
+        "k": 8
+      },
+      "why": "Delta digits are read as base 10; leading zeros are ignored."
+    },
+    {
+      "id": "delta-multi-digit",
+      "state": {
+        "k": 5
+      },
+      "sets": {
+        "k": "-12"
+      },
+      "expect": {
+        "k": -7
+      },
+      "why": "Deltas may have any number of digits."
+    },
+    {
+      "id": "multi-keys",
+      "state": {
+        "a": 1
+      },
+      "sets": {
+        "a": "+1",
+        "b": true,
+        "c": "x"
+      },
+      "expect": {
+        "a": 2,
+        "b": true,
+        "c": "x"
+      },
+      "why": "Each key is applied independently."
+    },
+    {
+      "id": "other-keys-untouched",
+      "state": {
+        "a": 1,
+        "b": "keep"
+      },
+      "sets": {
+        "a": "+1"
+      },
+      "expect": {
+        "a": 2,
+        "b": "keep"
+      },
+      "why": "Keys not named in sets are left alone."
+    }
+  ]
+}

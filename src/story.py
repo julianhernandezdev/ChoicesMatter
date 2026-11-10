@@ -13,7 +13,7 @@ class StoryValidationError(Exception):
 _SAFE_STORY_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 _ENDING_TYPES = {"good", "bad", "neutral"}
 _OVERLAY_POSITIONS = {"before", "after"}
-_DELTA_RE = re.compile(r"^[+-]\d+$")
+_DELTA_RE = re.compile(r"[+-][0-9]+")
 
 StateValue = bool | int | str
 RequiresValue = bool | int | str | list[str]

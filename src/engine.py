@@ -10,9 +10,57 @@ from .gallery import GalleryManager
 from .save import SaveManager, SaveState
 from .story import Choice, Story
 
-_DELTA_RE = re.compile(r"^[+-]\d+$")
+_DELTA_RE = re.compile(r"[+-][0-9]+")
 _INLINE_RE = re.compile(r"\{(\w+)\?([^|{}]*?)(?:\|([^{}]*?))?\}")
 _SUBST_RE = re.compile(r"\{(\w+)\}")
+
+
+
+def _int_value(value: object) -> int:
+    """A flag's integer value: itself if it is an int, otherwise 0 (missing, bool, str)."""
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def check_requires(requires: dict, state: dict) -> bool:
+    """Whether every condition in `requires` holds against `state`.
+
+    Matching is strictly typed and pinned by conformance/requires.json:
+    a bool condition needs that exact bool in state, a str or list condition
+    needs a str, and an int condition is a threshold on the flag's integer
+    value (non-integers and missing flags count as 0).
+    """
+    for key, condition in requires.items():
+        current = state.get(key)
+        if isinstance(condition, bool):
+            if not isinstance(current, bool) or current != condition:
+                return False
+        elif isinstance(condition, int):
+            if _int_value(current) < condition:
+                return False
+        elif isinstance(condition, str):
+            if not isinstance(current, str) or current != condition:
+                return False
+        elif isinstance(condition, list):
+            if not isinstance(current, str) or current not in condition:
+                return False
+        else:
+            return False
+    return True
+
+
+def apply_sets(sets: dict, state: dict) -> dict:
+    """Return a new state with `sets` applied. Pinned by conformance/sets.json.
+
+    A signed-digit string ("+1", "-2") is a delta on the flag's integer value;
+    every other value is assigned as-is.
+    """
+    result = dict(state)
+    for key, value in sets.items():
+        if isinstance(value, str) and _DELTA_RE.fullmatch(value):
+            result[key] = _int_value(result.get(key)) + int(value)
+        else:
+            result[key] = value
+    return result
 
 
 class Engine:
@@ -96,31 +144,10 @@ class Engine:
     # ------------------------------------------------------------------
 
     def _check_requires(self, requires: dict) -> bool:
-        for key, condition in requires.items():
-            current = self._state.get(key)
-            if isinstance(condition, bool):
-                if current != condition:
-                    return False
-            elif isinstance(condition, int):
-                val = current if isinstance(current, int) and not isinstance(current, bool) else 0
-                if val < condition:
-                    return False
-            elif isinstance(condition, str):
-                if current != condition:
-                    return False
-            elif isinstance(condition, list):
-                if current not in condition:
-                    return False
-        return True
+        return check_requires(requires, self._state)
 
     def _apply_sets(self, sets: dict) -> None:
-        for key, value in sets.items():
-            if isinstance(value, str) and _DELTA_RE.fullmatch(value):
-                delta = int(value)
-                current = self._state.get(key, 0)
-                self._state[key] = (current if isinstance(current, int) and not isinstance(current, bool) else 0) + delta
-            else:
-                self._state[key] = value
+        self._state = apply_sets(sets, self._state)
 
     def _resolve_start(self) -> bool:
         """Set up the run's starting state. Returns False if the host aborted a fresh start."""

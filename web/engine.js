@@ -67,6 +67,12 @@ export function resolveCorruption(text, nodeCorruption) {
   return segments.length ? segments : [text];
 }
 
+// A flag's integer value: itself if it is an integer, otherwise 0 (missing, boolean, string).
+function intValue(value) {
+  return Number.isInteger(value) ? value : 0;
+}
+
+// Strictly typed matching, pinned by conformance/requires.json.
 export function checkRequires(requires = {}, state = {}) {
   return Object.entries(requires).every(([key, condition]) => {
     const current = state[key];
@@ -74,7 +80,7 @@ export function checkRequires(requires = {}, state = {}) {
       return current === condition;
     }
     if (Number.isInteger(condition)) {
-      return Number.isInteger(current) && current >= condition;
+      return intValue(current) >= condition;
     }
     if (typeof condition === "string") {
       return current === condition;
@@ -86,12 +92,12 @@ export function checkRequires(requires = {}, state = {}) {
   });
 }
 
+// Pinned by conformance/sets.json.
 export function applySets(sets = {}, state = {}) {
   const next = { ...state };
   for (const [key, value] of Object.entries(sets)) {
-    if (typeof value === "string" && /^[+-]\d+$/.test(value)) {
-      const current = Number.isInteger(next[key]) ? next[key] : 0;
-      next[key] = current + Number(value);
+    if (typeof value === "string" && /^[+-][0-9]+$/.test(value)) {
+      next[key] = intValue(next[key]) + Number(value);
     } else {
       next[key] = value;
     }

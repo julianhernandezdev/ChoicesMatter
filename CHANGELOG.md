@@ -6,6 +6,14 @@ All notable changes to Choices Matter, most recent first.
 
 ## [Unreleased]
 
+### Conformance Suite (requires / sets)
+- **Added** `conformance/requires.json` (33 cases) and `conformance/sets.json` (22 cases) — language-neutral vectors that define flag-condition and flag-assignment semantics, each with a `why`. `tests/test_conformance.py` runs every case against `src/engine.py` and, through `tests/conformance_runner.mjs`, against `web/engine.js`
+- **Added** pure functions `check_requires(requires, state)` and `apply_sets(sets, state)` in `src/engine.py` (the `Engine` methods now delegate to them), mirroring `checkRequires` / `applySets` in `web/engine.js`
+- **Changed** (CLI) boolean `requires` is now strictly typed: integer `1` no longer satisfies `requires: true` and `0` no longer satisfies `requires: false`. The web player already behaved this way
+- **Changed** (web) integer thresholds treat a missing or non-integer flag as 0, so `requires: {"k": 0}` or a negative threshold passes on an unset flag. The CLI already behaved this way
+- **Fixed** (CLI) delta strings accepted non-ASCII digits (`\d` matched e.g. Arabic-Indic numerals) while the web player did not; both now accept `[0-9]` only
+- No committed story is affected: none mixes integer and boolean values on one flag or uses a threshold at or below zero
+
 ### Docs Status Sync
 - **Fixed** `SUGGESTIONS.md` listed Variable Text Substitution as Under Consideration and Corrupted Text Rendering as In-Flight; both shipped in v0.11.0 and now sit under Shipped. Corrupted Text's description now matches the shipped `{corrupt}` span syntax instead of the original named-style proposal. Counts corrected (the table said 9 under consideration while the heading said 10)
 - **Fixed** `specs/2026-07-04-default-settings-plan.md` had all 59 steps unticked though every task shipped; ticked after checking each task against the code, and marked both the plan and design spec as implemented

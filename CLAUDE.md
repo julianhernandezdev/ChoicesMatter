@@ -39,6 +39,8 @@ python main.py
                        (subprocess) to exercise web/engine.js directly, so `pytest` alone covers both
 /education           Feature guide docs — one .md per example story + feature-reference.md master index
 /accessibility       WCAG docs: implementation guide, screen reader test scripts, renderer authoring checklist
+/conformance         Language-neutral conformance vectors (requires.json, sets.json) — the engine-semantics spec
+                       a GDScript port must pass; run against both engines by tests/test_conformance.py
 /scripts             Developer tools (sync_stories.py, validate_story.py)
 /saves               Auto-generated at runtime — one .save.json + one .gallery.json per story
 settings.json        Gitignored, per-user visual style overrides
@@ -211,16 +213,22 @@ Overlays render around the choice list: `before` above the choices, `after` belo
 | `true` / `false` | Boolean assignment |
 | integer (e.g. `5`) | Absolute integer assignment |
 | string (e.g. `"red"`) | String assignment |
-| delta string (e.g. `"+1"`, `"-2"`) | Adds/subtracts from current int value; missing key defaults to 0 |
+| delta string (e.g. `"+1"`, `"-2"`) | Adds/subtracts from the flag's integer value; a missing or non-integer value (bool, string) counts as 0 |
 
 | `requires` value | Condition |
 |---|---|
-| `true` / `false` | Exact boolean match |
-| integer (e.g. `3`) | Current value ≥ 3 (threshold) |
-| string (e.g. `"red"`) | Exact string match |
-| list of strings (e.g. `["red","blue"]`) | Current value is a member of the list |
+| `true` / `false` | Exact boolean match — state must hold that boolean. `1` does not satisfy `true`, `0` does not satisfy `false`, and a **missing flag satisfies neither** |
+| integer (e.g. `3`) | Flag's integer value ≥ 3 (threshold); a missing or non-integer value counts as 0 |
+| string (e.g. `"red"`) | Exact, case-sensitive string match |
+| list of strings (e.g. `["red","blue"]`) | Current value is a string and a member of the list |
+
+Matching is strictly typed and identical in both engines. The rules live in the pure functions `check_requires` / `apply_sets` (`src/engine.py`) and `checkRequires` / `applySets` (`web/engine.js`), and are pinned by the conformance vectors in `/conformance` (see below). Change the vectors first, then the engines.
 
 Flags accumulate within a run and are persisted in the save file. `_reset()` clears them.
+
+## Conformance Suite
+
+`/conformance/*.json` holds vectors of the form "given this input, the engine must produce this output", each with a `why`. `tests/test_conformance.py` runs every case against `src/engine.py` and (via `tests/conformance_runner.mjs` under Node) against `web/engine.js`, so plain `pytest` covers both. These files are the semantic spec for the Godot port: when an engine and a vector disagree, the vector wins unless the vector is deliberately changed. Suites so far: `requires`, `sets`. Adding a suite means a new JSON file plus an entry in `PY_SUITES` and in the JS runner's `SUITES` (a test fails if a file has no runner). Format and planned suites: `conformance/README.md`.
 
 ## Validation Rules
 

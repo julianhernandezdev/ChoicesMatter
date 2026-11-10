@@ -176,7 +176,8 @@ Choices support `requires` and `sets` to gate and track state. State values can 
 
 ```json
 { "requires": { "has_key": true } }                    // boolean exact match
-{ "requires": { "trust": 3 } }                         // integer threshold (trust ≥ 3)
+{ "requires": { "has_key": false } }                   // only matches a flag explicitly set to false; an unset flag does not match
+{ "requires": { "trust": 3 } }                         // integer threshold (trust ≥ 3; unset counts as 0)
 { "requires": { "faction": "red" } }                   // string exact match
 { "requires": { "faction": ["red", "blue"] } }         // string membership (any of)
 ```
@@ -494,6 +495,7 @@ web/storage.js             Browser storage — save/gallery via localStorage
 web/typewriter.js          Browser typewriter — animation and settings
 web/style.css              Browser play mode styling
 web/stories.json           Static manifest of bundled stories (auto-generated)
+conformance/               Language-neutral engine test vectors, run against both the Python and web engines
 accessibility/             WCAG 2.1 AA docs — implementation guide, screen reader test scripts, renderer patterns
 
 /stories             Drop .json story files here — auto-discovered at startup (subfolders supported)

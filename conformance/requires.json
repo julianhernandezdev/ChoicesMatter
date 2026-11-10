@@ -1,0 +1,376 @@
+{
+  "suite": "requires",
+  "format": 1,
+  "description": "check_requires(requires, state) -> bool. Decides whether a choice, inset or overlay is visible.",
+  "cases": [
+    {
+      "id": "empty-requires",
+      "state": {
+        "a": true
+      },
+      "requires": {},
+      "expect": true,
+      "why": "No conditions means always visible."
+    },
+    {
+      "id": "bool-true-match",
+      "state": {
+        "k": true
+      },
+      "requires": {
+        "k": true
+      },
+      "expect": true,
+      "why": "Exact boolean match."
+    },
+    {
+      "id": "bool-true-vs-false",
+      "state": {
+        "k": false
+      },
+      "requires": {
+        "k": true
+      },
+      "expect": false,
+      "why": "Exact boolean match."
+    },
+    {
+      "id": "bool-false-match",
+      "state": {
+        "k": false
+      },
+      "requires": {
+        "k": false
+      },
+      "expect": true,
+      "why": "A flag explicitly set to false satisfies requires false."
+    },
+    {
+      "id": "bool-missing-vs-true",
+      "state": {},
+      "requires": {
+        "k": true
+      },
+      "expect": false,
+      "why": "A missing flag is not true."
+    },
+    {
+      "id": "bool-missing-vs-false",
+      "state": {},
+      "requires": {
+        "k": false
+      },
+      "expect": false,
+      "why": "A missing flag is not false either: boolean conditions need a boolean value in state. Set the flag explicitly to use requires false."
+    },
+    {
+      "id": "bool-int-one-vs-true",
+      "state": {
+        "k": 1
+      },
+      "requires": {
+        "k": true
+      },
+      "expect": false,
+      "why": "Strict typing: the integer 1 is not the boolean true."
+    },
+    {
+      "id": "bool-int-zero-vs-false",
+      "state": {
+        "k": 0
+      },
+      "requires": {
+        "k": false
+      },
+      "expect": false,
+      "why": "Strict typing: the integer 0 is not the boolean false."
+    },
+    {
+      "id": "bool-string-vs-true",
+      "state": {
+        "k": "true"
+      },
+      "requires": {
+        "k": true
+      },
+      "expect": false,
+      "why": "Strict typing: the string \"true\" is not the boolean true."
+    },
+    {
+      "id": "int-threshold-equal",
+      "state": {
+        "k": 3
+      },
+      "requires": {
+        "k": 3
+      },
+      "expect": true,
+      "why": "Integer conditions are thresholds: current >= condition."
+    },
+    {
+      "id": "int-threshold-above",
+      "state": {
+        "k": 5
+      },
+      "requires": {
+        "k": 3
+      },
+      "expect": true,
+      "why": "Integer conditions are thresholds: current >= condition."
+    },
+    {
+      "id": "int-threshold-below",
+      "state": {
+        "k": 2
+      },
+      "requires": {
+        "k": 3
+      },
+      "expect": false,
+      "why": "Integer conditions are thresholds: current >= condition."
+    },
+    {
+      "id": "int-missing-vs-positive",
+      "state": {},
+      "requires": {
+        "k": 3
+      },
+      "expect": false,
+      "why": "A missing flag counts as 0 for thresholds."
+    },
+    {
+      "id": "int-missing-vs-zero",
+      "state": {},
+      "requires": {
+        "k": 0
+      },
+      "expect": true,
+      "why": "A missing flag counts as 0, and 0 >= 0."
+    },
+    {
+      "id": "int-missing-vs-negative",
+      "state": {},
+      "requires": {
+        "k": -1
+      },
+      "expect": true,
+      "why": "A missing flag counts as 0, and 0 >= -1."
+    },
+    {
+      "id": "int-negative-below",
+      "state": {
+        "k": -2
+      },
+      "requires": {
+        "k": -1
+      },
+      "expect": false,
+      "why": "Negative values compare normally."
+    },
+    {
+      "id": "int-negative-equal",
+      "state": {
+        "k": -1
+      },
+      "requires": {
+        "k": -1
+      },
+      "expect": true,
+      "why": "Negative values compare normally."
+    },
+    {
+      "id": "int-bool-true-vs-one",
+      "state": {
+        "k": true
+      },
+      "requires": {
+        "k": 1
+      },
+      "expect": false,
+      "why": "A boolean is not an integer; any non-integer value counts as 0 for thresholds."
+    },
+    {
+      "id": "int-bool-true-vs-zero",
+      "state": {
+        "k": true
+      },
+      "requires": {
+        "k": 0
+      },
+      "expect": true,
+      "why": "A non-integer value counts as 0, and 0 >= 0."
+    },
+    {
+      "id": "int-string-digits-vs-threshold",
+      "state": {
+        "k": "5"
+      },
+      "requires": {
+        "k": 3
+      },
+      "expect": false,
+      "why": "A string of digits is not an integer; it counts as 0."
+    },
+    {
+      "id": "string-match",
+      "state": {
+        "k": "red"
+      },
+      "requires": {
+        "k": "red"
+      },
+      "expect": true,
+      "why": "Exact string match."
+    },
+    {
+      "id": "string-case-sensitive",
+      "state": {
+        "k": "Red"
+      },
+      "requires": {
+        "k": "red"
+      },
+      "expect": false,
+      "why": "String match is case-sensitive."
+    },
+    {
+      "id": "string-missing",
+      "state": {},
+      "requires": {
+        "k": "red"
+      },
+      "expect": false,
+      "why": "A missing flag matches no string."
+    },
+    {
+      "id": "string-empty-match",
+      "state": {
+        "k": ""
+      },
+      "requires": {
+        "k": ""
+      },
+      "expect": true,
+      "why": "The empty string matches the empty string."
+    },
+    {
+      "id": "string-empty-vs-missing",
+      "state": {},
+      "requires": {
+        "k": ""
+      },
+      "expect": false,
+      "why": "A missing flag is not the empty string."
+    },
+    {
+      "id": "string-vs-int",
+      "state": {
+        "k": 2
+      },
+      "requires": {
+        "k": "2"
+      },
+      "expect": false,
+      "why": "Strict typing: the integer 2 is not the string \"2\"."
+    },
+    {
+      "id": "list-member",
+      "state": {
+        "k": "blue"
+      },
+      "requires": {
+        "k": [
+          "red",
+          "blue"
+        ]
+      },
+      "expect": true,
+      "why": "List conditions test membership."
+    },
+    {
+      "id": "list-non-member",
+      "state": {
+        "k": "green"
+      },
+      "requires": {
+        "k": [
+          "red",
+          "blue"
+        ]
+      },
+      "expect": false,
+      "why": "List conditions test membership."
+    },
+    {
+      "id": "list-missing",
+      "state": {},
+      "requires": {
+        "k": [
+          "red",
+          "blue"
+        ]
+      },
+      "expect": false,
+      "why": "A missing flag is a member of no list."
+    },
+    {
+      "id": "list-int-vs-string-member",
+      "state": {
+        "k": 1
+      },
+      "requires": {
+        "k": [
+          "1",
+          "2"
+        ]
+      },
+      "expect": false,
+      "why": "Strict typing: the integer 1 is not the string \"1\"."
+    },
+    {
+      "id": "multi-all-met",
+      "state": {
+        "a": true,
+        "b": 4,
+        "c": "x"
+      },
+      "requires": {
+        "a": true,
+        "b": 3,
+        "c": [
+          "x",
+          "y"
+        ]
+      },
+      "expect": true,
+      "why": "All conditions must hold."
+    },
+    {
+      "id": "multi-one-unmet",
+      "state": {
+        "a": true,
+        "b": 2,
+        "c": "x"
+      },
+      "requires": {
+        "a": true,
+        "b": 3,
+        "c": "x"
+      },
+      "expect": false,
+      "why": "All conditions must hold; one failure hides the item."
+    },
+    {
+      "id": "extra-state-ignored",
+      "state": {
+        "a": true,
+        "other": 9
+      },
+      "requires": {
+        "a": true
+      },
+      "expect": true,
+      "why": "State keys not named in requires are ignored."
+    }
+  ]
+}
