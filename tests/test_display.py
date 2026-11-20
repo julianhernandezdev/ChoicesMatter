@@ -1374,6 +1374,20 @@ def test_show_chapter_transition_renders_panel_and_waits(display):
     display.console.input.assert_called_once()
 
 
+def test_show_chapter_transition_renders_overlays_before_the_panel(display):
+    display._cfg.setdefault("typewriter", {})["enabled"] = False
+    order = MagicMock()
+    display._render_overlay = order.overlay
+    display.show_node = order.node
+    overlays = [Overlay(text="First."), Overlay(text="Second.")]
+
+    display.show_chapter_transition("Story", ["The bridge ends."], [], [], "The bank", overlays)
+
+    names = [c[0] for c in order.mock_calls]
+    assert names == ["overlay", "overlay", "node"]
+    assert [c.args[0] for c in order.overlay.call_args_list] == overlays
+
+
 # Controller ruling 1: the rendered PLAIN TEXT of these prompts is spec copy (8.3).
 
 def _rendered_prompt(call, raw: str) -> str:
