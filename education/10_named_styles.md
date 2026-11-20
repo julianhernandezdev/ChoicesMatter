@@ -1,6 +1,5 @@
 # 10 — Named Styles
 
-**Story:** `stories/examples/10_named_styles.json`
 **Feature:** The full set of named style keys for insets and overlays, and how the engine resolves them to visual properties.
 
 ## What the story does

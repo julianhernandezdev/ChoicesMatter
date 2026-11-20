@@ -131,6 +131,8 @@ Stories are JSON files with two top-level keys: `meta` and `nodes`.
 
 `name_prompt` is optional — a non-empty string that triggers a name input screen after content warnings and before the first node. The entered name is stored as `player_name` and available as `{player_name}` in any text field. `name_default` is optional — a per-story fallback used when the player submits empty input; requires `name_prompt` to also be set.
 
+`saga_id`, `saga_title` and `chapter_label` are optional and only used by multi-chapter stories — see **Sagas** below.
+
 ### Nodes
 
 Each node is a keyed object:
@@ -333,6 +335,30 @@ Add `name_prompt` to `meta` to ask the player for a name before the first node:
 > [!NOTE]
 > Stories that use `{player_name}` without `name_prompt` will use the player's saved name. You don't need a prompt to use the token.
 
+### Sagas (Multi-Chapter Stories)
+
+A story can end by handing the player into another story file. Give every chapter the same `meta.saga_id` and mark chaining endings with `next_story`. Once a saga has two or more chapters, the **first** chapter (the one nothing chains into) must have a `saga_title` and every other chapter must not:
+
+```json
+"e_left": {
+  "text": "You reach the far post together.",
+  "choices": [],
+  "is_ending": true,
+  "next_story": "saga_demo_ch2a",
+  "exports": ["trust", "visited_bridge"]
+}
+```
+
+- `next_story` is the next chapter's `meta.id`. Different endings may point at different chapters (branching), and two chapters may point at the same one.
+- `exports` lists the flags that carry over, under the same names. Nothing else carries. `player_name` always does, and a chapter reached this way skips its own `name_prompt`.
+- `chapter_transition: true` skips the ending screen: the node shows as a normal scene, then the next chapter starts.
+- `saga_end: true` marks the finale ("End of saga"). An ending with none of these fields is an ordinary dead end.
+- The picker shows one **[SAGA]** row per saga. Selecting it opens a chapter list (the saga home screen) where you can continue or replay; replaying an earlier chapter asks before erasing progress in later ones.
+- Test a late chapter with `python main.py --debug --seed trust=3` (`--debug` lists every chapter of the saga; `--seed` seeds cold chapter starts and is never saved).
+- Sagas run in the CLI only for now; the web player skips `stories/sagas/`.
+
+See `stories/sagas/24_saga_*.json` and `education/24_chapters_sagas.md`.
+
 ### Corrupted Text
 
 Wrap any text in `{corrupt}…{/corrupt}` to render glitched characters at runtime:
@@ -473,6 +499,8 @@ Checks schema (via the engine's own loader), reachability (BFS from `start_node`
 python scripts/validate_story.py stories/horror/*.json stories/sci-fi/*.json
 ```
 
+Pass all of a saga's files together to check the whole saga (dangling links, cycles, exports); add `--strict` to treat a missing next chapter as an error.
+
 Output: `WARN` for unreachable nodes, `ERROR` for dead-ends and schema failures. Exit codes: `0` = clean, `1` = errors found, `2` = no arguments.
 
 ## Project Structure
@@ -485,6 +513,7 @@ src/save.py                Persistent save state — read/write/delete per story
 src/gallery.py             Ending gallery — tracks found endings across runs
 src/display.py             All rich rendering — nothing else imports rich
 src/config.py              Loads settings.json, merges with defaults
+src/saga.py                Chapter graph (sagas) — pure logic, no I/O
 scripts/validate_story.py  Story validator — schema, reachability, dead-end detection
 scripts/sync_stories.py    Regenerates web/stories.json manifest from stories/
 index.html                 GitHub Pages entrypoint for browser play

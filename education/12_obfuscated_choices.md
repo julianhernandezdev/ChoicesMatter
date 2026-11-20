@@ -1,6 +1,5 @@
 # 12 — Obfuscated Choices
 
-**Story:** `stories/examples/12_obfuscated_choices.json`
 **Feature:** Hiding a choice's label behind `[REDACTED]` while keeping it selectable.
 
 ## What the story does

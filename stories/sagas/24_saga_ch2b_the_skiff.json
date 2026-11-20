@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "id": "saga_demo_ch2b",
+    "title": "Chapter Two: The Skiff",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "drift",
+    "est_time": "5 min",
+    "name_prompt": "Who crosses the river tonight?",
+    "saga_id": "saga_demo",
+    "chapter_label": "2B"
+  },
+  "nodes": {
+    "drift": {
+      "text": "The skiff rocks under you, {player_name}. The current is stronger than it looked, and the lantern on the far bank keeps sliding out of line.",
+      "scene": "The open water",
+      "choices": [
+        { "label": "Row hard against the current", "next": "e_go", "sets": { "trust": "+1" } },
+        { "label": "Drift with the current", "next": "e_go" }
+      ]
+    },
+    "e_go": {
+      "text": "The skiff bumps a jetty you did not see until you were on it. Above you an iron arm holds a ship's bell, and beyond it the ferry idles in the dark.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "saga_demo_ch3",
+      "exports": ["trust"]
+    }
+  }
+}

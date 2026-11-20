@@ -1,6 +1,5 @@
 # 16 — Stateful Endings
 
-**Story:** `stories/examples/16_stateful_endings.json`
 **Feature:** Multiple paths converging on one ending node, with conditional content reflecting how the player arrived.
 
 ## What the story does

@@ -1,6 +1,5 @@
 # 05 — Integer Flags
 
-**Story:** `stories/examples/05_integer_flags.json`
 **Feature:** Accumulating an integer with delta strings (`"+1"`) and checking a threshold with `requires`.
 
 ## What the story does

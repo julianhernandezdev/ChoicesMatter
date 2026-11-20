@@ -6,14 +6,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-_GITIGNORED_STORY_DIRS = {"examples", "showcase"}
+# "sagas" is tracked but CLI-only until web saga support lands.
+_CLI_ONLY_STORY_DIRS = {"sagas"}
 
 def _story_paths() -> list[str]:
     return sorted(
         path.relative_to(ROOT).as_posix()
         for path in (ROOT / "stories").glob("**/*.json")
-        if path.parent.parent.name not in _GITIGNORED_STORY_DIRS
-        and path.parent.name not in _GITIGNORED_STORY_DIRS
+        if path.parent.parent.name not in _CLI_ONLY_STORY_DIRS
+        and path.parent.name not in _CLI_ONLY_STORY_DIRS
     )
 
 

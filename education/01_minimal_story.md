@@ -1,6 +1,5 @@
 # 01 — Minimal Story
 
-**Story:** `stories/examples/01_minimal_story.json`
 **Feature:** The minimum viable story — two nodes, one choice, one ending.
 
 ## What the story does

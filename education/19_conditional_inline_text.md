@@ -1,6 +1,5 @@
 # 19 — Conditional Inline Text
 
-**Story:** `stories/examples/19_conditional_inline_text.json`
 **Feature:** Flag-conditional spans embedded directly in text fields — node text, insets, and overlays — resolved at runtime without branching to a separate node.
 
 ## What the story does

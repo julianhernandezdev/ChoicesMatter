@@ -56,6 +56,10 @@ class Node:
     scene: str | None = None
     choice_number_color: str | None = None
     corruption: float | dict | None = None
+    next_story: str | None = None
+    exports: list[str] = field(default_factory=list)
+    chapter_transition: bool = False
+    saga_end: bool = False
 
 
 @dataclass
@@ -74,6 +78,9 @@ class Story:
     auto_visited_flags: bool = True
     name_prompt: str | None = None
     name_default: str | None = None
+    saga_id: str | None = None
+    saga_title: str | None = None
+    chapter_label: str | None = None
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes[node_id]
@@ -126,6 +133,7 @@ class StoryLoader:
         version = StoryLoader._required_string(meta, "version", path.name, "meta")
         author = StoryLoader._required_string(meta, "author", path.name, "meta")
         start = StoryLoader._required_string(meta, "start_node", path.name, "meta")
+        saga_id, saga_title, chapter_label = StoryLoader._parse_saga_meta(meta, path.name)
 
         raw_nodes = raw.get("nodes")
         if not isinstance(raw_nodes, dict):
@@ -183,6 +191,11 @@ class StoryLoader:
             if corruption_raw is not None:
                 corruption = StoryLoader._parse_corruption(corruption_raw, node_id, path.name)
 
+            is_terminal = is_ending or not choices
+            next_story, exports, chapter_transition, saga_end = StoryLoader._parse_chain_fields(
+                node_data, node_id, path.name, story_id, saga_id, is_terminal
+            )
+
             nodes[node_id] = Node(
                 text=text,
                 choices=choices,
@@ -193,6 +206,10 @@ class StoryLoader:
                 scene=scene,
                 choice_number_color=choice_number_color,
                 corruption=corruption,
+                next_story=next_story,
+                exports=exports,
+                chapter_transition=chapter_transition,
+                saga_end=saga_end,
             )
 
         for node_id, node in nodes.items():
@@ -254,6 +271,8 @@ class StoryLoader:
                                 f"set 'auto_visited_flags: false' in meta to manage these manually"
                             )
 
+        StoryLoader._validate_visited_exports(nodes, auto_visited_flags, path.name)
+
         name_prompt_raw = meta.get("name_prompt")
         name_prompt: str | None = None
         if name_prompt_raw is not None:
@@ -291,6 +310,9 @@ class StoryLoader:
             auto_visited_flags=auto_visited_flags,
             name_prompt=name_prompt,
             name_default=name_default,
+            saga_id=saga_id,
+            saga_title=saga_title,
+            chapter_label=chapter_label,
         )
 
     @staticmethod
@@ -312,6 +334,145 @@ class StoryLoader:
                 f"'{file_name}': {location} field '{field_name}' must be a non-empty string"
             )
         return value
+
+    @staticmethod
+    def _parse_saga_meta(meta: dict, file_name: str) -> tuple[str | None, str | None, str | None]:
+        saga_id: str | None = None
+        saga_id_raw = meta.get("saga_id")
+        if saga_id_raw is not None:
+            if not isinstance(saga_id_raw, str) or not saga_id_raw.strip():
+                raise StoryValidationError(
+                    f"'{file_name}': meta field 'saga_id' must be a non-empty string if provided"
+                )
+            saga_id = saga_id_raw.strip()
+            if not _SAFE_STORY_ID.fullmatch(saga_id):
+                raise StoryValidationError(
+                    f"'{file_name}': meta field 'saga_id' may only contain letters, numbers, "
+                    "dots, underscores, and hyphens"
+                )
+        values: dict[str, str | None] = {"saga_title": None, "chapter_label": None}
+        for key in values:
+            raw = meta.get(key)
+            if raw is None:
+                continue
+            if saga_id is None:
+                raise StoryValidationError(
+                    f"'{file_name}': meta field '{key}' requires 'saga_id' to also be set"
+                )
+            if not isinstance(raw, str) or not raw.strip():
+                raise StoryValidationError(
+                    f"'{file_name}': meta field '{key}' must be a non-empty string if provided"
+                )
+            values[key] = raw.strip()
+        return saga_id, values["saga_title"], values["chapter_label"]
+
+    @staticmethod
+    def _parse_chain_fields(
+        node_data: dict,
+        node_id: str,
+        file_name: str,
+        story_id: str,
+        saga_id: str | None,
+        is_terminal: bool,
+    ) -> tuple[str | None, list[str], bool, bool]:
+        where = f"'{file_name}': node '{node_id}'"
+
+        next_story = node_data.get("next_story")
+        if next_story is not None:
+            if not isinstance(next_story, str) or not next_story.strip():
+                raise StoryValidationError(
+                    f"{where} field 'next_story' must be a non-empty string if provided"
+                )
+            next_story = next_story.strip()
+
+        exports: list[str] = []
+        if "exports" in node_data:
+            raw_exports = node_data["exports"]
+            if not isinstance(raw_exports, list) or not all(
+                isinstance(e, str) and e.strip() for e in raw_exports
+            ):
+                raise StoryValidationError(
+                    f"{where} field 'exports' must be a list of non-empty strings"
+                )
+            exports = [e.strip() for e in raw_exports]
+
+        chapter_transition = node_data.get("chapter_transition", False)
+        if not isinstance(chapter_transition, bool):
+            raise StoryValidationError(f"{where} field 'chapter_transition' must be true or false")
+        saga_end = node_data.get("saga_end", False)
+        if not isinstance(saga_end, bool):
+            raise StoryValidationError(f"{where} field 'saga_end' must be true or false")
+
+        if next_story is None:
+            for key in ("exports", "chapter_transition"):
+                if key in node_data:
+                    raise StoryValidationError(
+                        f"{where} field '{key}' requires 'next_story' to also be set"
+                    )
+        else:
+            if saga_id is None:
+                raise StoryValidationError(
+                    f"{where} field 'next_story' requires meta field 'saga_id' to be set"
+                )
+            if not is_terminal:
+                raise StoryValidationError(
+                    f"{where} field 'next_story' is only valid on an ending node "
+                    "(is_ending or empty choices)"
+                )
+            if next_story == story_id:
+                raise StoryValidationError(
+                    f"{where} field 'next_story' must not name the story's own id"
+                )
+            seen: set[str] = set()
+            for name in exports:
+                if "*" in name:
+                    raise StoryValidationError(
+                        f"{where} export '{name}' is not allowed: wildcards are not supported"
+                    )
+                if name == "player_name":
+                    raise StoryValidationError(
+                        f"{where} export 'player_name' is not allowed: it always carries automatically"
+                    )
+                if name in seen:
+                    raise StoryValidationError(f"{where} duplicate export '{name}'")
+                seen.add(name)
+
+        if saga_end:
+            if saga_id is None:
+                raise StoryValidationError(
+                    f"{where} field 'saga_end' requires meta field 'saga_id' to be set"
+                )
+            if not is_terminal:
+                raise StoryValidationError(
+                    f"{where} field 'saga_end' is only valid on an ending node "
+                    "(is_ending or empty choices)"
+                )
+            if next_story is not None or "exports" in node_data or chapter_transition:
+                raise StoryValidationError(
+                    f"{where} 'saga_end' cannot be combined with 'next_story', "
+                    "'exports' or 'chapter_transition'"
+                )
+        return next_story, exports, chapter_transition, saga_end
+
+    @staticmethod
+    def _validate_visited_exports(
+        nodes: dict[str, "Node"], auto_visited_flags: bool, file_name: str
+    ) -> None:
+        for node_id, node in nodes.items():
+            for name in node.exports:
+                if not name.startswith("visited_"):
+                    continue
+                if not auto_visited_flags:
+                    raise StoryValidationError(
+                        f"'{file_name}': node '{node_id}' export '{name}' requires "
+                        "'auto_visited_flags' to be enabled"
+                    )
+                target = name[len("visited_"):]
+                if target not in nodes:
+                    raise StoryValidationError(
+                        f"'{file_name}': node '{node_id}' export '{name}' names no node "
+                        f"in this story ('{target}' not found)"
+                    )
 
     @staticmethod
     def _parse_choices(node_data: dict, node_id: str, file_name: str) -> list[Choice]:

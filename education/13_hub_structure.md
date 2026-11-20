@@ -1,6 +1,5 @@
 # 13 — Hub Structure
 
-**Story:** `stories/examples/13_hub_structure.json`
 **Feature:** A revisitable hub node where an exit unlocks only after the player has visited all branches — using auto-generated `visited_` flags.
 
 ## What the story does

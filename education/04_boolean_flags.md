@@ -1,6 +1,5 @@
 # 04 — Boolean Flags
 
-**Story:** `stories/examples/04_boolean_flags.json`
 **Feature:** Writing a boolean to state with `sets` and gating a choice on it with `requires`.
 
 ## What the story does

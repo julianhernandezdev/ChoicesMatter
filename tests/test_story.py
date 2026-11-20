@@ -862,3 +862,210 @@ def test_span_unknown_resolve_style_raises() -> None:
         StoryLoader._validate_corruption_spans(
             "{corrupt:reveal}text{/corrupt}", "node 'n' text", "test.json"
         )
+
+
+# ---------------------------------------------------------------------------
+# Saga / chapter fields
+# ---------------------------------------------------------------------------
+
+def _saga_dict(sample_story_dict: dict, **ending_fields) -> dict:
+    """sample_story_dict with saga_id set and the ending node carrying chain fields."""
+    sample_story_dict["meta"]["saga_id"] = "demo"
+    sample_story_dict["nodes"]["ending"].update(ending_fields)
+    return sample_story_dict
+
+
+def _load_dict(tmp_path: Path, data: dict):
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return StoryLoader.load(path)
+
+
+def test_plain_story_has_no_saga_fields(valid_story_path: Path) -> None:
+    story = StoryLoader.load(valid_story_path)
+    assert (story.saga_id, story.saga_title, story.chapter_label) == (None, None, None)
+    ending = story.nodes["ending"]
+    assert ending.next_story is None
+    assert ending.exports == []
+    assert ending.chapter_transition is False
+    assert ending.saga_end is False
+
+
+def test_saga_meta_fields_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"].update(
+        {"saga_id": "demo", "saga_title": " The Saga ", "chapter_label": "2A"}
+    )
+    story = _load_dict(tmp_path, sample_story_dict)
+    assert story.saga_id == "demo"
+    assert story.saga_title == "The Saga"
+    assert story.chapter_label == "2A"
+
+
+@pytest.mark.parametrize("bad", ["has space", "a/b", "über"])
+def test_saga_id_charset_enforced(tmp_path: Path, sample_story_dict: dict, bad: str) -> None:
+    sample_story_dict["meta"]["saga_id"] = bad
+    with pytest.raises(StoryValidationError, match="saga_id"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_saga_id_must_be_non_empty_string(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["saga_id"] = ""
+    with pytest.raises(StoryValidationError, match="saga_id"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+@pytest.mark.parametrize("key", ["saga_title", "chapter_label"])
+def test_saga_meta_field_requires_saga_id(tmp_path: Path, sample_story_dict: dict, key: str) -> None:
+    sample_story_dict["meta"][key] = "Something"
+    with pytest.raises(StoryValidationError, match=f"'{key}' requires 'saga_id'"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+@pytest.mark.parametrize("key", ["saga_title", "chapter_label"])
+def test_saga_meta_field_must_be_non_empty_string(tmp_path: Path, sample_story_dict: dict, key: str) -> None:
+    sample_story_dict["meta"]["saga_id"] = "demo"
+    sample_story_dict["meta"][key] = "  "
+    with pytest.raises(StoryValidationError, match=key):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_chain_fields_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(
+        sample_story_dict,
+        next_story="ch2", exports=["trust", "visited_middle"], chapter_transition=True,
+    )
+    node = _load_dict(tmp_path, data).nodes["ending"]
+    assert node.next_story == "ch2"
+    assert node.exports == ["trust", "visited_middle"]
+    assert node.chapter_transition is True
+    assert node.saga_end is False
+
+
+def test_saga_end_parsed(tmp_path: Path, sample_story_dict: dict) -> None:
+    node = _load_dict(tmp_path, _saga_dict(sample_story_dict, saga_end=True)).nodes["ending"]
+    assert node.saga_end is True
+    assert node.next_story is None
+
+
+@pytest.mark.parametrize("field, value", [("next_story", "ch2"), ("saga_end", True)])
+def test_empty_choices_without_is_ending_still_counts_as_an_ending_for_chain_fields(
+    tmp_path: Path, sample_story_dict: dict, field: str, value
+) -> None:
+    """An empty choices array is an ending even without is_ending, so it may carry chain fields."""
+    data = _saga_dict(sample_story_dict, **{field: value})
+    del data["nodes"]["ending"]["is_ending"]
+    assert data["nodes"]["ending"]["choices"] == []
+
+    node = _load_dict(tmp_path, data).nodes["ending"]
+
+    assert node.is_ending is False
+    assert getattr(node, field) == value
+
+
+def test_next_story_requires_saga_id(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["ending"]["next_story"] = "ch2"
+    with pytest.raises(StoryValidationError, match="'next_story' requires meta field 'saga_id'"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_saga_end_requires_saga_id(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["nodes"]["ending"]["saga_end"] = True
+    with pytest.raises(StoryValidationError, match="'saga_end' requires meta field 'saga_id'"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_next_story_only_on_ending_node(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["saga_id"] = "demo"
+    sample_story_dict["nodes"]["start"]["next_story"] = "ch2"
+    with pytest.raises(StoryValidationError, match="only valid on an ending node"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_saga_end_only_on_ending_node(tmp_path: Path, sample_story_dict: dict) -> None:
+    sample_story_dict["meta"]["saga_id"] = "demo"
+    sample_story_dict["nodes"]["start"]["saga_end"] = True
+    with pytest.raises(StoryValidationError, match="only valid on an ending node"):
+        _load_dict(tmp_path, sample_story_dict)
+
+
+def test_next_story_cannot_name_own_id(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="test_story")
+    with pytest.raises(StoryValidationError, match="own id"):
+        _load_dict(tmp_path, data)
+
+
+def test_next_story_must_be_non_empty_string(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story=5)
+    with pytest.raises(StoryValidationError, match="'next_story' must be a non-empty string"):
+        _load_dict(tmp_path, data)
+
+
+@pytest.mark.parametrize("key,value", [("exports", ["trust"]), ("chapter_transition", True)])
+def test_chain_field_requires_next_story(tmp_path: Path, sample_story_dict: dict, key: str, value) -> None:
+    data = _saga_dict(sample_story_dict, **{key: value})
+    with pytest.raises(StoryValidationError, match=f"'{key}' requires 'next_story'"):
+        _load_dict(tmp_path, data)
+
+
+def test_exports_must_be_list_of_non_empty_strings(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["ok", ""])
+    with pytest.raises(StoryValidationError, match="'exports' must be a list of non-empty strings"):
+        _load_dict(tmp_path, data)
+
+
+def test_exports_rejects_wildcards(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["trust_*"])
+    with pytest.raises(StoryValidationError, match="wildcards are not supported"):
+        _load_dict(tmp_path, data)
+
+
+def test_exports_rejects_player_name(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["player_name"])
+    with pytest.raises(StoryValidationError, match="player_name"):
+        _load_dict(tmp_path, data)
+
+
+def test_exports_rejects_duplicates(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["trust", "trust"])
+    with pytest.raises(StoryValidationError, match="duplicate export 'trust'"):
+        _load_dict(tmp_path, data)
+
+
+def test_chapter_transition_must_be_bool(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", chapter_transition="yes")
+    with pytest.raises(StoryValidationError, match="'chapter_transition' must be true or false"):
+        _load_dict(tmp_path, data)
+
+
+def test_saga_end_must_be_bool(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, saga_end="yes")
+    with pytest.raises(StoryValidationError, match="'saga_end' must be true or false"):
+        _load_dict(tmp_path, data)
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [{"next_story": "ch2"}, {"next_story": "ch2", "exports": ["a"]}, {"next_story": "ch2", "chapter_transition": True}],
+)
+def test_saga_end_is_exclusive_with_chaining(tmp_path: Path, sample_story_dict: dict, extra: dict) -> None:
+    data = _saga_dict(sample_story_dict, saga_end=True, **extra)
+    with pytest.raises(StoryValidationError, match="cannot be combined"):
+        _load_dict(tmp_path, data)
+
+
+def test_visited_export_of_real_node_is_valid(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["visited_middle"])
+    assert _load_dict(tmp_path, data).nodes["ending"].exports == ["visited_middle"]
+
+
+def test_visited_export_must_name_a_real_node(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["visited_nowhere"])
+    with pytest.raises(StoryValidationError, match="names no node in this story"):
+        _load_dict(tmp_path, data)
+
+
+def test_visited_export_requires_auto_visited_flags(tmp_path: Path, sample_story_dict: dict) -> None:
+    data = _saga_dict(sample_story_dict, next_story="ch2", exports=["visited_middle"])
+    data["meta"]["auto_visited_flags"] = False
+    with pytest.raises(StoryValidationError, match="requires 'auto_visited_flags'"):
+        _load_dict(tmp_path, data)

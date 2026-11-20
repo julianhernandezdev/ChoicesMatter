@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "id": "saga_demo_ch3",
+    "title": "Chapter Three: The Last Ferry",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "dock",
+    "est_time": "5 min",
+    "saga_id": "saga_demo"
+  },
+  "nodes": {
+    "dock": {
+      "text": "The ferry is here, {player_name}, engine ticking in the dark. The bell rope hangs just out of reach, and only someone the river has learned to trust can lower the ladder.",
+      "scene": "The jetty",
+      "choices": [
+        { "label": "Ring the ferry bell", "next": "e_win", "requires": { "trust": 2 } },
+        { "label": "Walk back into the dark", "next": "e_lose" }
+      ]
+    },
+    "e_win": {
+      "text": "The bell rings out across the water. The ladder drops. Whoever is left on the far bank hears it, and starts to run.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "good",
+      "saga_end": true
+    },
+    "e_lose": {
+      "text": "You walk until the sound of the engine is gone. Behind you, the ferry waits a while longer, and then it does not.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "bad"
+    }
+  }
+}

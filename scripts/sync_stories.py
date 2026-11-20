@@ -1,7 +1,7 @@
 """
 Regenerate web/stories.json from the stories/ directory.
 
-Walks stories/ recursively, skips examples/ and showcase/ (WIP stubs),
+Walks stories/ recursively, skips CLI-only folders (see SKIP_DIRS),
 uses the immediate parent folder name as the category, sorts by story title,
 and writes web/stories.json. Stories directly in stories/ (no subfolder)
 get no category — the web player lists them flat at the top level,
@@ -19,7 +19,8 @@ ROOT = pathlib.Path(__file__).parent.parent
 STORIES_DIR = ROOT / "stories"
 OUTPUT = ROOT / "web" / "stories.json"
 
-SKIP_DIRS = {"examples", "showcase"}
+# "sagas" is CLI-only until web saga support lands.
+SKIP_DIRS = {"sagas"}
 
 
 def story_title(path: pathlib.Path) -> str:

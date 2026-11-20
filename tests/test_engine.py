@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from src.corruption import CorruptedSpan, TextSegments
-from src.engine import Engine
+from src.engine import ChainResult, Engine
 from src.gallery import GalleryManager
 from src.save import SaveManager, SaveState
 from src.story import Choice, Node, Story
@@ -1148,3 +1148,226 @@ def test_engine_resolve_corruption_node_level(saves_dir) -> None:
     node_text = display.show_node.call_args_list[0][0][1]
     assert isinstance(node_text[0], CorruptedSpan)
     assert node_text[0].intensity == pytest.approx(0.3)
+
+
+# ------------------------------------------------------------------
+# Chapter chaining
+# ------------------------------------------------------------------
+
+def _chain_story(**ending_fields) -> Story:
+    fields = {"next_story": "chapter_two"} | ending_fields
+    return _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[Choice(label="Go", next="end", sets={"trust": 3, "secret": True})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True, ending_type="good", **fields),
+    })
+
+
+def _chain_display(answer: str = "continue") -> MagicMock:
+    display = _make_display(play_again=False)
+    display.prompt_chapter_transition.return_value = answer
+    return display
+
+
+def test_plain_ending_returns_none(saves_dir: Path, two_node_story: Story) -> None:
+    engine = Engine(two_node_story, SaveManager(saves_dir), _make_display())
+    assert engine.run() is None
+
+
+def test_chain_continue_writes_seed_and_returns_chain_result(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust", "missing_flag"])
+    display = _chain_display("continue")
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    engine = Engine(
+        story, sm, display, gm,
+        initial_state={"player_name": "Casey"}, known_chapter_ids={"chapter_two"},
+    )
+
+    result = engine.run()
+
+    assert result == ChainResult(next_story="chapter_two", from_story="test_story")
+    record = sm.load_handoff("chapter_two")
+    assert record is not None
+    assert record.from_story == "test_story"
+    assert record.state == {"trust": 3, "player_name": "Casey"}  # 'secret' and absent flags not carried
+    assert gm.get_found("test_story") == {"end"}
+    assert sm.has_save("test_story") is False
+    display.prompt_play_again.assert_not_called()
+    display.show_ending.assert_called_once_with(["Done."], "good", overlays=[])
+
+
+def test_chain_menu_returns_none_and_keeps_seed(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"])
+    display = _chain_display("menu")
+    sm = SaveManager(saves_dir)
+    engine = Engine(story, sm, display, known_chapter_ids={"chapter_two"})
+
+    assert engine.run() is None
+    assert sm.load_handoff("chapter_two").state == {"trust": 3}
+
+
+def test_chain_again_undoes_the_seed_and_replays(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"])
+    display = _chain_display()
+    display.prompt_chapter_transition.side_effect = ["again", "menu"]
+    sm = SaveManager(saves_dir)
+    sm.delete_handoff = MagicMock(wraps=sm.delete_handoff)
+    engine = Engine(story, sm, display, known_chapter_ids={"chapter_two"})
+
+    assert engine.run() is None
+
+    sm.delete_handoff.assert_called_once_with("chapter_two")
+    start_calls = [c for c in display.show_node.call_args_list if c.args[1] == ["Begin."]]
+    assert len(start_calls) == 2  # played the chapter twice
+    assert sm.has_handoff("chapter_two") is True  # rewritten by the second ending
+
+
+def test_transition_writes_seed_before_the_panel_and_skips_prompts(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"], chapter_transition=True)
+    display = _chain_display()
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    seen: list[bool] = []
+    display.show_chapter_transition.side_effect = lambda *a, **k: seen.append(sm.has_handoff("chapter_two"))
+    engine = Engine(story, sm, display, gm, known_chapter_ids={"chapter_two"})
+
+    result = engine.run()
+
+    assert result == ChainResult(next_story="chapter_two", from_story="test_story")
+    assert seen == [True]  # seed already on disk when the panel is shown
+    display.show_chapter_transition.assert_called_once_with("Test Story", ["Done."], [], [], None, [])
+    display.show_ending.assert_not_called()
+    display.prompt_chapter_transition.assert_not_called()
+    display.prompt_play_again.assert_not_called()
+    assert gm.get_found("test_story") == {"end"}
+    assert sm.has_save("test_story") is False
+
+
+def test_saga_end_shows_closing_line_and_uses_play_again(saves_dir: Path) -> None:
+    story = _chain_story(next_story=None, saga_end=True)
+    display = _chain_display()
+    sm = SaveManager(saves_dir)
+    engine = Engine(story, sm, display)
+
+    assert engine.run() is None
+
+    display.show_ending.assert_called_once_with(["Done."], "good", overlays=[], closing="End of saga")
+    display.prompt_play_again.assert_called_once()
+    display.prompt_chapter_transition.assert_not_called()
+
+
+def test_dangling_next_story_is_to_be_continued_without_a_seed(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"])
+    display = _chain_display()
+    sm = SaveManager(saves_dir)
+    engine = Engine(story, sm, display)  # known_chapter_ids defaults to empty
+
+    assert engine.run() is None
+
+    display.show_ending.assert_called_once_with(["Done."], "good", overlays=[], closing="To be continued")
+    display.prompt_play_again.assert_called_once()
+    assert sm.has_handoff("chapter_two") is False
+
+
+def test_dangling_link_with_chapter_transition_still_ends_with_to_be_continued(saves_dir: Path) -> None:
+    """A transition into a chapter that is not known must not run the transition path."""
+    story = _chain_story(exports=["trust"], chapter_transition=True)
+    display = _chain_display()
+    sm = SaveManager(saves_dir)
+    engine = Engine(story, sm, display, known_chapter_ids={"some_other_chapter"})
+
+    assert engine.run() is None
+
+    display.show_chapter_transition.assert_not_called()
+    display.show_ending.assert_called_once_with(["Done."], "good", overlays=[], closing="To be continued")
+    display.prompt_play_again.assert_called_once()
+    display.prompt_chapter_transition.assert_not_called()
+    assert sm.has_handoff("chapter_two") is False
+
+
+@pytest.mark.parametrize(
+    "fields, known, kind",
+    [
+        ({"saga_end": True, "next_story": "chapter_two"}, {"chapter_two"}, "saga_end"),
+        ({"saga_end": True, "next_story": "chapter_two", "chapter_transition": True}, set(), "saga_end"),
+        ({"next_story": "chapter_two", "chapter_transition": True}, set(), "dangling"),
+        ({"next_story": "chapter_two"}, set(), "dangling"),
+        ({"next_story": "chapter_two", "chapter_transition": True}, {"chapter_two"}, "transition"),
+        ({"next_story": "chapter_two"}, {"chapter_two"}, "chain"),
+        ({}, {"chapter_two"}, "plain"),
+    ],
+)
+def test_ending_kind_precedence(fields: dict, known: set, kind: str) -> None:
+    """saga_end > dangling > transition > chain > plain."""
+    node = Node(text="Done.", choices=[], is_ending=True, **fields)
+    engine = Engine(_make_story({"start": node}), MagicMock(), MagicMock(), known_chapter_ids=known)
+    assert engine._ending_kind(node) == kind
+
+
+def test_empty_choices_ending_without_is_ending_chains(saves_dir: Path) -> None:
+    """An empty choices array is an ending even without is_ending: it may chain into a chapter."""
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")]),
+        "end": Node(text="Done.", choices=[], next_story="chapter_two"),
+    })
+    display = _chain_display("continue")
+    sm = SaveManager(saves_dir)
+    engine = Engine(story, sm, display, known_chapter_ids={"chapter_two"})
+
+    assert engine.run() == ChainResult(next_story="chapter_two", from_story="test_story")
+
+    display.prompt_chapter_transition.assert_called_once()
+    assert sm.has_handoff("chapter_two") is True
+
+
+def test_empty_choices_ending_without_is_ending_can_end_the_saga(saves_dir: Path) -> None:
+    story = _make_story({
+        "start": Node(text="Begin.", choices=[Choice(label="Go", next="end")]),
+        "end": Node(text="Done.", choices=[], saga_end=True),
+    })
+    display = _chain_display()
+    engine = Engine(story, SaveManager(saves_dir), display)
+
+    assert engine.run() is None
+
+    display.show_ending.assert_called_once_with(["Done."], "neutral", overlays=[], closing="End of saga")
+    display.prompt_play_again.assert_called_once()
+
+
+def test_known_chapter_ids_turn_a_dangling_link_into_a_chain(saves_dir: Path) -> None:
+    story = _chain_story()
+    display = _chain_display("continue")
+    engine = Engine(story, SaveManager(saves_dir), display, known_chapter_ids=["chapter_two"])
+    assert engine.run() == ChainResult(next_story="chapter_two", from_story="test_story")
+
+
+def test_chain_writes_seed_before_the_transition_prompt(saves_dir: Path) -> None:
+    story = _chain_story(exports=["trust"])
+    display = _chain_display()
+    sm, gm = SaveManager(saves_dir), GalleryManager(saves_dir)
+    seen: list[dict] = []
+
+    def _answer() -> str:
+        record = sm.load_handoff("chapter_two")
+        seen.append({
+            "has_handoff": sm.has_handoff("chapter_two"),
+            "state": record.state if record else None,
+            "has_save": sm.has_save("test_story"),
+            "found": gm.get_found("test_story"),
+        })
+        return "continue"
+
+    display.prompt_chapter_transition.side_effect = _answer
+    engine = Engine(story, sm, display, gm, known_chapter_ids={"chapter_two"})
+
+    result = engine.run()
+
+    assert result == ChainResult(next_story="chapter_two", from_story="test_story")
+    # Everything is already durable when the prompt is on screen, so quitting then loses nothing.
+    assert seen == [{
+        "has_handoff": True,
+        "state": {"trust": 3},
+        "has_save": False,
+        "found": {"end"},
+    }]
