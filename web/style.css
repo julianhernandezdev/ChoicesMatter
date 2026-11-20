@@ -334,7 +334,7 @@ body {
 }
 
 /* === READER MODE (light paper theme) === */
-/* Source of truth: docs/claudedesign/Accessibility Testing/canvas/reader.css */
+/* Reader-mode styles — adapted from the accessible-mode design canvas */
 
 body.reader-mode {
   background: #f4ecda;

@@ -1,6 +1,5 @@
 # 14 — Parallel Knowledge Routes
 
-**Story:** `stories/examples/14_parallel_knowledge_routes.json`
 **Feature:** Two different paths converging on the same node, with state determining how that node renders.
 
 ## What the story does

@@ -1,6 +1,5 @@
 # 21 — Variable Text Substitution
 
-**Story:** `stories/examples/21_variable_text_substitution.json`
 **Feature:** `{key}` placeholders in any text field replaced at runtime with the current value of that flag.
 
 ## What the story does

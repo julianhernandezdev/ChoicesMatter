@@ -1,6 +1,5 @@
 # 17 — Delayed Consequences
 
-**Story:** `stories/examples/17_delayed_consequences.json`
 **Feature:** A flag set early in a story that only becomes relevant several nodes later, with no reference to it in between.
 
 ## What the story does

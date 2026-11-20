@@ -1,6 +1,5 @@
 # 18 — Multi-Condition Gating
 
-**Story:** `stories/examples/18_multi_condition_gating.json`
 **Feature:** A single choice gated on two simultaneous conditions — boolean AND integer/string — plus list-membership as OR within one condition.
 
 ## What the story does

@@ -1,6 +1,5 @@
 # 23 — Corrupted Text
 
-**Story:** `stories/examples/23_corrupted_text.json`
 **Feature:** `{corrupt}…{/corrupt}` inline spans mark text for glitch rendering — characters are replaced with noise from a configurable charset, leaving punctuation and spaces intact. Authors control intensity, mode, and an optional resolve style per-span; a node-level `corruption` field sets a baseline; `settings.json` provides global fallback defaults, an always-applied intensity multiplier, and controls the typewriter scramble/resolve animation timing.
 
 ## What the story does

@@ -1,6 +1,5 @@
 # 07 — Auto-Visited Flags
 
-**Story:** `stories/examples/07_auto_visited_flags.json`
 **Feature:** Opting out of automatic `visited_` flag tracking and managing revisit state manually.
 
 ## What the story does

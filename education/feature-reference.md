@@ -1,41 +1,40 @@
 # Engine Feature Reference
 
-All 24 engine features in one place — each illustrated by a numbered example story and documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
+All 24 engine features in one place — each documented with its code path through the engine. Read sequentially for a guided tour, or jump to a section via the table below.
 
 ## Quick Lookup
 
-| # | Feature | Story file | Summary |
-|---|---|---|---|
-| 01 | Minimal Story | `stories/examples/01_minimal_story.json` | Minimum viable story: two nodes, one choice, one ending |
-| 02 | Branching Endings | `stories/examples/02_branching_endings.json` | Three ending types (`good`, `bad`, `neutral`) and their display colors |
-| 03 | Scene Carry-Forward | `stories/examples/03_scene_carry_forward.json` | Location labels that persist across nodes until overridden |
-| 04 | Boolean Flags | `stories/examples/04_boolean_flags.json` | Write a boolean with `sets`; gate a choice on it with `requires` |
-| 05 | Integer Flags | `stories/examples/05_integer_flags.json` | Accumulate an integer with delta strings; check a threshold |
-| 06 | String Flags | `stories/examples/06_string_flags.json` | Store a string; check it with exact-match or list-membership |
-| 07 | Auto-Visited Flags | `stories/examples/07_auto_visited_flags.json` | Opt out of automatic `visited_` tracking; manage revisit state manually |
-| 08 | Insets | `stories/examples/08_insets.json` | Styled text blocks inside the story panel, before or after prose |
-| 09 | Overlays | `stories/examples/09_overlays.json` | Flavour text outside the panel, wrapped around the choice list |
-| 10 | Named Styles | `stories/examples/10_named_styles.json` | Full set of named style keys for insets and overlays |
-| 11 | Choice Colors | `stories/examples/11_choice_colors.json` | Override choice number color per-choice or at node level |
-| 12 | Obfuscated Choices | `stories/examples/12_obfuscated_choices.json` | Hide a choice label behind `[REDACTED]` while keeping it selectable |
-| 13 | Hub Structure | `stories/examples/13_hub_structure.json` | Revisitable hub; exit unlocks only after visiting all branches |
-| 14 | Parallel Knowledge Routes | `stories/examples/14_parallel_knowledge_routes.json` | Two paths converge on one node; state determines how it renders |
-| 15 | Soft Failure | `stories/examples/15_soft_failure.json` | A gated choice completely invisible until its condition is met |
-| 16 | Stateful Endings | `stories/examples/16_stateful_endings.json` | Multiple paths to one ending node with conditional content per path |
-| 17 | Delayed Consequences | `stories/examples/17_delayed_consequences.json` | A flag set early that only surfaces several nodes later |
-| 18 | Multi-Condition Gating | `stories/examples/18_multi_condition_gating.json` | One choice gated on two simultaneous conditions (AND + OR) |
-| 19 | Conditional Inline Text | `stories/examples/19_conditional_inline_text.json` | Flag-conditional spans in text fields, resolved at runtime |
-| 20 | Pause Token | `stories/examples/20_pause_token.json` | Inject a configurable delay mid-stream during typewriter playback |
-| 21 | Variable Text Substitution | `stories/examples/21_variable_text_substitution.json` | `{key}` placeholders replaced at runtime with flag values; missing keys preserved intact |
-| 22 | Protagonist Name Prompt | `stories/examples/22_protagonist_name_prompt.json` | `meta.name_prompt` triggers a pre-game name input; `{player_name}` available in all text fields |
-| 23 | Corrupted Text | `stories/examples/23_corrupted_text.json` | `{corrupt}…{/corrupt}` inline spans with node baseline and scramble-settle typewriter animation |
+| # | Feature | Summary |
+|---|---|---|
+| 01 | Minimal Story | Minimum viable story: two nodes, one choice, one ending |
+| 02 | Branching Endings | Three ending types (`good`, `bad`, `neutral`) and their display colors |
+| 03 | Scene Carry-Forward | Location labels that persist across nodes until overridden |
+| 04 | Boolean Flags | Write a boolean with `sets`; gate a choice on it with `requires` |
+| 05 | Integer Flags | Accumulate an integer with delta strings; check a threshold |
+| 06 | String Flags | Store a string; check it with exact-match or list-membership |
+| 07 | Auto-Visited Flags | Opt out of automatic `visited_` tracking; manage revisit state manually |
+| 08 | Insets | Styled text blocks inside the story panel, before or after prose |
+| 09 | Overlays | Flavour text outside the panel, wrapped around the choice list |
+| 10 | Named Styles | Full set of named style keys for insets and overlays |
+| 11 | Choice Colors | Override choice number color per-choice or at node level |
+| 12 | Obfuscated Choices | Hide a choice label behind `[REDACTED]` while keeping it selectable |
+| 13 | Hub Structure | Revisitable hub; exit unlocks only after visiting all branches |
+| 14 | Parallel Knowledge Routes | Two paths converge on one node; state determines how it renders |
+| 15 | Soft Failure | A gated choice completely invisible until its condition is met |
+| 16 | Stateful Endings | Multiple paths to one ending node with conditional content per path |
+| 17 | Delayed Consequences | A flag set early that only surfaces several nodes later |
+| 18 | Multi-Condition Gating | One choice gated on two simultaneous conditions (AND + OR) |
+| 19 | Conditional Inline Text | Flag-conditional spans in text fields, resolved at runtime |
+| 20 | Pause Token | Inject a configurable delay mid-stream during typewriter playback |
+| 21 | Variable Text Substitution | `{key}` placeholders replaced at runtime with flag values; missing keys preserved intact |
+| 22 | Protagonist Name Prompt | `meta.name_prompt` triggers a pre-game name input; `{player_name}` available in all text fields |
+| 23 | Corrupted Text | `{corrupt}…{/corrupt}` inline spans with node baseline and scramble-settle typewriter animation |
 | 24 | Chapters and Sagas | `stories/sagas/24_saga_ch1_the_bridge.json` (+3 chapters) | Endings chain into other story files; only exported flags carry over; saga picker row, saga home screen, replay |
 
 ---
 
 ## 01 — Minimal Story
 
-**Story:** `stories/examples/01_minimal_story.json`
 **Feature:** The minimum viable story — two nodes, one choice, one ending.
 
 ### What the story does
@@ -72,7 +71,6 @@ Two nodes. `start` has one choice that leads to `end`. `end` has `is_ending: tru
 
 ## 02 — Branching Endings
 
-**Story:** `stories/examples/02_branching_endings.json`
 **Feature:** Three `ending_type` values — `good`, `bad`, `neutral` — and how the engine maps them to display colors.
 
 ### What the story does
@@ -117,7 +115,6 @@ The `color` string is used for both the panel's `border_style` and the title lab
 
 ## 03 — Scene Carry-Forward
 
-**Story:** `stories/examples/03_scene_carry_forward.json`
 **Feature:** The `scene` field sets a location label that persists across nodes until overridden.
 
 ### What the story does
@@ -167,7 +164,6 @@ A dim Rule line is printed above the story panel.
 
 ## 04 — Boolean Flags
 
-**Story:** `stories/examples/04_boolean_flags.json`
 **Feature:** Writing a boolean to state with `sets` and gating a choice on it with `requires`.
 
 ### What the story does
@@ -226,7 +222,6 @@ Choices that fail `_check_requires()` are excluded from `visible` entirely. `dis
 
 ## 05 — Integer Flags
 
-**Story:** `stories/examples/05_integer_flags.json`
 **Feature:** Accumulating an integer with delta strings (`"+1"`) and checking a threshold with `requires`.
 
 ### What the story does
@@ -276,7 +271,6 @@ elif isinstance(condition, int):
 
 ## 06 — String Flags
 
-**Story:** `stories/examples/06_string_flags.json`
 **Feature:** Storing a string value in state and checking it with exact-match and list-membership `requires`.
 
 ### What the story does
@@ -326,7 +320,6 @@ elif isinstance(condition, list):
 
 ## 07 — Auto-Visited Flags
 
-**Story:** `stories/examples/07_auto_visited_flags.json`
 **Feature:** Opting out of automatic `visited_` flag tracking and managing revisit state manually.
 
 ### What the story does
@@ -374,7 +367,6 @@ This prevents a story author from manually writing `visited_` flags while auto-t
 
 ## 08 — Insets
 
-**Story:** `stories/examples/08_insets.json`
 **Feature:** Styled text blocks inside the story panel, positioned before or after the prose, with optional flag gating.
 
 ### What the story does
@@ -440,7 +432,6 @@ Each inset gets a dim `Rule` separator on the side facing the prose — before-i
 
 ## 09 — Overlays
 
-**Story:** `stories/examples/09_overlays.json`
 **Feature:** Flavour text that renders outside the story panel, wrapped around the choice list, with optional flag gating.
 
 ### What the story does
@@ -521,7 +512,6 @@ This is different from non-ending nodes where overlays split around the choice l
 
 ## 10 — Named Styles
 
-**Story:** `stories/examples/10_named_styles.json`
 **Feature:** The full set of named style keys for insets and overlays, and how the engine resolves them to visual properties.
 
 ### What the story does
@@ -598,7 +588,6 @@ When `style == ""` (empty string), the `if inset.style:` guard is `False`, so th
 
 ## 11 — Choice Colors
 
-**Story:** `stories/examples/11_choice_colors.json`
 **Feature:** Overriding the number color on individual choices and at the node level.
 
 ### What the story does
@@ -647,7 +636,6 @@ The engine does not interpret the color string — it passes it through unchange
 
 ## 12 — Obfuscated Choices
 
-**Story:** `stories/examples/12_obfuscated_choices.json`
 **Feature:** Hiding a choice's label behind `[REDACTED]` while keeping it selectable.
 
 ### What the story does
@@ -685,7 +673,6 @@ When `obfuscated` is `True`, the label is replaced with a fixed block-character 
 
 ## 13 — Hub Structure
 
-**Story:** `stories/examples/13_hub_structure.json`
 **Feature:** A revisitable hub node where an exit unlocks only after the player has visited all branches — using auto-generated `visited_` flags.
 
 ### What the story does
@@ -733,7 +720,6 @@ After `self._current_node` is updated to the new node, the flag `visited_<new_no
 
 ## 14 — Parallel Knowledge Routes
 
-**Story:** `stories/examples/14_parallel_knowledge_routes.json`
 **Feature:** Two different paths converging on the same node, with state determining how that node renders.
 
 ### What the story does
@@ -770,7 +756,6 @@ At `converge`, two insets exist — each requires a different value of `source`.
 
 ## 15 — Soft Failure
 
-**Story:** `stories/examples/15_soft_failure.json`
 **Feature:** A gated choice that is completely invisible until its condition is met — the player is never told it exists.
 
 ### What the story does
@@ -805,7 +790,6 @@ visible = [c for c in node.choices if self._check_requires(c.requires)]
 
 ## 16 — Stateful Endings
 
-**Story:** `stories/examples/16_stateful_endings.json`
 **Feature:** Multiple paths converging on one ending node, with conditional content reflecting how the player arrived.
 
 ### What the story does
@@ -849,7 +833,6 @@ The corrected version of this story would use `overlays` with `position: "before
 
 ## 17 — Delayed Consequences
 
-**Story:** `stories/examples/17_delayed_consequences.json`
 **Feature:** A flag set early in a story that only becomes relevant several nodes later, with no reference to it in between.
 
 ### What the story does
@@ -884,7 +867,6 @@ Both go through `_check_requires()` independently. The engine filters insets at 
 
 ## 18 — Multi-Condition Gating
 
-**Story:** `stories/examples/18_multi_condition_gating.json`
 **Feature:** A single choice gated on two simultaneous conditions — boolean AND integer/string — plus list-membership as OR within one condition.
 
 ### What the story does
@@ -936,7 +918,6 @@ For `{ "has_key": true, "clearance": ["red", "blue"] }`:
 
 ## 19 — Conditional Inline Text
 
-**Story:** `stories/examples/19_conditional_inline_text.json`
 **Feature:** Flag-conditional spans embedded directly in text fields — node text, insets, and overlays — resolved at runtime without branching to a separate node.
 
 ### What the story does
@@ -1025,7 +1006,6 @@ Variable Text Substitution (example 21) uses `{key}` — no `?`. The conditional
 
 ## 20 — Pause Token
 
-**Story:** `stories/examples/20_pause_token.json`
 **Feature:** `{pause}` embedded in node or ending `text` injects a configurable delay mid-stream during typewriter playback. Stripped silently in non-typewriter mode.
 
 ### What the story does
@@ -1106,7 +1086,6 @@ self.console.print(make(_strip_pause_tokens(node_text)))
 
 ## 21 — Variable Text Substitution
 
-**Story:** `stories/examples/21_variable_text_substitution.json`
 **Feature:** `{key}` placeholders in any text field replaced at runtime with the current value of that flag.
 
 ### What the story does
@@ -1170,7 +1149,6 @@ Applied to node text, all insets, and all overlays via `dataclasses.replace()` c
 
 ## 22 — Protagonist Name Prompt
 
-**Story:** `stories/examples/22_protagonist_name_prompt.json`
 **Feature:** `meta.name_prompt` triggers a pre-game name input screen. The name is stored as the reserved `player_name` flag and available via `{player_name}` in all text fields.
 
 ### What the story does
@@ -1223,7 +1201,6 @@ Fires after content warnings, before the first node. Skipped on save resume — 
 
 ## 23 — Corrupted Text
 
-**Story:** `stories/examples/23_corrupted_text.json`
 **Feature:** `{corrupt}…{/corrupt}` inline spans in any text field, a node-level baseline, a global settings multiplier, and scramble-settle typewriter animation.
 
 ### What the story does

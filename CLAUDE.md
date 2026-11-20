@@ -33,9 +33,7 @@ python main.py --debug --seed trust=3,key_taken=true   # author testing: list ev
 /src                 Python CLI engine package (imported as src.X from main.py and tests/)
 /web                 Browser-based web player — app.js (rendering/UI), engine.js (pure game logic), typewriter.js, storage.js, style.css
 /stories             Story JSON files — auto-discovered at startup; organized into subfolders:
-                       examples/         (01–23: one file per engine feature)
                        horror/
-                       showcase/         (including showcase/sci-fi/)
                        sagas/            (24_saga_*: the four-chapter example saga — tracked, CLI-only for now)
                        ChoicesMatterGPT/ (GPT-authored stories)
 /tests               Test suite — pytest for Python; tests/test_web_engine.py shells out to Node
@@ -513,7 +511,7 @@ In web accessible mode, all corruption is stripped and original text is shown. T
 - `settings.json` is gitignored (per-user). `settings.example.json` is committed as a template.
 - Numeric settings are range-limited. A row's `range` in `SETTINGS_SECTIONS` (`src/config.py`) is mirrored by `SETTING_RANGES` in `web/engine.js`; `tests/test_web_engine.py` fails if the two tables differ, or if a default falls outside its own range. Add a ranged row on both sides, and keep the default inside the range. Use time clamps through `config.clamp_setting` / `corruption_timing` (Python) and `clampSetting` / `corruptionTiming` (JS).
 - `tests/test_web.py` runs against the deployed GitHub Pages site, not the local checkout — it cannot verify local `web/` changes. Use the Node-backed tests plus a localhost browser run (serve the repo root; `index.html` is not in `web/`).
-- `stories/sagas/` is CLI-only for now: it is listed in `SKIP_DIRS` in `scripts/sync_stories.py` and `_GITIGNORED_STORY_DIRS` in `tests/test_web_player_assets.py`, so the web manifest skips it until web saga support lands. (`_GITIGNORED_STORY_DIRS` is a misnomer for `sagas`: that folder is tracked; the set only decides which folders the web-manifest test skips.)
+- `stories/sagas/` is CLI-only for now: it is listed in `SKIP_DIRS` in `scripts/sync_stories.py` and `_CLI_ONLY_STORY_DIRS` in `tests/test_web_player_assets.py`, so the web manifest skips it until web saga support lands.
 
 ## Exploration Tooling
 
@@ -538,4 +536,4 @@ Drop a `.json` file into `/stories/`. No code changes needed.
 - **Story validator CLI:** `python scripts/validate_story.py stories/your_story.json` — validates schema, reachability, and dead-ends. Accepts multiple files: `python scripts/validate_story.py stories/**/*.json`. Exit codes: 0 = clean, 1 = errors found, 2 = no arguments. Cross-file saga checks run over the files passed together (pass all of a saga's files at once): graph problems and a colliding exported `visited_X` are errors; dangling `next_story` links, exports nothing sets, flags a chapter needs that no parent provides, and a chapter with no chaining or `saga_end` ending are warnings. `--strict` promotes only dangling links to errors. A lone chapter of a `saga_id` gets one "pass sibling chapters together" warning and skips the dangling, export, missing-flag, `saga_title` and `visited_` checks, but still gets the no-chaining warning. A duplicate saga chapter `meta.id` is always one error naming the id and files.
 - **Multiple save slots:** Change `SaveManager` to accept a slot index; save path becomes `<story_id>.<slot>.save.json`.
 - **Graph branching (convergent nodes):** No engine changes needed — just point multiple `next` values at the same node ID.
-- **Godot / host engine binding:** The v1.0 deliverable. A GDScript port reads the same `.json` files and emits signals defined in `docs/superpowers/specs/godot-signal-api.md` (not yet written). Format-changing backlog items (Chapters, Cross-Story Persistent State, Asset Association Layer) must ship before the signal API is frozen. Do not introduce new top-level `node` fields or new reserved flag namespaces without considering their GDScript surface.
+- **Godot / host engine binding:** The v1.0 deliverable. A GDScript port reads the same `.json` files and emits signals defined in a signal-API spec (not yet written). Format-changing backlog items (Chapters, Cross-Story Persistent State, Asset Association Layer) must ship before the signal API is frozen. Do not introduce new top-level `node` fields or new reserved flag namespaces without considering their GDScript surface.

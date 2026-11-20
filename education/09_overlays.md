@@ -1,6 +1,5 @@
 # 09 — Overlays
 
-**Story:** `stories/examples/09_overlays.json`
 **Feature:** Flavour text that renders outside the story panel, wrapped around the choice list, with optional flag gating.
 
 ## What the story does

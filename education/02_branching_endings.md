@@ -1,6 +1,5 @@
 # 02 — Branching Endings
 
-**Story:** `stories/examples/02_branching_endings.json`
 **Feature:** Three `ending_type` values — `good`, `bad`, `neutral` — and how the engine maps them to display colors.
 
 ## What the story does

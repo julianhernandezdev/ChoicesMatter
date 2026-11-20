@@ -1,6 +1,5 @@
 # 06 — String Flags
 
-**Story:** `stories/examples/06_string_flags.json`
 **Feature:** Storing a string value in state and checking it with exact-match and list-membership `requires`.
 
 ## What the story does

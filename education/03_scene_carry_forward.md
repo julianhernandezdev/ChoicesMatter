@@ -1,6 +1,5 @@
 # 03 — Scene Carry-Forward
 
-**Story:** `stories/examples/03_scene_carry_forward.json`
 **Feature:** The `scene` field sets a location label that persists across nodes until overridden.
 
 ## What the story does

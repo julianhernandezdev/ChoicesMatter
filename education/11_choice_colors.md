@@ -1,6 +1,5 @@
 # 11 — Choice Colors
 
-**Story:** `stories/examples/11_choice_colors.json`
 **Feature:** Overriding the number color on individual choices and at the node level.
 
 ## What the story does

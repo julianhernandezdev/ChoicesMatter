@@ -1,6 +1,5 @@
 # 22 — Protagonist Name Prompt
 
-**Story:** `stories/examples/22_protagonist_name_prompt.json`
 **Feature:** An optional pre-game name input screen. The player's name is stored as the reserved `player_name` flag and available as `{player_name}` throughout the story via Variable Text Substitution.
 
 ## What the story does

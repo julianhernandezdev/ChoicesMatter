@@ -1,6 +1,5 @@
 # 08 — Insets
 
-**Story:** `stories/examples/08_insets.json`
 **Feature:** Styled text blocks inside the story panel, positioned before or after the prose, with optional flag gating.
 
 ## What the story does

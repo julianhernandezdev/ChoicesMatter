@@ -1,6 +1,5 @@
 # 20 — Pause Token
 
-**Story:** `stories/examples/20_pause_token.json`
 **Feature:** `{pause}` embedded in node or ending `text` injects a configurable delay mid-stream during typewriter playback. Stripped silently in non-typewriter mode.
 
 ## What the story does

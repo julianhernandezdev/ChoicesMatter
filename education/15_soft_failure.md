@@ -1,6 +1,5 @@
 # 15 — Soft Failure
 
-**Story:** `stories/examples/15_soft_failure.json`
 **Feature:** A gated choice that is completely invisible until its condition is met — the player is never told it exists.
 
 ## What the story does
