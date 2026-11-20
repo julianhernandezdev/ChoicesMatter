@@ -1224,6 +1224,25 @@ def test_chain_again_undoes_the_seed_and_replays(saves_dir: Path) -> None:
     assert sm.has_handoff("chapter_two") is True  # rewritten by the second ending
 
 
+def test_chain_again_returns_none_when_fresh_run_provider_aborts(saves_dir: Path) -> None:
+    """Play [A]gain withdraws the seed; if the host's fresh-run provider then aborts
+    (e.g. the name prompt is cancelled) the engine returns to the menu without replaying."""
+    story = _chain_story(exports=["trust"])
+    display = _chain_display("again")
+    sm = SaveManager(saves_dir)
+    # None on the first start (so the run begins), None again when play-again resets.
+    provider = MagicMock(side_effect=[{}, None])
+    engine = Engine(story, sm, display, known_chapter_ids={"chapter_two"}, fresh_run_state=provider)
+
+    assert engine.run() is None
+
+    assert provider.call_count == 2
+    assert sm.has_handoff("chapter_two") is False  # withdrawn before the abort
+    start_calls = [c for c in display.show_node.call_args_list if c.args[1] == ["Begin."]]
+    assert len(start_calls) == 1  # not replayed
+    display.prompt_play_again.assert_not_called()
+
+
 def test_transition_writes_seed_before_the_panel_and_skips_prompts(saves_dir: Path) -> None:
     story = _chain_story(exports=["trust"], chapter_transition=True)
     display = _chain_display()
