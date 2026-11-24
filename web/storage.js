@@ -75,7 +75,8 @@ export function recordEnding(story, nodeId) {
 
 export function clearAllProgress() {
   for (const key of storedKeys()) {
-    if (key.startsWith(`${STORE_PREFIX}:`)) {
+    // Only saves and ending lists go, same as the terminal game. The player's settings are not progress, so they stay.
+    if (key.startsWith(saveKey("")) || key.startsWith(galleryKey(""))) {
       removeStoredItem(key);
     }
   }
