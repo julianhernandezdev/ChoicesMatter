@@ -361,3 +361,84 @@ def test_no_chapter_states_a_fate() -> None:
             texts = [node["text"]] + [i["text"] for i in node.get("insets", [])] + [o["text"] for o in node.get("overlays", [])]
             for line in texts:
                 assert not FATE_WORDS.search(line), (key, line)
+
+
+# --- whole-saga playthroughs (real engine, mocked display) ------------------
+
+COMPLICIT = [
+    # ch1: leave the drawer shut
+    "form", "corridor", "office", "assignment", "kharkiv", "clear_desk", "drawer_shut", "e_depart",
+    # ch2: reconcile twice, leave the ledger
+    "zoya", "vasylenko_desk", "first_sheets", "reconcile_a", "second_sheet", "reconcile_b", "evening", "e_to_poltava",
+    # ch3: stay away from the village, look away from the lines, leave the total unsigned
+    "sheets", "crossroads", "avoid_home", "desk_work", "look_away", "evening_ledger", "e_return_moscow",
+    # ch4: sign
+    "outer_room", "final_table", "the_fork", "e_sign",
+    # ch5
+    "the_table", "the_drawer", "files", "e_stands",
+]
+HONEST = [
+    "form", "corridor", "office", "assignment", "kharkiv", "clear_desk", "drawer_open", "e_depart",
+    "zoya", "vasylenko_desk", "ledger_read", "keep_ledger", "first_sheets", "reconcile_a", "second_sheet",
+    "ask_why", "evening", "e_to_poltava",
+    "sheets", "crossroads", "go_home", "village_street", "the_house", "roll_sheet", "leave_house",
+    "evening_ledger", "e_return_moscow",
+    "outer_room", "final_table", "attach_ledger", "the_fork", "e_file_true",
+    "the_table", "the_drawer", "files", "e_colleague",
+]
+
+
+def test_complicit_run_reaches_the_number_stands(saves_dir: Path) -> None:
+    sm, gm, display = play(COMPLICIT, saves=saves_dir)
+
+    assert gm.get_found(IDS["5"]) == {"e_stands"}
+    assert sm.load_handoff(IDS["5"]).state == {
+        "drift": 2, "opened_letters": False, "went_home": False, "kept_ledger": False,
+        "asked_why": False, "looked_away": True, "signed_figure": True, "filed_true": False,
+        "player_name": "Casey",
+    }
+    assert display.prompt_protagonist_name.call_count == 1  # every later chapter skips it via the seed
+    assert any("Casey" in str(c.args[1]) for c in display.show_node.call_args_list)
+
+
+def test_honest_run_reaches_the_colleagues_page(saves_dir: Path) -> None:
+    sm, gm, _ = play(HONEST, saves=saves_dir)
+
+    assert gm.get_found(IDS["5"]) == {"e_colleague"}
+    assert sm.load_handoff(IDS["5"]).state == {
+        "drift": 1, "opened_letters": True, "went_home": True, "kept_ledger": True,
+        "asked_why": True, "looked_away": False, "signed_figure": False, "filed_true": True,
+        "player_name": "Casey",
+    }
+
+
+def test_each_run_records_one_ending_per_chapter_it_finished(saves_dir: Path) -> None:
+    _, gm, _ = play(COMPLICIT, saves=saves_dir)
+    assert gm.get_found(IDS["1"]) == {"e_depart"}
+    assert gm.get_found(IDS["4"]) == {"e_sign"}
+
+
+def test_every_ending_in_the_hub_is_reachable_and_the_hub_is_never_empty() -> None:
+    import itertools
+
+    reached: set[str] = set()
+    for combo in itertools.product([False, True], repeat=len(BOOLS)):
+        state = dict(zip(BOOLS, combo))
+        if state["signed_figure"] == state["filed_true"]:  # chapter 4 sets exactly one
+            continue
+        targets = hub_targets({**state, "drift": 0})
+        assert targets, state
+        reached |= targets
+    assert reached == ENDINGS
+
+
+def test_cold_start_of_each_later_chapter_runs_to_the_end(saves_dir: Path) -> None:
+    for start in "2345":
+        saves = saves_dir / f"cold{start}"
+        saves.mkdir()
+        _, gm, display = play([], start=start, seed={"player_name": "Casey"}, saves=saves)
+
+        assert gm.get_found(IDS["5"]), start  # always the first available choice; the saga ends
+        shown = [c.args[1] for c in display.show_node.call_args_list]
+        shown += [c.args[0] for c in display.show_ending.call_args_list]
+        assert shown and not [t for t in shown if "{" in t or "}" in t], start
