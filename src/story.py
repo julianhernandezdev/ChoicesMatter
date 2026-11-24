@@ -111,7 +111,15 @@ class StoryLoader:
     @staticmethod
     def load(path: Path) -> Story:
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
+            # "utf-8-sig" reads normal UTF-8 and also forgives the invisible marker Notepad
+            # likes to put at the start of a file.
+            raw = json.loads(path.read_text(encoding="utf-8-sig"))
+        except UnicodeDecodeError as e:
+            # Saved as something other than UTF-8. That is one broken story, not a reason
+            # for the whole game to fall over.
+            raise StoryValidationError(
+                f"'{path.name}': file is not saved as UTF-8; save it again with UTF-8 encoding"
+            ) from e
         except json.JSONDecodeError as e:
             raise StoryValidationError(f"Invalid JSON in '{path.name}': {e}") from e
 
