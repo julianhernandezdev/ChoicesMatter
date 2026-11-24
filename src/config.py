@@ -206,11 +206,16 @@ def corruption_timing(cfg_corruption: dict) -> dict[str, int]:
     }
 
 
-def save_settings(data: dict, path: Path = Path("settings.json")) -> None:
+# settings.json lives in the game folder (one level up from src/), so it is the
+# same file no matter which folder the game was started from.
+SETTINGS_PATH = Path(__file__).resolve().parent.parent / "settings.json"
+
+
+def save_settings(data: dict, path: Path = SETTINGS_PATH) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def load_settings(path: Path = Path("settings.json")) -> dict:
+def load_settings(path: Path = SETTINGS_PATH) -> dict:
     if not path.exists():
         return _deep_copy(_DEFAULTS)
     try:

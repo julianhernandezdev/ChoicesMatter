@@ -21,8 +21,12 @@ from src.save import SaveManager
 from src.config import load_settings
 from src.story import Story, StoryLoader, StoryValidationError
 
-STORIES_DIR = Path("stories")
-SAVES_DIR = Path("saves")
+# Look next to this file, not wherever the terminal happens to be standing.
+# Otherwise launching from another folder finds no stories and leaves empty
+# "stories" and "saves" folders behind as a souvenir.
+APP_DIR = Path(__file__).resolve().parent
+STORIES_DIR = APP_DIR / "stories"
+SAVES_DIR = APP_DIR / "saves"
 
 
 def _build_parser() -> argparse.ArgumentParser:

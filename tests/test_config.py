@@ -472,3 +472,13 @@ def test_corruption_timing_fallback_uses_clamped_scramble_values() -> None:
     assert t["resolve_frames"] == 1
     assert t["resolve_delay_ms"] == 1000
     assert t["cascade_stagger_ms"] == 1000
+
+
+def test_settings_file_lives_in_the_game_folder_not_the_current_folder() -> None:
+    from src import config
+
+    game_folder = Path(config.__file__).resolve().parent.parent
+    assert config.SETTINGS_PATH == game_folder / "settings.json"
+    assert config.SETTINGS_PATH.is_absolute()
+    assert config.load_settings.__defaults__ == (config.SETTINGS_PATH,)
+    assert config.save_settings.__defaults__ == (config.SETTINGS_PATH,)
