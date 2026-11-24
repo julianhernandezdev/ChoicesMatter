@@ -39,7 +39,7 @@
       ]
     },
     "ledger_read": {
-      "text": "It is a procurement ledger, village by village: what the plan required, what was delivered. The columns are neat. Every line closes. Plan and delivered are the same figure all the way down the page, village after village, and the arrears column is a column of dashes.\n\nIn the margin beside the longest run of dashes, in green, someone has written four words.",
+      "text": "It is a procurement ledger, village by village: what the plan required, what was delivered. The columns are neat. Every line closes. Plan and delivered are the same figure all the way down the page, village after village, and the arrears column is a column of dashes.\n\nIn the margin beside the longest run of dashes, in green, someone has written a line.",
       "insets": [
         { "text": "PROCUREMENT — PLAN 1,140 / DELIVERED 1,140 / ARREARS —", "position": "before", "style": "system" },
         { "text": "Delivered in full. Delivered by whom?", "position": "after", "style": "memory" }
