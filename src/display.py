@@ -140,28 +140,29 @@ class Display:
         page: int = 0,
         total_pages: int = 1,
     ) -> None:
-        self.console.print(Rule(f"[bold cyan]{title}[/bold cyan]"))
+        self.console.print(Rule(f"[bold cyan]{escape(title)}[/bold cyan]"))
         self.console.print()
         for entry in entries:
             num = entry["index"]
-            label = entry["label"]
+            # Titles, folder names and file names are somebody's words, not styling orders.
+            # Without escape(), Rich reads "[beta]" as a style tag and quietly eats it,
+            # and a stray "[/x]" takes the whole screen down with it.
+            label = escape(entry["label"])
             if entry.get("type") == "folder":
                 count = entry.get("story_count", 0)
                 noun = "story" if count == 1 else "stories"
                 self.console.print(f"  [bold cyan]{num}.[/bold cyan]  [bold]📁 {label}/[/bold]")
                 self.console.print(f"      [dim]{count} {noun}[/dim]")
             elif entry.get("error"):
-                # A saga row's label is the author-supplied saga title; a plain story's is its file stem.
-                shown = escape(label) if entry.get("type") == "saga" else label
-                self.console.print(f"  [dim]{num}.[/dim] [red]{shown}  [italic]-ERROR[/italic][/red]")
+                self.console.print(f"  [dim]{num}.[/dim] [red]{label}  [italic]-ERROR[/italic][/red]")
             elif entry.get("type") == "saga":
                 resume = "  [bold green]● RESUME[/bold green]" if entry.get("has_save") else ""
                 complete = "  [green]✓ Complete[/green]" if entry.get("complete") else ""
                 self.console.print(
-                    f"  [bold cyan]{num}.[/bold cyan]  {escape(label)}  "
+                    f"  [bold cyan]{num}.[/bold cyan]  {label}  "
                     f"[bold magenta][SAGA][/bold magenta]{resume}"
                 )
-                self._print_byline(entry, escape_values=True)
+                self._print_byline(entry)
                 stats = (
                     f"{entry.get('chapters_reached', 0)}/{entry.get('chapters_total', 0)} chapters · "
                     f"{entry.get('endings_found', 0)}/{entry.get('endings_total', 0)} endings"
@@ -211,7 +212,9 @@ class Display:
     ) -> None:
         self.console.print()
         if current_scene:
-            self.console.print(Rule(f"[dim]{current_scene}[/dim]", style="dim"))
+            # "This House Remembered" has scenes named "[unwritten]" and
+            # "[fragment: station_departure]". Unescaped, they rendered as a blank line.
+            self.console.print(Rule(f"[dim]{escape(current_scene)}[/dim]", style="dim"))
             self.console.print()
         charset = self._get_charset()
         cfg_corruption = self._cfg.get("corruption", {})
@@ -246,7 +249,7 @@ class Display:
                 if self._debug["enabled"]:
                     label_markup += r"  [dim]\[redacted][/dim]"
             else:
-                label_markup = choice.label
+                label_markup = escape(choice.label)
             self.console.print(f"  [bold {num_color}]{i}.[/bold {num_color}] {label_markup}")
             if stagger:
                 time.sleep(stagger)
@@ -330,15 +333,14 @@ class Display:
     # Internal rendering helpers
     # ------------------------------------------------------------------
 
-    def _print_byline(self, entry: dict, escape_values: bool = False) -> None:
+    def _print_byline(self, entry: dict) -> None:
         author = entry.get("author", "")
         version = entry.get("version", "")
         if author or version:
-            esc = escape if escape_values else (lambda s: s)
             byline = " · ".join(
                 part for part in (
-                    f"by {esc(_truncate_author(author))}" if author else "",
-                    f"v{esc(version)}" if version else "",
+                    f"by {escape(_truncate_author(author))}" if author else "",
+                    f"v{escape(version)}" if version else "",
                 ) if part
             )
             self.console.print(f"      [dim]{byline}[/dim]")
@@ -482,7 +484,7 @@ class Display:
             parts.append(Rule(style="dim white"))
             parts.append(self._inset_renderable(inset))
         content = Group(*parts) if len(parts) > 1 else Text(text)
-        return Panel(content, title=f"[bold]{story_title}[/bold]", border_style="white", padding=(1, 2))
+        return Panel(content, title=f"[bold]{escape(story_title)}[/bold]", border_style="white", padding=(1, 2))
 
     def _style_cfg(self, style_name: str) -> dict:
         """Return config dict for a named style, falling back to the default overlay config."""
@@ -507,7 +509,9 @@ class Display:
             t.append(f"  [{tag}]", style="dim")
             self.console.print(t)
         else:
-            self.console.print(f"  {prefix}{text}", style=style)
+            # Overlay text can carry the player's name ({player_name}), so this also
+            # covers the player who decides to be called "[/]". There is always one.
+            self.console.print(f"  {prefix}{escape(text)}", style=style)
 
     def _render_debug_panel(self, state: dict) -> None:
         show_all = self._debug["all"]
@@ -677,7 +681,9 @@ class Display:
             suffix = f" {unit}" if unit else ""
             return f"[bold]{val:.1f}{suffix}[/bold]"
         if t in ("cycle", "text", "custom_chars"):
-            return f"[bold]{val}[/bold]"
+            # Player-typed values (name, custom glitch characters). A name like "a[/]b"
+            # used to crash the settings screen every time it was opened.
+            return f"[bold]{escape(str(val))}[/bold]"
         return str(val) if val is not None else ""
 
     def _edit_row(self, draft: dict, row: dict) -> None:
@@ -891,13 +897,13 @@ class Display:
 
     def show_content_warnings(self, title: str, warnings: list[str]) -> bool:
         """Show warning panel. Returns True to proceed, False to go back."""
-        lines = "\n".join(f"  · {w}" for w in warnings)
+        lines = "\n".join(f"  · {escape(w)}" for w in warnings)
         self.console.print()
         self.console.print(
             Panel(
                 f"[bold]This story contains:[/bold]\n\n{lines}",
                 title="[bold yellow][!] Content Warnings[/bold yellow]",
-                subtitle=f"[dim]{title}[/dim]",
+                subtitle=f"[dim]{escape(title)}[/dim]",
                 border_style="yellow",
                 padding=(1, 2),
             )
@@ -920,14 +926,16 @@ class Display:
         self.console.print()
         self.console.print(
             Panel(
-                f"[bold]{prompt_text}[/bold]",
+                f"[bold]{escape(prompt_text)}[/bold]",
                 title="[bold cyan]Protagonist[/bold cyan]",
                 border_style="cyan",
                 padding=(1, 2),
             )
         )
         self.console.print()
-        hint = f" [{prefill}]" if prefill else ""
+        # The saved name is shown in square brackets as the default. A lowercase name
+        # like "felix" looked exactly like a style tag to Rich, so the hint vanished.
+        hint = escape(f" [{prefill}]") if prefill else ""
         while True:
             raw = self.console.input(
                 f"  [bold]Enter name{hint} (Q to go back):[/bold] "
