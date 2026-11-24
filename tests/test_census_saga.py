@@ -116,3 +116,52 @@ def test_every_chapter_has_warnings() -> None:
     for key in FILES:
         warnings = load(key)["meta"].get("warnings")
         assert isinstance(warnings, list) and warnings, key
+
+
+# --- helpers for structural chapter tests ---------------------------------
+
+
+def choices_to(chapter: str, target: str) -> list[dict]:
+    """Every choice in a chapter whose `next` is `target`."""
+    return [c for n in load(chapter)["nodes"].values() for c in n["choices"] if c["next"] == target]
+
+
+def endings_chaining_to(chapter: str, next_story: str) -> list[dict]:
+    return [n for n in load(chapter)["nodes"].values() if n.get("next_story") == next_story]
+
+
+ALL_FALSE = {name: False for name in BOOLS}
+
+
+# --- chapter 1: the bureau -------------------------------------------------
+
+
+def test_ch1_initialises_every_flag_on_the_only_path() -> None:
+    data = load("1")
+    start = data["nodes"][data["meta"]["start_node"]]
+    assert len(start["choices"]) == 1
+    assert start["choices"][0]["sets"] == {"drift": 0, **ALL_FALSE}
+
+
+def test_ch1_drawer_open_sets_opened_letters_and_shut_does_not() -> None:
+    opened = choices_to("1", "drawer_open")
+    shut = choices_to("1", "drawer_shut")
+    assert opened and all(c["sets"] == {"opened_letters": True} for c in opened)
+    assert shut and all("opened_letters" not in c.get("sets", {}) for c in shut)
+
+
+def test_ch1_exports_all_eight_into_chapter_2() -> None:
+    ends = endings_chaining_to("1", IDS["2"])
+    assert ends and all(n["exports"] == EXPORTS and n["is_ending"] for n in ends)
+
+
+def test_ch1_has_name_prompt_and_saga_title() -> None:
+    meta = load("1")["meta"]
+    assert meta["id"] == IDS["1"] and meta["saga_id"] == "census_of_the_dead"
+    assert meta["saga_title"] == "The Census of the Dead"
+    assert meta["name_prompt"] and meta["name_default"]
+
+
+def test_ch1_offers_no_question() -> None:
+    labels = [c["label"] for n in load("1")["nodes"].values() for c in n["choices"]]
+    assert not [l for l in labels if re.search(r"\bwhy\b", l, re.IGNORECASE)]
