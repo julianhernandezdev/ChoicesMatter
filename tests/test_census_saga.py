@@ -165,3 +165,38 @@ def test_ch1_has_name_prompt_and_saga_title() -> None:
 def test_ch1_offers_no_question() -> None:
     labels = [c["label"] for n in load("1")["nodes"].values() for c in n["choices"]]
     assert not [l for l in labels if re.search(r"\bwhy\b", l, re.IGNORECASE)]
+
+
+# --- chapter 2: the regional office ----------------------------------------
+
+
+def test_ch2_keep_ledger_sets_flag_and_leave_does_not() -> None:
+    keep, leave = choices_to("2", "keep_ledger"), choices_to("2", "leave_ledger")
+    assert keep and all(c["sets"] == {"kept_ledger": True} for c in keep)
+    assert leave and all("kept_ledger" not in c.get("sets", {}) for c in leave)
+
+
+def test_ch2_each_reconcile_adds_one_drift_and_nothing_else_does() -> None:
+    for target in ("reconcile_a", "reconcile_b"):
+        found = choices_to("2", target)
+        assert found and all(c["sets"] == {"drift": "+1"} for c in found), target
+    drifting = [
+        c["next"] for n in load("2")["nodes"].values() for c in n["choices"] if "drift" in c.get("sets", {})
+    ]
+    assert set(drifting) == {"reconcile_a", "reconcile_b"}
+
+
+def test_ch2_ask_why_waits_for_the_first_wrong_number() -> None:
+    found = choices_to("2", "ask_why")
+    assert found and all(c["requires"] == {"drift": 1} for c in found)
+    assert all(c["sets"] == {"asked_why": True} for c in found)
+
+
+def test_ch2_exports_all_eight_into_chapter_3() -> None:
+    ends = endings_chaining_to("2", IDS["3"])
+    assert ends and all(n["exports"] == EXPORTS and n["is_ending"] for n in ends)
+
+
+def test_ch2_has_no_saga_title() -> None:
+    meta = load("2")["meta"]
+    assert meta["id"] == IDS["2"] and "saga_title" not in meta

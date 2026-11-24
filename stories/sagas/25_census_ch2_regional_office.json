@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "id": "cotd_2_regional_office",
+    "title": "The Regional Office",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "office_arrival",
+    "est_time": "10 min",
+    "warnings": [
+      "Political repression",
+      "Bureaucratic erasure of mass death",
+      "Fiction built on real historical events; it does not depict them directly"
+    ],
+    "name_prompt": "What name is on your desk plate?",
+    "name_default": "Comrade Sorokin",
+    "saga_id": "census_of_the_dead",
+    "chapter_label": "2"
+  },
+  "nodes": {
+    "office_arrival": {
+      "text": "April. The regional office was a merchant's house once, and still has the merchant's stairs: wide, and too many of them. Someone has papered over the carved lintels. The paste has not taken evenly.\n\nThe clerk at the desk in the hall is Zoya Kuzminichna. She takes your papers, reads the stamp, and stamps beside it. She does not look up.",
+      "scene": "Kharkiv — the regional office",
+      "choices": [
+        { "label": "Wait for her to finish", "next": "zoya" }
+      ]
+    },
+    "zoya": {
+      "text": "“Third floor, the back room,” she says to the papers. “It was Vasylenko's. It has not been reassigned.”\n\nShe says the name the way the stairs are papered: evenly, with the join showing. Behind her a typewriter reaches the end of its line and rings its bell. It rings it again. Nobody in the hall looks up.",
+      "choices": [
+        { "label": "Go up", "next": "vasylenko_desk" }
+      ]
+    },
+    "vasylenko_desk": {
+      "text": "The back room has one window and one desk. On the door there is a paler rectangle where a nameplate hung. On the hook behind it hangs a coat, a good one, brushed. The desk is empty except for a ledger, bound in cloth, lying open with a pen across it. The pen is capped.\n\nThe handwriting down the margins is small, upright, and in green ink.",
+      "scene": "Kharkiv — the back room",
+      "choices": [
+        { "label": "Look at the ledger", "next": "ledger_read" },
+        { "label": "Put your case on the desk and take out the district sheets", "next": "first_sheets" }
+      ]
+    },
+    "ledger_read": {
+      "text": "It is a procurement ledger, village by village: what the plan required, what was delivered. The columns are neat. Every line closes. Plan and delivered are the same figure all the way down the page, village after village, and the arrears column is a column of dashes.\n\nIn the margin beside the longest run of dashes, in green, someone has written four words.",
+      "insets": [
+        { "text": "PROCUREMENT — PLAN 1,140 / DELIVERED 1,140 / ARREARS —", "position": "before", "style": "system" },
+        { "text": "Delivered in full. Delivered by whom?", "position": "after", "style": "memory" }
+      ],
+      "choices": [
+        { "label": "Slip the ledger in among the district sheets", "next": "keep_ledger", "sets": { "kept_ledger": true } },
+        { "label": "Put it back exactly as you found it", "next": "leave_ledger" }
+      ]
+    },
+    "keep_ledger": {
+      "text": "It is not exactly theft. The ledger belongs to the Bureau and so do you. You tell yourself that you will need the village names, and that is true.\n\nThe cloth cover is warmer than the desk.",
+      "choices": [
+        { "label": "Sit down and begin", "next": "first_sheets" }
+      ]
+    },
+    "leave_ledger": {
+      "text": "You close it on the pen and lay it where it was, spine to the wall. The coat stays on its hook. Nobody has touched either of them for a long time, and you find that you do not want to be the first.",
+      "choices": [
+        { "label": "Sit down and begin", "next": "first_sheets" }
+      ]
+    },
+    "first_sheets": {
+      "text": "The first village sheet is a sheet like any other. Its columns are filled in a round, careful, schoolroom hand. It takes you the better part of an hour to find the fault, and when you find it you almost admire it: the persons listed by age band add up to a number three short of the total printed at the foot.\n\nThree. It is such a small thing to be wrong about.\n\nIn the margin, in green, there is already a tick beside the total. You are fairly sure the sheet has never been in this room.",
+      "insets": [
+        { "text": "AGE BANDS SUM TO 612 — PRINTED TOTAL 615", "position": "after", "style": "system" }
+      ],
+      "choices": [
+        { "label": "Correct the printed total to agree with the bands", "next": "reconcile_a", "sets": { "drift": "+1" } },
+        { "label": "Correct the bands to agree with the printed total", "next": "reconcile_a", "sets": { "drift": "+1" } }
+      ]
+    },
+    "reconcile_a": {
+      "text": "It takes a minute. Nothing in the building notices. The form agrees with itself again, and that is all a form has ever been asked to do.\n\nThe tick in green is still there. You do not remember either of you deciding that it should stay.",
+      "choices": [
+        { "label": "Take the next sheet", "next": "second_sheet" }
+      ]
+    },
+    "second_sheet": {
+      "text": "The second sheet is worse, and it is worse in a quieter way. The households on the roll of five years ago are a great many more than the households on this one. Nobody has written where the difference went. There is no column for it. There is a column beside it, with a heading and no entries.\n\nThe gap is larger than three.",
+      "insets": [
+        { "text": "COLUMN 5 — (not used; see Instruction 14 of the Commission)", "position": "after", "style": "system" }
+      ],
+      "choices": [
+        { "label": "Post the gap to Column 4 as in-year movement", "next": "reconcile_b", "sets": { "drift": "+1" } },
+        { "label": "Ask why the two rolls disagree", "next": "ask_why", "requires": { "drift": 1 }, "sets": { "asked_why": true } }
+      ]
+    },
+    "ask_why": {
+      "text": "You say it aloud, to the room, in the voice you use for queries about stamps.\n\nZoya Kuzminichna, who has come up with a tray of tea, sets down exactly one glass and says that the stairs will be mended in the summer. A man at the next desk through the open door finds that he has a form to take to another floor. The tea goes cold on the corner of the desk. Nobody has been rude. Nobody has said anything at all.",
+      "choices": [
+        { "label": "Post the gap to Column 4 as in-year movement", "next": "reconcile_b", "sets": { "drift": "+1" } },
+        { "label": "Leave the gap unposted for tonight", "next": "evening" }
+      ]
+    },
+    "reconcile_b": {
+      "text": "Column 4 takes it without a sound. It has taken worse. The sheet closes, the page turns, and the figure at the foot is a figure that someone in Moscow will be glad to see.\n\nYou are good at this. You have always been good at this.",
+      "choices": [
+        { "label": "Put the sheet in the tray", "next": "evening" }
+      ]
+    },
+    "evening": {
+      "text": "By evening the light in the back room is the colour of weak tea. Zoya Kuzminichna puts her head round the door without looking at anything in it and says that the car for Sulyna leaves at six. The district secretary has been told to expect you.\n\nOn the hook the coat has not moved. You put on your own, and for a moment, with the two of them hanging a hand's breadth apart, you cannot say which is the one that is waiting for someone to come back.",
+      "choices": [
+        { "label": "Go down the stairs", "next": "e_to_poltava" }
+      ]
+    },
+    "e_to_poltava": {
+      "text": "The car is black, and the road south goes straight for a long time. The fields on either side are in order. The villages come up out of them one by one, each with its roofs, each with its road, and you check the names against the sheet on your knee as they pass.\n\nYou are, you tell yourself, only checking the spelling.",
+      "scene": "The road to Sulyna",
+      "overlays": [
+        { "text": "A bell somewhere behind you rings. Rings again. You do not turn round.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "cotd_3_village",
+      "exports": [
+        "drift",
+        "opened_letters",
+        "went_home",
+        "kept_ledger",
+        "asked_why",
+        "looked_away",
+        "signed_figure",
+        "filed_true"
+      ]
+    }
+  }
+}
