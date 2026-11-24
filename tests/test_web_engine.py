@@ -684,3 +684,74 @@ console.log(JSON.stringify([
         {".": 550, "!": 250},
         {".": 550, "!": 250},
     ]
+
+
+# ---------------------------------------------------------------------------
+# checkRequires: a flag that was never set counts as false
+# ---------------------------------------------------------------------------
+#
+# Same table as test_requires_bool_treats_a_never_set_flag_as_false in test_engine.py.
+# The terminal and the browser have to agree on which choices a player gets to see.
+
+_BOOL_REQUIRES_CASES = [
+    ({"has_key": False}, {},                 True),   # never set: this is the fix
+    ({"has_key": False}, {"has_key": False}, True),
+    ({"has_key": False}, {"has_key": True},  False),
+    ({"has_key": True},  {},                 False),  # never set is still not true
+    ({"has_key": True},  {"has_key": False}, False),
+    ({"has_key": True},  {"has_key": True},  True),
+    ({"has_key": False, "met_guard": True}, {},                  False),
+    ({"has_key": False, "met_guard": True}, {"met_guard": True}, True),
+]
+
+
+def test_js_check_requires_treats_a_never_set_flag_as_false() -> None:
+    cases = [[requires, state] for requires, state, _ in _BOOL_REQUIRES_CASES]
+    js = _js_json(f"""
+import {{ checkRequires }} from './web/engine.js';
+const cases = {json.dumps(cases)};
+console.log(JSON.stringify(cases.map(([requires, state]) => checkRequires(requires, state))));
+""")
+    assert js == [offered for _, _, offered in _BOOL_REQUIRES_CASES]
+
+
+def test_js_and_python_agree_on_boolean_requires() -> None:
+    from src.engine import Engine
+
+    cases = [[requires, state] for requires, state, _ in _BOOL_REQUIRES_CASES]
+    js = _js_json(f"""
+import {{ checkRequires }} from './web/engine.js';
+const cases = {json.dumps(cases)};
+console.log(JSON.stringify(cases.map(([requires, state]) => checkRequires(requires, state))));
+""")
+
+    engine = Engine.__new__(Engine)  # only the rule is under test, not a whole game
+    python = []
+    for requires, state in cases:
+        engine._state = dict(state)
+        python.append(engine._check_requires(requires))
+
+    assert js == python
+
+
+def test_js_requires_false_shows_the_choice_for_a_new_player() -> None:
+    """End to end through currentView: a fresh run has an empty state, and the choice is there."""
+    story = {
+        "meta": {"id": "t", "title": "T", "version": "1", "author": "A", "start_node": "room"},
+        "nodes": {
+            "room": {
+                "text": "A basin.",
+                "choices": [
+                    {"label": "Reach into the basin", "next": "end", "requires": {"has_key": False}},
+                    {"label": "Leave", "next": "end"},
+                ],
+            },
+            "end": {"text": "Done.", "choices": [], "is_ending": True},
+        },
+    }
+    js = _js_json(f"""
+import {{ createRun, currentView }} from './web/engine.js';
+const view = currentView(createRun({{ story: {json.dumps(story)} }}));
+console.log(JSON.stringify(view.choices.map((c) => c.label)));
+""")
+    assert js == ["Reach into the basin", "Leave"]

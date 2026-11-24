@@ -34,7 +34,7 @@ if isinstance(condition, bool):
         return False
 ```
 
-For `requires: { "has_key": true }`, `condition` is `True`. `current = self._state.get("has_key")` — if the flag was never set, `current` is `None`, which `!= True`, so the check fails and the choice is hidden.
+For `requires: { "has_key": true }`, `condition` is `True`. `current = self._state.get("has_key")` — if the flag was never set, it counts as `False`, which `!= True`, so the check fails and the choice is hidden. The same rule works the other way: `requires: { "has_key": false }` passes for a flag that was never set.
 
 **Where hiding happens** — `Engine.run()` builds the `visible` list before rendering:
 

@@ -71,7 +71,9 @@ export function checkRequires(requires = {}, state = {}) {
   return Object.entries(requires).every(([key, condition]) => {
     const current = state[key];
     if (typeof condition === "boolean") {
-      return current === condition;
+      // A flag nobody ever set counts as false. Same rule, same reason,
+      // as _check_requires in src/engine.py. Keep the two in step.
+      return (current ?? false) === condition;
     }
     if (Number.isInteger(condition)) {
       return Number.isInteger(current) && current >= condition;

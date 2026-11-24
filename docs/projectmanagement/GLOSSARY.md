@@ -18,7 +18,7 @@ Terms used throughout the codebase, story format, and docs.
 | **Save** | Active game state: `current_node`, `history`, `state`, `timestamp`. One slot per story at `saves/<story_id>.save.json`. |
 | **History** | Breadcrumb list of visited node IDs in the current run. Preserved in the save file for future features. |
 | **Scene** | Optional location label on a node (`"scene": "The Library"`). Renders as a dim Rule above the story panel. Carries forward to subsequent nodes until a new `scene` key overrides it. |
-| **Requires** | Condition dict checked against flag state. Hides choices, overlays, or insets when conditions are not met. Supports bool exact match, int threshold (≥), string exact match, list membership. |
+| **Requires** | Condition dict checked against flag state. Hides choices, overlays, or insets when conditions are not met. Supports bool match (a never-set flag counts as false), int threshold (≥), string exact match, list membership. |
 | **Sets** | Flags applied to `_state` when a choice is taken. Supports `bool`, `int`, `str`, and delta strings (`"+1"`, `"-2"`). |
 | **Visited flag** | Auto-set flag `visited_<node_id>` each time a node is entered (when `meta.auto_visited_flags` is true). The `visited_` prefix is reserved. |
 | **Inline conditional** | `{flag?shown if true\|shown if false}` span embedded in any text field. False branch is optional. Resolved at runtime against current flag state. |

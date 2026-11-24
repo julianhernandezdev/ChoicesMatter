@@ -177,7 +177,8 @@ Choices support `requires` and `sets` to gate and track state. State values can 
 **`requires`** — hides the choice entirely if conditions are not met:
 
 ```json
-{ "requires": { "has_key": true } }                    // boolean exact match
+{ "requires": { "has_key": true } }                    // boolean match
+{ "requires": { "has_key": false } }                   // also true if has_key was never set
 { "requires": { "trust": 3 } }                         // integer threshold (trust ≥ 3)
 { "requires": { "faction": "red" } }                   // string exact match
 { "requires": { "faction": ["red", "blue"] } }         // string membership (any of)
