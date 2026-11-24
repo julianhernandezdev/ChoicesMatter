@@ -253,3 +253,34 @@ def test_ch3_never_requires_an_unset_flag_to_be_false() -> None:
     for node in load("3")["nodes"].values():
         for c in node["choices"]:
             assert False not in c.get("requires", {}).values(), c
+
+
+# --- chapter 4: the report -------------------------------------------------
+
+
+def test_ch4_sign_sets_exactly_signed_figure() -> None:
+    found = choices_to("4", "e_sign")
+    assert found and all(c["sets"] == {"signed_figure": True, "filed_true": False} for c in found)
+
+
+def test_ch4_file_true_sets_exactly_filed_true() -> None:
+    found = choices_to("4", "e_file_true")
+    assert found and all(c["sets"] == {"filed_true": True, "signed_figure": False} for c in found)
+
+
+def test_ch4_ledger_option_depends_on_kept_ledger() -> None:
+    found = choices_to("4", "attach_ledger")
+    assert found and all(c["requires"] == {"kept_ledger": True} for c in found)
+
+
+def test_ch4_both_endings_export_all_eight_into_chapter_5() -> None:
+    ends = endings_chaining_to("4", IDS["5"])
+    assert {k for k, n in load("4")["nodes"].items() if n.get("next_story") == IDS["5"]} == {"e_sign", "e_file_true"}
+    assert all(n["exports"] == EXPORTS and n["is_ending"] for n in ends)
+
+
+def test_ch4_never_sets_drift_and_never_requires_an_unset_flag_to_be_false() -> None:
+    for node in load("4")["nodes"].values():
+        for c in node["choices"]:
+            assert "drift" not in c.get("sets", {}), c
+            assert False not in c.get("requires", {}).values(), c
