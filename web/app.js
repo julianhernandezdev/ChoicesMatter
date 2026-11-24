@@ -2043,6 +2043,10 @@ document.addEventListener('keydown', function(e) {
   if (e.target === mobileCapture) return;
   if (isAccessibleMode()) return;
 
+  // Ctrl and Cmd combos belong to the browser (reload, find, zoom, copy). They are not letters for the prompt.
+  // AltGr is the one exception. Windows reports it as Ctrl plus Alt, and people need it to type @ or {.
+  if ((e.ctrlKey || e.metaKey) && !e.getModifierState('AltGraph')) return;
+
   var key = e.key;
   var keyUp = key.toUpperCase();
 
