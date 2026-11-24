@@ -406,7 +406,8 @@ body.reader-mode {
   font-size: 13px; font-weight: 400; font-style: italic;
   color: var(--r-ink-muted); white-space: nowrap;
 }
-.reader-screen .r-prose { color: var(--r-ink); font-size: 17px; line-height: 1.6; margin: 0; }
+/* Authors put blank lines between paragraphs. pre-wrap keeps them, the same way terminal mode does. */
+.reader-screen .r-prose { color: var(--r-ink); font-size: 17px; line-height: 1.6; margin: 0; white-space: pre-wrap; }
 .reader-screen .r-prose + .r-prose { margin-top: 14px; }
 
 /* --- Insets (notes / artifacts) --- */
@@ -414,6 +415,7 @@ body.reader-mode {
 .reader-screen .r-inset {
   background: var(--r-bg-inset); border-left: 3px solid var(--r-border-strong);
   padding: 8px 12px; font-size: 13px; color: var(--r-ink-soft); margin: 0;
+  white-space: pre-wrap;
 }
 .reader-screen .r-inset-kind {
   font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
