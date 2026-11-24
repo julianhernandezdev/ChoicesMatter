@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "id": "cotd_3_village",
+    "title": "The Village",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "district_office",
+    "est_time": "15 min",
+    "warnings": [
+      "Political repression",
+      "Bureaucratic erasure of mass death",
+      "Fiction built on real historical events; it does not depict them directly"
+    ],
+    "name_prompt": "What name is on your desk plate?",
+    "name_default": "Comrade Sorokin",
+    "saga_id": "census_of_the_dead",
+    "chapter_label": "3"
+  },
+  "nodes": {
+    "district_office": {
+      "text": "May. Sulyna is a district town in the way a button is a coat: it holds the place together and nobody looks at it. The district office has a new roof and an old smell. The secretary is glad to see you, and goes on being glad for rather longer than the occasion needs.\n\nA ledger lies open on the desk they have given you. It has already been written up for your arrival.",
+      "scene": "Sulyna — the district office",
+      "insets": [
+        { "text": "SULYNA DISTRICT — PROJECTED 41,200 — ENUMERATED 33,740 — VARIANCE 7,460", "position": "before", "style": "system" },
+        { "text": "VILLAGES RECONCILED TO DATE: ALL AGREE.", "position": "after", "style": "system", "requires": { "drift": 1 } },
+        { "text": "HOUSEHOLDS, 1932 ROLL: 212. HOUSEHOLDS, 1937 SHEETS: 131. DIFFERENCE: 0.", "position": "after", "style": "system", "requires": { "drift": 3 } },
+        { "text": "COLUMN 5 — 81 — ENTERED BY THE RECONCILING OFFICER.", "position": "after", "style": "system", "requires": { "drift": 5 } }
+      ],
+      "choices": [
+        { "label": "Ask for the enumerators' sheets", "next": "sheets" }
+      ]
+    },
+    "sheets": {
+      "text": "They bring the sheets in a crate, tied in bundles by village. The enumerators signed at the foot of each. One name comes up again and again: Tetiana Hryhorivna, forty-one sheets out of the first fifty. You hold two of them side by side. The signature is the same name, written three different ways.",
+      "choices": [
+        { "label": "Send for the enumerator", "next": "tetiana" },
+        { "label": "Work from the sheets alone", "next": "crossroads" }
+      ]
+    },
+    "tetiana": {
+      "text": "She is nineteen, and she stands the whole time. When you ask whether the count is hers she says that she counted what was there. When you ask about the signatures she looks at the sheets as though they were someone else's, and says she is sorry for her writing. Others had better hands, she says. She does not say who.\n\nThe secretary is in the doorway, though he has not come in.",
+      "choices": [
+        { "label": "Initial her sheets as they stand", "next": "reconcile_c", "sets": { "drift": "+1" } },
+        { "label": "Ask who else has signed", "next": "ask_why", "requires": { "drift": 1 }, "sets": { "asked_why": true } }
+      ]
+    },
+    "ask_why": {
+      "text": "You ask it plainly, as you would ask for a stamp. Tetiana's eyes go to the secretary. The secretary says, warmly, that the comrade is tired, that the journey was long, that there will be tea. She is already being thanked and dismissed. The door closes on the end of a sentence neither of you will hear.\n\nThe question is still on the desk. It is quite clean. Nobody has touched it.",
+      "choices": [
+        { "label": "Let it lie", "next": "crossroads" }
+      ]
+    },
+    "reconcile_c": {
+      "text": "Your initials go in the corner, small and level. Forty-one sheets agree with themselves now. Tetiana Hryhorivna is thanked, and leaves, and her signature, in whatever hand it was, is now yours to answer for.",
+      "choices": [
+        { "label": "Go on", "next": "crossroads" }
+      ]
+    },
+    "crossroads": {
+      "text": "The sheets are in order. The villages are not on your desk; they are out there, on a road you could take. One of them is on the list as Zelenyi Hai. You have known the name all afternoon. It is a short drive. The driver is waiting by the car and has not asked where.",
+      "scene": "Sulyna — the yard",
+      "choices": [
+        { "label": "Tell the driver: Zelenyi Hai", "next": "go_home", "sets": { "went_home": true } },
+        { "label": "Tell the driver that you will work from the sheets", "next": "avoid_home" }
+      ]
+    },
+    "go_home": {
+      "text": "The road is the road you left by, eleven years ago, in a cart. It is not shorter than you remember and it is not longer. The fields are in order. The wells are where they were.\n\nAt the edge of the village a man at a gate lifts his hand and says good day in the old way, the way nobody has said it to you since Kharkiv, and before you have decided anything your mouth has answered him the same.",
+      "scene": "Zelenyi Hai",
+      "choices": [
+        { "label": "Walk up the street", "next": "village_street" }
+      ]
+    },
+    "village_street": {
+      "text": "The street is swept. The gates are shut. A dog barks once, and thinks better of it. There is smoke from some of the chimneys and not from others, and you notice that you are counting them, and stop.\n\nThe house is where the house was. The roof holds.",
+      "choices": [
+        { "label": "Go in", "next": "the_house" }
+      ]
+    },
+    "the_house": {
+      "text": "The door is not locked. Inside, the floor has been swept and the table wiped, and the stove is cold, and on the wall a calendar is turned to a month that is not this one. Nothing in the room has been taken. Nothing in the room has been left out for you.\n\nOn the table, squared to the edge, is an enumerator's sheet.",
+      "choices": [
+        { "label": "Read the sheet", "next": "roll_sheet" },
+        { "label": "Go back to the car", "next": "leave_house" }
+      ]
+    },
+    "roll_sheet": {
+      "text": "Household 47. The family name is Danylenko. You say it aloud, once, in the voice it was always said in. The column for persons is blank all the way down. Beside it is Column 5, with its heading and no entries, and the heading has grown since Kharkiv.\n\nThe handwriting that filled in the household number is small, upright, and green.",
+      "insets": [
+        { "text": "COLUMN 5 — (not used; see Instruction 14 and Supplement 3 of the Commission)", "position": "after", "style": "system" }
+      ],
+      "choices": [
+        { "label": "Post the household to Column 4 as in-year movement", "next": "reconcile_d", "sets": { "drift": "+1" } },
+        { "label": "Turn the sheet face down", "next": "look_away", "sets": { "looked_away": true } },
+        { "label": "Leave the line as it is", "next": "leave_house" }
+      ]
+    },
+    "leave_house": {
+      "text": "You close the door. It has no lock to turn. You stand for a moment with your hand flat on the wood, as though the house were something that could be told to stay as it was.\n\nThe driver has not asked where you have been. In the car you hold the sheet from the district office on your knee and read the spelling of the next village.",
+      "choices": [
+        { "label": "Drive back to Sulyna", "next": "evening_ledger" }
+      ]
+    },
+    "avoid_home": {
+      "text": "The driver says nothing, and goes on saying it. You tell yourself that there are forty other villages and that the sheets are enough. The sheets are enough. They have always been enough.\n\nThe light goes yellow on the wall of the district office and the secretary puts a glass of tea at your elbow without being asked.",
+      "choices": [
+        { "label": "Work through the villages one by one", "next": "desk_work" }
+      ]
+    },
+    "desk_work": {
+      "text": "Forty villages, each on its sheet. Zelenyi Hai is among them, in the middle, and you pass it the way you pass a name in a list. The household lines are there. The column for persons is there. It would take no time at all to read them.",
+      "choices": [
+        { "label": "Reconcile each village to the projection", "next": "reconcile_d", "sets": { "drift": "+1" } },
+        { "label": "Total the columns without reading the lines", "next": "look_away", "sets": { "looked_away": true } }
+      ]
+    },
+    "reconcile_d": {
+      "text": "It goes in quickly, and it goes in clean. The household lines close. The movement column takes the difference. In the margin of the sheet, in green, there is a tick against the line you have just written, and you do not look at it, and it does not go away.",
+      "choices": [
+        { "label": "Go on", "next": "evening_ledger" }
+      ]
+    },
+    "look_away": {
+      "text": "You find that you have turned the sheet over, or closed the file, or looked up at the window. It is a small thing to have done. Nobody saw it. Your hands go on adding, and the total at the foot comes out right.",
+      "choices": [
+        { "label": "Go on", "next": "evening_ledger" }
+      ]
+    },
+    "evening_ledger": {
+      "text": "At the end of the day the district ledger lies open on the desk, and it has a total at the foot. It is the total that was wanted. The secretary has left a pen beside it, uncapped.",
+      "scene": "Sulyna — evening",
+      "insets": [
+        { "text": "VILLAGES RECONCILED TO DATE: ALL AGREE.", "position": "after", "style": "system", "requires": { "drift": 1 } },
+        { "text": "HOUSEHOLDS, 1932 ROLL: 212. HOUSEHOLDS, 1937 SHEETS: 131. DIFFERENCE: 0.", "position": "after", "style": "system", "requires": { "drift": 3 } },
+        { "text": "COLUMN 5 — 81 — ENTERED BY THE RECONCILING OFFICER.", "position": "after", "style": "system", "requires": { "drift": 5 } }
+      ],
+      "choices": [
+        { "label": "Post the district total to Column 4 and sign", "next": "reconcile_e", "sets": { "drift": "+1" } },
+        { "label": "Leave the total unsigned until Moscow", "next": "e_return_moscow" }
+      ]
+    },
+    "reconcile_e": {
+      "text": "The pen is steady. The signature is steady. When you blot it, the ledger looks, for a moment, finished, in the way that a house looks finished when the last light has gone out in it.",
+      "insets": [
+        { "text": "VILLAGES RECONCILED TO DATE: ALL AGREE.", "position": "after", "style": "system", "requires": { "drift": 1 } },
+        { "text": "HOUSEHOLDS, 1932 ROLL: 212. HOUSEHOLDS, 1937 SHEETS: 131. DIFFERENCE: 0.", "position": "after", "style": "system", "requires": { "drift": 3 } },
+        { "text": "COLUMN 5 — 81 — ENTERED BY THE RECONCILING OFFICER.", "position": "after", "style": "system", "requires": { "drift": 5 } },
+        { "text": "You do not remember writing that line. The hand is yours.", "position": "after", "style": "memory", "requires": { "drift": 5 } }
+      ],
+      "choices": [
+        { "label": "Close the ledger", "next": "e_return_moscow" }
+      ]
+    },
+    "e_return_moscow": {
+      "text": "The night train north is warm and nearly empty. Somewhere past Kursk you take out the district sheet and read it by the lamp, and it is in order. It is entirely in order. You fold it along the creases it came with and put it away, and you do not say to yourself, or to the dark window, what it is in order about.",
+      "scene": "The night train north",
+      "overlays": [
+        { "text": "A bell rings in the next carriage. Once. Twice. A third time, a little late.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "cotd_4_the_report",
+      "exports": [
+        "drift",
+        "opened_letters",
+        "went_home",
+        "kept_ledger",
+        "asked_why",
+        "looked_away",
+        "signed_figure",
+        "filed_true"
+      ]
+    }
+  }
+}

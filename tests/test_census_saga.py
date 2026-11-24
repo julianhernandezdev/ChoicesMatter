@@ -200,3 +200,56 @@ def test_ch2_exports_all_eight_into_chapter_3() -> None:
 def test_ch2_has_no_saga_title() -> None:
     meta = load("2")["meta"]
     assert meta["id"] == IDS["2"] and "saga_title" not in meta
+
+
+# --- chapter 3: the village ------------------------------------------------
+
+
+def test_ch3_go_home_sets_went_home_and_avoid_does_not() -> None:
+    go, avoid = choices_to("3", "go_home"), choices_to("3", "avoid_home")
+    assert go and all(c["sets"] == {"went_home": True} for c in go)
+    assert avoid and all("went_home" not in c.get("sets", {}) for c in avoid)
+
+
+def test_ch3_look_away_sets_looked_away() -> None:
+    found = choices_to("3", "look_away")
+    assert found and all(c["sets"] == {"looked_away": True} for c in found)
+
+
+def test_ch3_ask_why_needs_drift_and_sets_asked_why() -> None:
+    found = choices_to("3", "ask_why")
+    assert found and all(c["requires"] == {"drift": 1} and c["sets"] == {"asked_why": True} for c in found)
+
+
+def test_ch3_three_reconcile_nodes_each_add_one_drift_and_nothing_else_does() -> None:
+    targets = set()
+    for node in load("3")["nodes"].values():
+        for c in node["choices"]:
+            if "drift" in c.get("sets", {}):
+                assert c["sets"] == {"drift": "+1"} and c["next"].startswith("reconcile_"), c
+                targets.add(c["next"])
+    assert len(targets) >= 3
+
+
+def test_ch3_ledger_insets_are_additive_drift_tiers() -> None:
+    tiers = set()
+    for node in load("3")["nodes"].values():
+        for inset in node.get("insets", []):
+            req = inset.get("requires", {})
+            if "drift" in req:
+                assert req["drift"] >= 1, inset  # never a tier-0 inset
+                if inset["style"] == "system":
+                    tiers.add(req["drift"])
+    assert {1, 3, 5} <= tiers
+
+
+def test_ch3_exports_all_eight_into_chapter_4() -> None:
+    ends = endings_chaining_to("3", IDS["4"])
+    assert ends and all(n["exports"] == EXPORTS and n["is_ending"] for n in ends)
+
+
+def test_ch3_never_requires_an_unset_flag_to_be_false() -> None:
+    # a cold start has no flags, and `requires {flag: false}` fails for a missing key
+    for node in load("3")["nodes"].values():
+        for c in node["choices"]:
+            assert False not in c.get("requires", {}).values(), c
