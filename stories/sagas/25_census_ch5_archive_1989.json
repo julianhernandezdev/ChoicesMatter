@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "id": "cotd_5_archive_1989",
+    "title": "The Archive",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "reading_room",
+    "est_time": "10 min",
+    "warnings": [
+      "Political repression",
+      "Bureaucratic erasure of mass death",
+      "Fiction built on real historical events; it does not depict them directly"
+    ],
+    "name_prompt": "What name is on your desk plate?",
+    "name_default": "Comrade Sorokin",
+    "saga_id": "census_of_the_dead",
+    "chapter_label": "5"
+  },
+  "nodes": {
+    "reading_room": {
+      "text": "October, 1989. The archive has put its radiators on early, and they tick like something being counted. The clerk is young, and kind, and bored. She says {player_name} twice, the second time as a question, because the name on the letter that brought you here was typed, and the name in front of her is eighty years old and holding the banister.\n\nThe files are open now. That is what the letter said. It did not say who had decided.",
+      "scene": "State archive — the reading room, October 1989",
+      "choices": [
+        { "label": "Let her take your coat", "next": "the_table" }
+      ]
+    },
+    "the_table": {
+      "text": "You remember that the room had windows. You remember the green ink. You are less sure about the stairs; you came up them, but you could not say how many, and you find that you are counting the radiators instead, one, two, three, as though one of them might be wrong.\n\nThe table is long and the lamp is low. The clerk puts a pencil in front of you, since pens are not allowed, and goes to look for the card index.",
+      "choices": [
+        { "label": "Wait for her", "next": "the_drawer" }
+      ]
+    },
+    "the_drawer": {
+      "text": "The drawer of the card index sticks. She tugs it, apologises to it, tugs it again, and it comes out all at once, so that for a moment she is holding something heavier than she meant to.\n\n“It has been here since before me,” she says, as though the drawer were the thing that needed explaining. She walks her fingers along the cards, and stops, and does not tell you what she has found. She goes to fetch the folders. There is more than one.",
+      "choices": [
+        { "label": "Sit down at the table", "next": "files" }
+      ]
+    },
+    "files": {
+      "text": "They are laid out in front of you, squared to the edge: grey folders, tied, each with a number in a small round hand. She stands with her hands behind her back, in the way of someone who has been told not to hover.\n\n“You may open one,” she says, and then, because she is kind, “or all of them. There is time.”",
+      "choices": [
+        { "label": "Open the report you signed", "next": "e_stands", "requires": { "signed_figure": true, "looked_away": true } },
+        { "label": "Open the report you signed", "next": "e_wrong", "requires": { "signed_figure": true, "looked_away": false } },
+        { "label": "Open the page you filed", "next": "e_honest", "requires": { "filed_true": true } },
+        { "label": "Open the ledger in the green ink", "next": "e_colleague", "requires": { "kept_ledger": true } },
+        { "label": "Ask for the folder with the family name on the cover", "next": "e_name_letters", "requires": { "opened_letters": true } },
+        { "label": "Ask for Household 47", "next": "e_name_home", "requires": { "went_home": true } },
+        { "label": "Ask what else is filed under the district", "next": "e_name_late", "requires": { "opened_letters": false, "went_home": false } },
+        { "label": "Leave the files unopened", "next": "e_unread" }
+      ]
+    },
+    "e_stands": {
+      "text": "The report is intact. The figure sits in the margin of a later table, which cites it, and a later one cites that. It is still in use; you can see the thumbprints of the people who have used it. The signature at the foot is small and level, and you know it the way you know a coat in a shop window: it is yours, and you cannot think when you took it off.\n\nIn the appendix there is a roll of households, and in the roll a single line.\n\nDANYLENKO, Hanna Opanasivna.\n\nThere are no entries beside it. You did not look for it. You see it anyway, the way you see the one stamp on a page that is crooked.",
+      "overlays": [
+        { "text": "Downstairs, someone is typing. The bell rings, and rings again.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_wrong": {
+      "text": "The report is intact, and it does not agree with the folder it lives in. Someone has pencilled in the margin, in a tidy and unhurried hand: figures do not reconcile; cause not recorded. Someone else has written beneath it: see above.\n\n“What does it count?” the clerk asks, honestly, leaning over your shoulder. You find that you cannot say. The form is a form. The number is a number. You open your mouth to name the thing it is the number of, and the word is not in the room.\n\nIn the appendix there is a roll of households, and in the roll a single line.\n\nDANYLENKO, Hanna Opanasivna.\n\nNo entries.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_honest": {
+      "text": "The plain page is in the folder, with VOID across it in red, perfectly straight. It is the only page in the file that is correct, and it has been stamped as though it were the only one that was not. The clerk turns it over, to see whether there is more. There is not.\n\nAt the foot of the household list, one line.\n\nDANYLENKO, Hanna Opanasivna.\n\nNo entries beside it. The clerk says that is unusual, and asks whether you would like it noted. You tell her that it has been noted. You tell her that is the whole difficulty.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_colleague": {
+      "text": "The ledger is in the file. Someone has catalogued it under another man's name, and the cloth cover has gone soft at the corners. It opens at the place it always opened. The green ink is in the margin, small and upright and unhurried, and it has been asking the same four words for fifty-two years.\n\nBeside the village list, in the same hand: Zelenyi Hai — see household 47.\n\nYou do. The household roll lists one family name against a line with no entries.\n\nDANYLENKO, Hanna Opanasivna.\n\nYou do not know, any longer, whether the doubts in the margin are his or yours. They agree. That was always what was wrong with them.",
+      "overlays": [
+        { "text": "The clerk says that she has not seen green ink in this archive before. You tell her that it was a rare colour.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_name_letters": {
+      "text": "It is not the report. It is a single sheet, and under it a stamp from a different archive, and a postmark you could recite. The sheet is the household roll for a village you have not said aloud in fifty-two years.\n\nDANYLENKO, Hanna Opanasivna.\n\nYou do not need to read it. You could have recited it. You read it to the end anyway, because the line is short and there is nothing after it, and you know that, and you read it twice, to check the spelling.\n\nThe roof holds, you say, without meaning to. The clerk asks you to repeat it. You do not.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_name_home": {
+      "text": "It is the same sheet. You have been in this room before: a swept floor, a table wiped, a calendar on the wall turned to a month that was not that one. Household 47. The line has not moved. The column of persons is blank all the way down.\n\nDANYLENKO, Hanna Opanasivna.\n\nYou said it aloud once, in the old voice, with your hand flat on a door that had no lock. You say it now. The clerk, who has never heard it said that way, says it back to you, kindly and wrongly, and the sound of it in her mouth is the worst thing that has happened to you all day.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_name_late": {
+      "text": "You did not open the drawer, in 1937. You did not take the road. You have never, until this moment, been in a room with the name.\n\nThe clerk is looking for your file number. She finds the cover sheet and reads it aloud, as she has been trained to, and her eye slips down the page to the line beneath it, and she reads that aloud too.\n\n“Danylenko, Hanna Opanasivna.” She stops. “Oh. I'm sorry. That's filed in the wrong place.”\n\nYou sit very still. The radiators tick. Nobody has said that name aloud in the presence of this person in fifty-two years, and she has said it without knowing, like a girl reading a street sign.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    },
+    "e_unread": {
+      "text": "You close your hand on the grey folder and do not open it. You are eighty years old. You have read a great many forms, and you know, in the way that you know your own stairs, what is likely to be on this one.\n\nThe clerk writes something in a register: relieved, or disappointed. It is hard to tell with the young. At the door she says that there is a line on the first page that people often ask about. You say that you are sure there is.",
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "saga_end": true
+    }
+  }
+}

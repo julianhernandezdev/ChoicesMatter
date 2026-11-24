@@ -284,3 +284,80 @@ def test_ch4_never_sets_drift_and_never_requires_an_unset_flag_to_be_false() -> 
         for c in node["choices"]:
             assert "drift" not in c.get("sets", {}), c
             assert False not in c.get("requires", {}).values(), c
+
+
+# --- chapter 5: the archive, 1989 ------------------------------------------
+
+HUB = "files"
+ENDINGS = {
+    "e_stands", "e_wrong", "e_honest", "e_colleague",
+    "e_name_letters", "e_name_home", "e_name_late", "e_unread",
+}
+NAME_LINE = re.compile(r"danylenko, hanna opanasivna", re.IGNORECASE)
+FATE_WORDS = re.compile(r"\b(died|dead|death|buried|grave|corpses?|bod(?:y|ies))\b", re.IGNORECASE)
+
+
+def meets(requires: dict, state: dict) -> bool:
+    """Mirror of Engine._check_requires for bool and int conditions."""
+    for key, want in requires.items():
+        have = state.get(key)
+        if isinstance(want, bool):
+            if have != want:
+                return False
+        elif isinstance(want, int):
+            val = have if isinstance(have, int) and not isinstance(have, bool) else 0
+            if val < want:
+                return False
+    return True
+
+
+def hub_targets(state: dict) -> set[str]:
+    return {c["next"] for c in load("5")["nodes"][HUB]["choices"] if meets(c.get("requires", {}), state)}
+
+
+def profile(**flags) -> dict:
+    return {**ALL_FALSE, "drift": 0, **flags}
+
+
+def test_ch5_hub_choices_by_profile() -> None:
+    complicit = profile(signed_figure=True, looked_away=True)
+    asker = profile(filed_true=True, opened_letters=True, went_home=True, kept_ledger=True)
+    signed_but_asked = profile(signed_figure=True, kept_ledger=True)
+    assert hub_targets(complicit) == {"e_stands", "e_name_late", "e_unread"}
+    assert hub_targets(asker) == {"e_honest", "e_colleague", "e_name_letters", "e_name_home", "e_unread"}
+    assert hub_targets(signed_but_asked) == {"e_wrong", "e_colleague", "e_name_late", "e_unread"}
+
+
+def test_ch5_hub_is_never_empty_even_with_no_flags_at_all() -> None:
+    assert "e_unread" in hub_targets({})
+
+
+def test_ch5_every_ending_is_a_plain_saga_end() -> None:
+    nodes = load("5")["nodes"]
+    assert {k for k, n in nodes.items() if n.get("is_ending")} == ENDINGS
+    for key in ENDINGS:
+        node = nodes[key]
+        assert node["saga_end"] is True and node["ending_type"] == "neutral", key
+        assert not {"next_story", "exports", "chapter_transition"} & node.keys(), key
+
+
+def test_ch5_opens_in_1989_in_the_players_name() -> None:
+    data = load("5")
+    opening = data["nodes"][data["meta"]["start_node"]]["text"]
+    assert "{player_name}" in opening and "1989" in opening
+
+
+def test_ch5_every_file_carries_the_name_line_except_the_unread_one() -> None:
+    nodes = load("5")["nodes"]
+    for key in ENDINGS - {"e_unread"}:
+        assert NAME_LINE.search(nodes[key]["text"]), key
+    assert not NAME_LINE.search(nodes["e_unread"]["text"])
+
+
+def test_no_chapter_states_a_fate() -> None:
+    for key in FILES:
+        data = load(key)
+        for node in data["nodes"].values():
+            texts = [node["text"]] + [i["text"] for i in node.get("insets", [])] + [o["text"] for o in node.get("overlays", [])]
+            for line in texts:
+                assert not FATE_WORDS.search(line), (key, line)
