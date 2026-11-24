@@ -33,7 +33,9 @@ class GalleryManager:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             return set(data.get("endings_found", []))
-        except (json.JSONDecodeError, KeyError):
+        # A damaged file should not cost the player the whole game. Whatever is wrong
+        # with it, it counts as "no endings found yet" and the game carries on.
+        except (ValueError, KeyError, TypeError, AttributeError, OSError):
             return set()
 
     def get_count(self, story_id: str) -> int:
