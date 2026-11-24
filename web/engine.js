@@ -128,6 +128,16 @@ export function createRun(entry, saved = null, initialState = {}) {
   };
 }
 
+// Same rule as _resolve_player_name in main.py. The built-in name is what the settings
+// hand out when nobody picked one. That is not a choice, so the story's own default goes
+// first and the built-in name only fills in when the story has none.
+export function resolvePlayerName(entered, nameDefault, savedName, builtInName) {
+  if (entered !== '') return entered;
+  if (savedName && savedName !== builtInName) return savedName;
+  if (nameDefault) return nameDefault;
+  return savedName || null; // null means no name at all: ask again
+}
+
 export function currentView(run) {
   const node = run.story.nodes[run.nodeId];
   if (node.scene) {
