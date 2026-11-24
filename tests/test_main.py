@@ -1495,6 +1495,47 @@ def test_saga_entries_and_home_rows_render_through_the_real_display(
 
 
 # ---------------------------------------------------------------------------
+# Leaving the game: Ctrl+C or a closed terminal is not a crash
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("leaving", [KeyboardInterrupt, EOFError])
+def test_run_says_goodbye_instead_of_showing_a_stack_trace(leaving, capsys) -> None:
+    """Ctrl+C (KeyboardInterrupt) or a closed terminal (EOFError) is the player leaving, not a crash."""
+    with patch.object(main_module, "main", side_effect=leaving):
+        main_module.run()  # must not raise
+
+    assert "Goodbye" in capsys.readouterr().out
+
+
+def test_run_does_not_hide_real_crashes() -> None:
+    with patch.object(main_module, "main", side_effect=RuntimeError("an actual bug")):
+        with pytest.raises(RuntimeError):
+            main_module.run()
+
+
+def test_closing_the_input_mid_game_exits_cleanly() -> None:
+    """The real game, with its input cut off at the first prompt."""
+    import os
+    import subprocess
+
+    main_py = Path(main_module.__file__).resolve()
+    result = subprocess.run(
+        [sys.executable, str(main_py)],
+        cwd=main_py.parent,
+        input="",  # the terminal goes away before the player types anything
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        timeout=60,
+    )
+
+    assert result.returncode == 0
+    assert "Traceback" not in result.stderr
+    assert "Goodbye" in result.stdout
+
+
+# ---------------------------------------------------------------------------
 # Duplicate meta.id chapter files (the loser is not a chapter the graph knows)
 # ---------------------------------------------------------------------------
 
