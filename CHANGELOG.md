@@ -17,6 +17,7 @@ All notable changes to Choices Matter, most recent first.
 - **Added** Cross-file saga validation in `scripts/validate_story.py` (duplicate ids, cycles, entry chapters, `saga_title`, dangling links, exports, flags no chapter provides) and `--strict`, which promotes only dangling `next_story` links to errors
 - **Added** Four-chapter example saga `stories/sagas/24_saga_*.json` (tracked, CLI-only for now — the web manifest skips `sagas/`) and `education/24_chapters_sagas.md`
 - **Changed** `main.py` picker entries are self-describing (`path` / saga id) instead of relying on list position; `_run_folder_picker` returns the chosen entry
+- **Added** Five-chapter saga *The Census of the Dead* `stories/sagas/25_census_*.json` (CLI-only, like the example saga): a 1937 statistician reconciles a census deficit, with a running `drift` counter, one fork in chapter 4 and eight endings in a 1989 archive hub; covered by `tests/test_census_saga.py`
 
 ### Settings Clamp Parity (Python ↔ Web)
 - **Fixed** The shipped default `scramble_frames: 85` was outside its own settings range (`1–50`), so it could never be re-entered in the CLI. The frames ranges for `scramble_frames` and `resolve_frames` are now `1–200`

@@ -1,0 +1,109 @@
+{
+  "meta": {
+    "id": "cotd_4_the_report",
+    "title": "The Report",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "report_desk",
+    "est_time": "10 min",
+    "warnings": [
+      "Political repression",
+      "Bureaucratic erasure of mass death",
+      "Fiction built on real historical events; it does not depict them directly"
+    ],
+    "name_prompt": "What name is on your desk plate?",
+    "name_default": "Comrade Sorokin",
+    "saga_id": "census_of_the_dead",
+    "chapter_label": "4"
+  },
+  "nodes": {
+    "report_desk": {
+      "text": "July. The third floor of the Bureau smells of radiator dust and paste, though the radiators are cold. The plate on your desk still says {player_name}. The plate on Voronin's door has been changed. It is a good plate, brass, and the name on it is one you do not know.\n\nNobody has said where Arkady Sergeyevich has gone. You have not asked. You notice that you have not asked, and you notice that it is a very easy thing not to do.",
+      "scene": "Moscow — the Bureau, July",
+      "choices": [
+        { "label": "Go through to the outer room", "next": "outer_room" }
+      ]
+    },
+    "outer_room": {
+      "text": "There is a typist at the desk in the outer room, and she is not the typist. She is younger. Her hands move over the keys without hesitating, line after line, and when she reaches the end of each line she rings the bell once, and only once, and goes on.\n\nYou find that you were listening for the second.",
+      "choices": [
+        { "label": "Go to your desk", "next": "final_table" }
+      ]
+    },
+    "final_table": {
+      "text": "Two documents lie on the blotter, squared to the edge. The first is Form 7-C for Sulyna district, reconciled, with the variance posted to Column 4 and a space at the foot for your signature. It is clean. It agrees with the projection. It is exactly what was asked for.\n\nThe second is a plain page of arithmetic. It is the sum of the sheets as they stand. It does not agree with anything, and it does not accuse anyone. {asked_why?You asked it once, aloud, and it is still in a room in Sulyna, as clean as the day you put it there.|}\n\nA clerk waits at the door. The Commission meets at four.",
+      "insets": [
+        { "text": "SULYNA DISTRICT — VARIANCE POSTED: 7,460 — VARIANCE UNEXPLAINED: 0", "position": "before", "style": "system", "requires": { "drift": 1 } },
+        { "text": "PREPARED BY THE RECONCILING OFFICER: {player_name}", "position": "after", "style": "system", "requires": { "drift": 3 } }
+      ],
+      "choices": [
+        { "label": "Read the plain page", "next": "true_count" },
+        { "label": "Take Vasylenko's ledger out of your case", "next": "attach_ledger", "requires": { "kept_ledger": true } },
+        { "label": "Take up the pen", "next": "the_fork" }
+      ]
+    },
+    "true_count": {
+      "text": "It is one page. It adds up. It adds up to a number smaller than the number on the form, by the number the form was made to hold. You read it twice, as you read everything twice, to check the spelling, and there is nothing to check. The page is correct.\n\nIt is the only thing on your desk that is.",
+      "choices": [
+        { "label": "Take Vasylenko's ledger out of your case", "next": "attach_ledger", "requires": { "kept_ledger": true } },
+        { "label": "Take up the pen", "next": "the_fork" }
+      ]
+    },
+    "attach_ledger": {
+      "text": "The cloth cover has gone soft at the corners. It opens at the place it always opens, and the green ink in the margin is exactly where it was, small and upright and unhurried.\n\nYou could clip it behind the report, where it would be filed with whatever you decide. You could put it back in the case, where it would not. It would make no difference to the figures either way. You know that, and you hold it for some time.",
+      "choices": [
+        { "label": "Clip it behind the report", "next": "the_fork" },
+        { "label": "Put it back in the case", "next": "the_fork" }
+      ]
+    },
+    "the_fork": {
+      "text": "The clerk coughs, very slightly, the way a clerk coughs who has been told not to hurry anyone.\n\nThere are two pens on the blotter. One is yours. The other is the same pen. You will not be asked which of the pages you prefer. You will be asked only which one you put your name to, and the Commission will not read the other.",
+      "choices": [
+        { "label": "Sign the reconciled figure", "next": "e_sign", "sets": { "signed_figure": true, "filed_true": false } },
+        { "label": "File the count as the sheets add up", "next": "e_file_true", "sets": { "filed_true": true, "signed_figure": false } }
+      ]
+    },
+    "e_sign": {
+      "text": "Your name goes in at the foot, small and level, and the clerk takes the page away between two fingers as though it were warm. The figure is posted. The form agrees with itself, and with the projection, and with the Commission.\n\nIn the autumn the January count is declared invalid. A new one is planned. The name on Voronin's door is not spoken in the building, and then the name on the plate that replaced it is not spoken either. You keep your desk.",
+      "scene": "Moscow — the Bureau",
+      "overlays": [
+        { "text": "Downstairs the bell rings. Twice. Both times, correctly.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "cotd_5_archive_1989",
+      "exports": [
+        "drift",
+        "opened_letters",
+        "went_home",
+        "kept_ledger",
+        "asked_why",
+        "looked_away",
+        "signed_figure",
+        "filed_true"
+      ]
+    },
+    "e_file_true": {
+      "text": "You write your name at the foot of the plain page, beneath the plain total, and the clerk takes it away without a sound. By the end of the week it has been stamped VOID, and you are thanked, formally, in a corridor, by someone you do not know.\n\nYour desk is moved down a floor in September, and a smaller one down another in October. Nobody says why. You have the sense of having been spared something, or of being kept for it.",
+      "scene": "Moscow — the Bureau",
+      "overlays": [
+        { "text": "Downstairs the bell rings once. Nobody answers it.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "cotd_5_archive_1989",
+      "exports": [
+        "drift",
+        "opened_letters",
+        "went_home",
+        "kept_ledger",
+        "asked_why",
+        "looked_away",
+        "signed_figure",
+        "filed_true"
+      ]
+    }
+  }
+}

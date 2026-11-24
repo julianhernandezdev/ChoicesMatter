@@ -1,0 +1,147 @@
+{
+  "meta": {
+    "id": "cotd_1_bureau",
+    "title": "The Bureau",
+    "version": "1.0",
+    "author": "Choices Matter",
+    "start_node": "desk",
+    "est_time": "10 min",
+    "warnings": [
+      "Political repression",
+      "Bureaucratic erasure of mass death",
+      "Fiction built on real historical events; it does not depict them directly"
+    ],
+    "name_prompt": "What name is on your desk plate?",
+    "name_default": "Comrade Sorokin",
+    "saga_id": "census_of_the_dead",
+    "saga_title": "The Census of the Dead",
+    "chapter_label": "1"
+  },
+  "nodes": {
+    "desk": {
+      "text": "February. The third floor of the Bureau smells of radiator dust and paste. The plate on your desk says {player_name}. On the blotter, squared to the edge, is the day's tray: forty forms, each of them the same form.",
+      "scene": "Moscow — the Bureau, third floor",
+      "insets": [
+        { "text": "FORM 7-C — RECONCILIATION OF POPULATION VARIANCE", "position": "before", "style": "system" }
+      ],
+      "choices": [
+        {
+          "label": "Take the first form from the tray",
+          "next": "form",
+          "sets": {
+            "drift": 0,
+            "opened_letters": false,
+            "went_home": false,
+            "kept_ledger": false,
+            "asked_why": false,
+            "looked_away": false,
+            "signed_figure": false,
+            "filed_true": false
+          }
+        }
+      ]
+    },
+    "form": {
+      "text": "You have filled in a great many of them. The variance goes in the fourth column, under Unregistered movement (in-year), and that column has never once been wrong. Beside it is a fifth column with a heading and no entries. Nobody has ever filled it. You could not say who decided it should exist.",
+      "insets": [
+        { "text": "COLUMN 4 — UNREGISTERED MOVEMENT (IN-YEAR)", "position": "after", "style": "system" },
+        { "text": "COLUMN 5 — (not used)", "position": "after", "style": "system" }
+      ],
+      "overlays": [
+        { "text": "Two floors down a typewriter reaches the end of its line and rings its bell. It rings it again.", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Check that the stamp is straight", "next": "stamp" },
+        { "label": "Initial the corner and pass it along", "next": "corridor" }
+      ]
+    },
+    "stamp": {
+      "text": "The stamp is straight. It is always straight. You have checked it every morning for six years, the way other men check their pockets.",
+      "choices": [
+        { "label": "Pass the form along", "next": "corridor" }
+      ]
+    },
+    "corridor": {
+      "text": "Voronin is in the corridor, as he often is, slightly ahead of you. Arkady Sergeyevich is a tidy man with a warm voice and a habit of already knowing what you came to say.\n\n“There you are, {player_name}. Walk with me.”",
+      "scene": "Moscow — the corridor",
+      "choices": [
+        { "label": "Walk with him", "next": "office" },
+        { "label": "Say you have forms to finish", "next": "office" }
+      ]
+    },
+    "office": {
+      "text": "His office has a window that faces another window. He opens a folder, finds a page without looking for it, and reads aloud in the voice he uses for good news.\n\n“Sulyna district. Seven thousand four hundred and sixty.”\n\nThrough the wall the typing in the outer room stops. It stays stopped for exactly as long as it takes him to finish the sentence. Then it starts again, a little faster than before.",
+      "scene": "Moscow — Voronin's office",
+      "choices": [
+        { "label": "Look toward the outer room", "next": "typist" },
+        { "label": "Keep your eyes on the folder", "next": "assignment" }
+      ]
+    },
+    "typist": {
+      "text": "The door is half open. The typist has her hands in her lap. She is looking at the wall calendar, though it is turned to the wrong month and there is nothing on it. When Voronin clears his throat she begins again.",
+      "choices": [
+        { "label": "Turn back to the folder", "next": "assignment" }
+      ]
+    },
+    "assignment": {
+      "text": "“The Commission wants the variance reconciled,” Voronin says. “Properly. I asked for you.”\n\nHe says it as a favour, and you take it as one. Kharkiv first, to the regional office, then out to the district itself. Three months. You are to make the sheets agree with the projection, or else state, in the form's own terms, why they cannot.\n\n“Nobody wants it explained,” he adds, kindly. “We want it posted.”\n\nYou read the district name on the cover sheet. You read it again to check the spelling. It is spelled correctly.",
+      "insets": [
+        { "text": "ASSIGNMENT — SULYNA DISTRICT, POLTAVA REGION. VARIANCE TO RECONCILE: 7,460.", "position": "after", "style": "system" }
+      ],
+      "choices": [
+        { "label": "Thank him and accept", "next": "kharkiv" },
+        { "label": "Ask when the train leaves", "next": "kharkiv" }
+      ]
+    },
+    "kharkiv": {
+      "text": "“In Kharkiv you will find Vasylenko's desk,” Voronin says. “Vasylenko has been moved. He was a thorough man.” He closes the folder and squares it to the edge of the blotter. “Don't be thorough, {player_name}. Be correct.”\n\nYou say that you understand. You do. It is the first thing you ever understood about the Bureau.",
+      "choices": [
+        { "label": "Go back to your desk", "next": "clear_desk" }
+      ]
+    },
+    "clear_desk": {
+      "text": "That evening you clear your desk of what you will not need in three months. The left-hand drawer sticks, as it always has. Inside, under the spare blotters, is a bundle of letters tied with string. The envelopes are cheap, the pencil is pressed hard into the paper. You have not taken them out in four years.",
+      "scene": "Moscow — your desk, evening",
+      "choices": [
+        { "label": "Untie the string", "next": "drawer_open", "sets": { "opened_letters": true } },
+        { "label": "Close the drawer", "next": "drawer_shut" }
+      ]
+    },
+    "drawer_open": {
+      "text": "They are in order, because you put them in order. The early ones are long. The later ones are shorter, and they come further apart. The last is two lines in the same hard pencil.\n\n“Come when you can. The roof holds.”\n\nThe postmark is from the autumn of 1932. There is nothing after it. You have always known there is nothing after it.\n\nYou read it standing up. You read it again to check the date.",
+      "overlays": [
+        { "text": "You tie the string. It would be strange to leave them.", "position": "after" }
+      ],
+      "choices": [
+        { "label": "Put the bundle in your case", "next": "e_depart" }
+      ]
+    },
+    "drawer_shut": {
+      "text": "You leave it shut. The key goes into your waistcoat pocket, where it has been for four years. It is nobody's business what is in a drawer.",
+      "choices": [
+        { "label": "Take your coat", "next": "e_depart" }
+      ]
+    },
+    "e_depart": {
+      "text": "The night train leaves Kursky station at 21:40. Your papers are in order. They are always in order. Somewhere past Tula you fall asleep without dreaming, and in the morning you do not remember having expected to.",
+      "scene": "The night train south",
+      "overlays": [
+        { "text": "Somewhere under the platform a bell rings. Once. You wait for the second, and it does not come.", "position": "before" }
+      ],
+      "choices": [],
+      "is_ending": true,
+      "ending_type": "neutral",
+      "next_story": "cotd_2_regional_office",
+      "exports": [
+        "drift",
+        "opened_letters",
+        "went_home",
+        "kept_ledger",
+        "asked_why",
+        "looked_away",
+        "signed_figure",
+        "filed_true"
+      ]
+    }
+  }
+}
