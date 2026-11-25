@@ -33,9 +33,32 @@ body {
   justify-content: center;
 }
 
-/* Shrink font on small screens to preserve 76ch column */
+/* Phones. The first rule shrinks the text until 76 characters fit across the
+   screen, which on a phone comes out near 9px. Nobody reads a story at 9px.
+   So the terminal view now keeps its text at 15px and lets it wrap instead.
+   The drawn lines are a fixed row of dashes and cannot wrap, so the dashes get
+   trimmed evenly at both ends. The words in the middle stay whole and wrap if
+   they are longer than the screen.
+   Reader mode sets its own text sizes and only uses this one for its margins,
+   so it keeps the old rule and looks exactly as it did. */
 @media (max-width: 76ch) {
   body { font-size: clamp(0.55rem, 2.1vw, 1rem); }
+  body:not(.reader-mode) { font-size: 0.9375rem; }
+  body:not(.reader-mode) .terminal-rule,
+  body:not(.reader-mode) .terminal-panel-title,
+  body:not(.reader-mode) .terminal-separator,
+  body:not(.reader-mode) .terminal-ending-label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  body:not(.reader-mode) .rule-words {
+    flex-shrink: 0;
+    max-width: 100%;
+    white-space: pre-wrap;
+    text-align: center;
+  }
 }
 
 /* === LAYOUT === */

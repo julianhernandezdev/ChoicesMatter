@@ -77,10 +77,19 @@ function makeRule(text, width) {
   return '─'.repeat(left) + inner + '─'.repeat(dashes - left);
 }
 
+// Same line as makeRule, with the words marked. A phone has no room for the
+// full row of dashes, so the stylesheet trims the dashes and keeps the words.
+function ruleHtml(text, width) {
+  var rule = makeRule(text, width);
+  if (!text) return rule;
+  var at = rule.indexOf(text);
+  return rule.slice(0, at) + '<span class="rule-words">' + escapeHtml(text) + '</span>' + rule.slice(at + text.length);
+}
+
 function renderRule(text, colorClass, width) {
   var w = (width !== undefined) ? width : RULE_WIDTH;
   var cls = colorClass ? 'terminal-rule ' + escapeHtml(colorClass) : 'terminal-rule';
-  return '<span class="' + cls + '">' + escapeHtml(makeRule(text, w)) + '</span>';
+  return '<span class="' + cls + '">' + ruleHtml(text, w) + '</span>';
 }
 
 function resolveColor(name) {
@@ -689,7 +698,7 @@ function renderGame() {
     '<div class="terminal-screen">' +
     sceneRule +
     '<div class="terminal-panel">' +
-    '<span class="terminal-panel-title">' + escapeHtml(makeRule(storyTitle(currentRun.entry), PANEL_RULE_WIDTH)) + '</span>' +
+    '<span class="terminal-panel-title">' + ruleHtml(storyTitle(currentRun.entry), PANEL_RULE_WIDTH) + '</span>' +
     beforeInsets +
     (view.insets.before.length ? sep : '') +
     '<div class="terminal-prose" id="prose-text">' + escapeHtml(_assembleText(node.text, cfg)) + '</div>' +
