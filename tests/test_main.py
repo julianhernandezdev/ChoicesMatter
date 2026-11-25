@@ -1656,3 +1656,39 @@ def test_main_hides_a_known_saga_duplicate_and_the_saga_gate_still_blocks_play(
     engine_cls.assert_not_called()
     label, message = display.show_picker_error.call_args.args
     assert label == "Demo Saga" and "duplicate story id 'ch2a'" in message
+
+
+def test_game_finds_its_stories_when_launched_from_another_folder(tmp_path: Path) -> None:
+    """Start the real game from an unrelated folder, the way a shortcut or `python path/to/main.py` does.
+
+    It used to look for "stories" in whatever folder the terminal was in: the player got
+    "No stories found" and two empty folders were left behind in a place they never asked for.
+    """
+    import os
+    import subprocess
+
+    elsewhere = tmp_path / "somewhere_else"
+    elsewhere.mkdir()
+    main_py = Path(main_module.__file__).resolve()
+
+    result = subprocess.run(
+        [sys.executable, str(main_py)],
+        cwd=elsewhere,
+        input="q\n",  # quit at the story picker
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Select a Story" in result.stdout
+    assert "No Stories Loaded" not in result.stdout
+    assert list(elsewhere.iterdir()) == []  # nothing left behind
+
+
+def test_story_and_save_folders_sit_next_to_main_py() -> None:
+    app_dir = Path(main_module.__file__).resolve().parent
+    assert main_module.STORIES_DIR == app_dir / "stories"
+    assert main_module.SAVES_DIR == app_dir / "saves"
