@@ -245,7 +245,7 @@
         { "text": "ASYLUM APPLICATIONS RECEIVED: 847 — JURISDICTION: UNCLEAR — STATUS: PENDING SOMEONE BRAVE", "position": "after", "style": "system" }
       ],
       "choices": [
-        { "label": "Take the next ticket.", "next": "ticket_moon_miners" }
+        { "label": "Take the next ticket.", "next": "ticket_moon_miners", "sets": { "toaster_free": true } }
       ]
     },
     "toaster_reset": {
