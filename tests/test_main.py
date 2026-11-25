@@ -154,7 +154,7 @@ def test_resolve_player_name_entered_wins():
 
 
 def test_resolve_player_name_settings_wins_over_story_default():
-    assert _resolve_player_name("", "Officer", "Felix") == "Felix"
+    assert _resolve_player_name("", "Officer", "Zara") == "Zara"
 
 
 def test_resolve_player_name_falls_back_to_story_default_when_no_settings_name():
@@ -183,7 +183,7 @@ def test_prompt_name_state_returns_typed_name():
 def test_prompt_name_state_empty_input_uses_settings_name():
     display = MagicMock()
     display.prompt_protagonist_name.return_value = ""
-    assert _prompt_name_state(_name_story("Officer"), display, "Felix") == {"player_name": "Felix"}
+    assert _prompt_name_state(_name_story("Officer"), display, "Zara") == {"player_name": "Zara"}
 
 
 def test_prompt_name_state_empty_input_falls_back_to_story_default():

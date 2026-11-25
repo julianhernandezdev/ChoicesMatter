@@ -18,7 +18,7 @@ from src.saga import (
     parse_seed_arg,
 )
 from src.save import SaveManager
-from src.config import load_settings
+from src.config import _DEFAULTS, load_settings
 from src.story import Story, StoryLoader, StoryValidationError
 
 # Look next to this file, not wherever the terminal happens to be standing.
@@ -192,20 +192,21 @@ def _run_folder_picker(
 
 
 def _resolve_player_name(entered: str, name_default: str, settings_name: str) -> str | None:
-    """Resolve the protagonist name after an empty name-prompt submission.
+    """Pick the protagonist name once the player has answered the name prompt.
 
-    Priority: typed name > saved settings player_name > story's name_default.
-    The settings name wins over name_default because settings.json always
-    resolves to a value (default "Felix") — name_default is a fallback only
-    for the case where no saved player_name exists at all.
+    Order: what the player typed, then a name the player saved in Settings,
+    then the story's own name_default, then the built-in "Felix".
     """
     if entered:
         return entered
-    if settings_name:
+    # Settings always hand back a name, and "Felix" is what you get when nobody
+    # picked one. That is not a choice, so it does not get to beat the name the
+    # story's author picked. A saved name only counts if it is a different one.
+    if settings_name and settings_name != _DEFAULTS["player_name"]:
         return settings_name
     if name_default:
         return name_default
-    return None
+    return settings_name or None
 
 
 def _prompt_name_state(
@@ -216,7 +217,9 @@ def _prompt_name_state(
     Returns the seed-state dict, or None when the player backed out (Q) or no
     name could be resolved. In the latter case the player has already been told.
     """
-    entered = display.prompt_protagonist_name(story.name_prompt or "", prefill=settings_name)
+    # The name in brackets is what Enter will give, so it has to be the same name.
+    blank_name = _resolve_player_name("", story.name_default or "", settings_name)
+    entered = display.prompt_protagonist_name(story.name_prompt or "", prefill=blank_name or "")
     if entered is None:
         return None
     name = _resolve_player_name(entered, story.name_default or "", settings_name)

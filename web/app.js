@@ -1,4 +1,4 @@
-import { createRun, currentView, applySets, commitSettingValue, corruptionCount } from "./engine.js";
+import { createRun, currentView, applySets, commitSettingValue, corruptionCount, resolvePlayerName } from "./engine.js";
 import { loadSave, writeSave, deleteSave, loadGallery, recordEnding, clearAllProgress } from "./storage.js";
 import { isTypewriterOn, setSessionTw, isTwAnimating, startTypewriter, skipTypewriter, loadTypewriterSettings, saveTypewriterSettings, TYPEWRITER_DEFAULTS } from "./typewriter.js";
 
@@ -364,7 +364,7 @@ function promptPrefix() {
     return 'Edit ' + (srow ? srow.label : 'value') + ': ';
   }
   if (currentScreen === 'name-prompt') {
-    var pn = loadTypewriterSettings().player_name;
+    var pn = _resolvePlayerName('', namePromptEntry.story.meta);
     return 'Name' + (pn ? ' [' + escapeHtml(pn) + ']' : '') + ': ';
   }
   if (currentScreen === 'game')           return 'Your choice (or <span class="key-back">Q</span> to menu): ';
@@ -542,11 +542,7 @@ function renderWarnings(entry, resume) {
 }
 
 function _resolvePlayerName(entered, meta) {
-  if (entered !== '') return entered;
-  var savedName = loadTypewriterSettings().player_name;
-  if (savedName) return savedName;
-  if (meta.name_default) return meta.name_default;
-  return null; // reject — no fallback available
+  return resolvePlayerName(entered, meta.name_default, loadTypewriterSettings().player_name, TYPEWRITER_DEFAULTS.player_name);
 }
 
 function renderNamePrompt() {
@@ -574,14 +570,14 @@ function renderAccessibleNamePrompt() {
   currentScreen = 'name-prompt';
   setPageTitle('Protagonist');
   var meta = namePromptEntry.story.meta;
-  var savedName = loadTypewriterSettings().player_name;
+  var blankName = _resolvePlayerName('', meta);
   app.innerHTML =
     '<main class="reader-screen">' +
     '<h1 class="r-page-title">Protagonist</h1>' +
     '<p class="r-prose">' + escapeHtml(meta.name_prompt) + '</p>' +
     '<div class="r-name-form">' +
     '<label for="r-name-input" class="r-name-label">Your name</label>' +
-    '<input id="r-name-input" type="text" class="r-name-input" value="' + escapeHtml(savedName || '') + '"' +
+    '<input id="r-name-input" type="text" class="r-name-input" value="' + escapeHtml(blankName || '') + '"' +
     (meta.name_default ? ' placeholder="' + escapeHtml(meta.name_default) + '"' : '') +
     ' autocomplete="off">' +
     '</div>' +
