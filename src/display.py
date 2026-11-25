@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import sys
 import time
+from contextlib import contextmanager
 
 from rich.console import Console, Group
 from rich.live import Live
@@ -31,14 +32,71 @@ try:
         if key in (b"\x00", b"\xe0"):  # special key — consume the second byte too
             _msvcrt.getch()
 
+    @contextmanager
+    def _listen_for_skip_key():
+        # Windows hands over every key the moment it is pressed. Nothing to set up.
+        yield
+
 except ImportError:
+    import os as _os
     import select as _select
+    import termios as _termios
+    import tty as _tty
+
+    # Which keyboard we are listening to while the text is typing itself out.
+    # None the rest of the time, and None for good when there is no keyboard at all.
+    _skip_key_fd: int | None = None
+
+    @contextmanager
+    def _listen_for_skip_key():
+        # A Mac or Linux terminal is polite to a fault. It holds on to everything
+        # you type until you press Enter, and prints it on screen while it waits.
+        # So "press any key to skip" really meant "press any key, watch it land in
+        # the middle of the story, then press Enter". For as long as the text is
+        # typing we ask for each key right away, with nothing printed.
+        global _skip_key_fd
+        try:
+            fd = sys.stdin.fileno()
+            is_keyboard = _os.isatty(fd)
+        except (AttributeError, OSError, ValueError):
+            is_keyboard = False
+        if not is_keyboard:
+            # Input is coming from a file or another program, not a person.
+            # Nobody is there to press skip, and those lines are answers meant
+            # for the questions later on. Leave every one of them alone.
+            yield
+            return
+        normal = _termios.tcgetattr(fd)
+        try:
+            # A key pressed just before the text started still counts as a skip,
+            # same as on Windows, so nothing typed so far is thrown away here.
+            _tty.setcbreak(fd, _termios.TCSADRAIN)
+            _skip_key_fd = fd
+            yield
+        finally:
+            # Always hand the terminal back the way we found it, Ctrl+C included.
+            # Skip this and the player is left typing blind after the game is gone.
+            # Anything pressed in the last moment and never looked at goes in the
+            # bin too. It was aimed at the story, not at the next question.
+            _skip_key_fd = None
+            _termios.tcsetattr(fd, _termios.TCSAFLUSH, normal)
 
     def _key_pending() -> bool:
-        return bool(_select.select([sys.stdin], [], [], 0)[0])
+        if _skip_key_fd is None:
+            return False
+        return bool(_select.select([_skip_key_fd], [], [], 0)[0])
 
     def _consume_key() -> None:
-        sys.stdin.read(1)
+        # One key is not always one piece. An arrow key shows up as three, and a
+        # player in a hurry presses things twice. Take all of it, straight from
+        # the keyboard, so no leftover Enter is sitting there to answer the next
+        # question on the player's behalf.
+        if _skip_key_fd is None:
+            return
+        for _ in range(64):  # A stuck key or a dead terminal must not trap us here.
+            _os.read(_skip_key_fd, 1024)
+            if not _select.select([_skip_key_fd], [], [], 0.02)[0]:
+                break
 
 _ENDING_COLORS = {
     "good": "bright_green",
@@ -374,7 +432,7 @@ class Display:
         }
         full_assembled = _assemble_text(segments, charset, cfg_corruption)
 
-        with Live(make_panel(""), console=self.console, auto_refresh=False) as live:
+        with _listen_for_skip_key(), Live(make_panel(""), console=self.console, auto_refresh=False) as live:
             displayed = ""
             for segment in segments:
                 if isinstance(segment, str):
