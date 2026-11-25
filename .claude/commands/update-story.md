@@ -60,7 +60,7 @@ Use this instead of reading `CLAUDE.md`. All field names, valid values, and cons
 | `""` | — | — | dim italic | generic aside |
 
 **Flag system:**
-- `requires` bool = exact match; int = value ≥ N; str = exact match; `[str]` = value is member of list
+- `requires` bool = match (a never-set flag counts as `false`); int = value ≥ N; str = exact match; `[str]` = value is member of list
 - `sets` bool/int/str = direct assign; `"+N"`/`"-N"` string = delta on current int
 - `visited_<node_id>` is auto-set `true` on node entry when `auto_visited_flags` is `true` (reserved prefix — don't set manually via `sets` unless `auto_visited_flags: false`)
 

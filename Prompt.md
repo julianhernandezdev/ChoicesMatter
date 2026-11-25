@@ -105,7 +105,7 @@ Two top-level keys: `meta` (story metadata) and `nodes` (a dict of all scenes ke
 
 | Value type | Condition |
 |---|---|
-| `true` / `false` | Exact boolean match |
+| `true` / `false` | Boolean match. A flag that was never set counts as `false` |
 | integer (e.g. `3`) | Current value ≥ 3 (threshold) |
 | string (e.g. `"red"`) | Exact string match |
 | list of strings (e.g. `["red","blue"]`) | Current value is a member of the list |

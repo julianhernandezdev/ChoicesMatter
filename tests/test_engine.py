@@ -1390,3 +1390,120 @@ def test_chain_writes_seed_before_the_transition_prompt(saves_dir: Path) -> None
         "has_save": False,
         "found": {"end"},
     }]
+
+
+# ------------------------------------------------------------------
+# requires: false on a flag that was never set
+# ------------------------------------------------------------------
+#
+# The rule: a flag nobody ever set counts as false.
+#
+# It used to count as neither true nor false, so `requires: {"has_key": false}` hid the
+# choice from every player who had simply never picked up the key. Two shipped stories
+# lost content to this (see the last two tests in this section).
+
+def _offered(saves_dir: Path, requires: dict, state: dict) -> bool:
+    """Is a choice with these `requires` offered to a player holding these flags?"""
+    story = _make_story({
+        "start": Node(
+            text="Begin.",
+            choices=[
+                Choice(label="Gated", next="end", requires=requires),
+                Choice(label="Always there", next="end"),
+            ],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True),
+    })
+    display = _make_display()
+    Engine(story, SaveManager(saves_dir), display, initial_state=state).run()
+    return "Gated" in [c.label for c in display.show_choices.call_args.args[0]]
+
+
+@pytest.mark.parametrize("requires, state, offered", [
+    ({"has_key": False}, {},                 True),   # never set: this is the fix
+    ({"has_key": False}, {"has_key": False}, True),   # set to false: same as before
+    ({"has_key": False}, {"has_key": True},  False),  # set to true: same as before
+    ({"has_key": True},  {},                 False),  # never set is still not true
+    ({"has_key": True},  {"has_key": False}, False),
+    ({"has_key": True},  {"has_key": True},  True),
+    # every condition still has to pass
+    ({"has_key": False, "met_guard": True}, {},                  False),
+    ({"has_key": False, "met_guard": True}, {"met_guard": True}, True),
+])
+def test_requires_bool_treats_a_never_set_flag_as_false(saves_dir, requires, state, offered) -> None:
+    assert _offered(saves_dir, requires, state) is offered
+
+
+def test_requires_false_on_never_set_flag_shows_overlays_and_insets_too(saves_dir: Path) -> None:
+    from src.story import Inset, Overlay
+
+    story = _make_story({
+        "start": Node(
+            text="A locked door.",
+            choices=[Choice(label="Leave", next="end")],
+            overlays=[Overlay(text="Something is still missing.", requires={"has_key": False})],
+            insets=[Inset(text="Key in hand: no.", requires={"has_key": False})],
+        ),
+        "end": Node(text="Done.", choices=[], is_ending=True),
+    })
+    display = _make_display()
+    Engine(story, SaveManager(saves_dir), display).run()
+
+    insets = display.show_node.call_args_list[0].args[2]
+    after_overlays = display.show_choices.call_args_list[0].args[2]
+    assert [i.text for i in insets] == [["Key in hand: no."]]
+    assert [o.text for o in after_overlays] == [["Something is still missing."]]
+
+
+def _play_by_label(story_file: str, saves_dir: Path, labels: list[str]) -> str:
+    """Play a real shipped story by picking these choices in order. Returns the node we end on."""
+    from src.story import StoryLoader
+
+    story = StoryLoader.load(Path(__file__).resolve().parents[1] / "stories" / story_file)
+    display = _make_display()
+    wanted = iter(labels)
+
+    def pick(visible):
+        label = next(wanted)
+        on_screen = [c.label for c in visible]
+        assert label in on_screen, f"{label!r} was never offered. On screen: {on_screen}"
+        return on_screen.index(label) + 1
+
+    display.prompt_choice.side_effect = pick
+    engine = Engine(story, SaveManager(saves_dir), display)
+    engine.run()
+    return engine._current_node
+
+
+def test_vulture_corridor_witness_ending_can_be_reached(saves_dir: Path) -> None:
+    """The fifth ending needs Darius NOT to have erased the cache.
+
+    Nothing ever sets that flag to false, only to true. Under the old rule the evidence
+    exchange was hidden on every playthrough, so nobody could ever see this ending.
+    """
+    ended_on = _play_by_label("horror/the_vulture_corridor_v2_1_demo.json", saves_dir, [
+        "Step through the torn seal and keep recording.",
+        "Follow the wristbands toward the quarantine glass.",
+        "Ask his name before anything else.",
+        "Tell the AI you are only here to document conditions.",
+        "Copy the door log and leave the bay sealed for now.",
+        "Begin the sanitation walkdown by the book.",
+        "Order Saye to keep tagging. Feel later.",
+        "Sedate him and mark him for extraction.",
+        "Force the terminal into deceased status and preserve the rejection log.",
+        "Break protocol and route the cached discrepancy to an external relay.",
+        "Let the relay assemble both records before anyone edits them.",
+        "Mara gives Darius the Mercy lock log. Darius gives Mara the casualty cache.",
+        "Send the joined evidence with names, warnings, and raw logs attached.",
+    ])
+    assert ended_on == "ending_witness"
+
+
+def test_painted_doors_key_can_be_taken_from_the_basin(saves_dir: Path) -> None:
+    """The blue room's key is only offered while you do NOT have one. That used to mean never."""
+    ended_on = _play_by_label("horror/painted_doors.json", saves_dir, [
+        "Open the blue door",
+        "Reach into the basin",
+        "Speak the word hidden beneath the water",
+    ])
+    assert ended_on == "opened"

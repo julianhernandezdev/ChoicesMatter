@@ -157,6 +157,17 @@ class Engine:
         for key, condition in requires.items():
             current = self._state.get(key)
             if isinstance(condition, bool):
+                # A flag nobody ever set counts as false. We do not hold it
+                # accountable for sins it never had the chance to commit.
+                #
+                # Before this, "requires: {has_key: false}" only matched if some earlier
+                # choice had gone out of its way to set has_key to false. A flag the
+                # player simply never touched matched neither true nor false, so the
+                # choice stayed hidden forever and nobody was told. Numbers already
+                # treat "never set" as 0 and inline text already treats it as false.
+                # This makes true/false play by the same rule.
+                if current is None:
+                    current = False
                 if current != condition:
                     return False
             elif isinstance(condition, int):
