@@ -644,5 +644,16 @@ def _load_story_info(path: Path) -> tuple[str, str, int, int, str, bool, str, st
         return (path.stem, "", 0, 0, "", False, "", "")
 
 
+def run() -> None:
+    """Run the game, and leave quietly when the player wants out."""
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        # Ctrl+C, or the terminal window got closed on us. Progress is saved after
+        # every choice, so there is nothing to rescue. Say goodbye instead of dumping
+        # a page of stack trace on someone who only wanted to stop reading.
+        print("\n  Goodbye.")
+
+
 if __name__ == "__main__":
-    main()
+    run()
