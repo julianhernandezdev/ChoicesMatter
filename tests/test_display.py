@@ -1489,3 +1489,101 @@ def test_show_picker_error_escapes_author_text(text):
     out = buf.getvalue()
     assert f"Error loading '{text}':" in out
     assert f"multiple entry chapters: {text}" in out
+
+
+# The same fix, for everywhere else a story or a player gets to supply text. Three flavours of
+# trouble: a closing tag with nothing to close and a bare "[/]" (both used to crash), and a
+# lowercase word in brackets (used to vanish without a word of complaint).
+
+_BRACKETS = ["Part [/x] One", "Ends with [/]", "The [beta] Bridge"]
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_choice_labels_keep_their_brackets(text):
+    d, buf = _real_display()
+    d.show_choices([Choice(label=text, next="x")])
+    assert f"1. {text}" in buf.getvalue()
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_overlays_keep_their_brackets(text):
+    d, buf = _real_display()
+    d.show_choices(
+        [Choice(label="Go on", next="x")],
+        [Overlay(text=text, position="before")],
+        [Overlay(text=text, position="after", style="warning")],
+    )
+    assert buf.getvalue().count(text) == 2
+
+
+@pytest.mark.parametrize("text", _BRACKETS + ["[unwritten]", "[fragment: station_departure]"])
+def test_scene_header_and_story_title_keep_their_brackets(text):
+    """The last two are real scene names from This House Remembered. They used to render blank."""
+    d, buf = _real_display()
+    d.show_node(text, ["You are here."], current_scene=text)
+    assert buf.getvalue().count(text) == 2  # once in the scene rule, once in the panel title
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_ordinary_story_row_keeps_its_brackets(text):
+    d, buf = _real_display()
+    d.show_story_picker([{
+        "index": 1, "type": "story", "label": text, "error": False,
+        "author": text, "version": text, "node_count": 3, "ending_count": 2, "est_time": "5 min",
+    }])
+    out = buf.getvalue()
+    assert f"1.  {text}" in out
+    assert f"by {text}" in out
+    assert f"v{text}" in out
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_folder_row_error_row_and_picker_heading_keep_their_brackets(text):
+    d, buf = _real_display()
+    d.show_story_picker(
+        [
+            {"index": 1, "type": "folder", "label": text, "story_count": 2},
+            {"index": 2, "label": text, "error": True, "path": Path("broken.json")},
+        ],
+        title=f"📁 {text}/",
+    )
+    out = buf.getvalue()
+    assert f"📁 {text}/" in out            # folder row (and the heading above it)
+    assert out.count(f"📁 {text}/") == 2
+    assert f"2. {text}  -ERROR" in out
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_content_warnings_keep_their_brackets(text):
+    out = _rendered_prompt(lambda d: d.show_content_warnings(text, [text, "Something else"]), "y")
+    assert f"· {text}" in out   # the warning itself
+    assert out.count(text) == 2  # plus the story title under the panel
+
+
+@pytest.mark.parametrize("text", _BRACKETS)
+def test_name_prompt_text_keeps_its_brackets(text):
+    out = _rendered_prompt(lambda d: d.prompt_protagonist_name(text), "q")
+    assert text in out
+
+
+@pytest.mark.parametrize("name", ["felix", "a[/]b", "Felix"])
+def test_name_prompt_shows_the_saved_name_as_the_default(name):
+    """A lowercase saved name inside the [default] brackets used to disappear entirely."""
+    out = _rendered_prompt(lambda d: d.prompt_protagonist_name("Who are you?", prefill=name), "q")
+    assert f"Enter name [{name}] (Q to go back):" in out
+
+
+@pytest.mark.parametrize("value", ["a[/]b", "the [quiet] one", "plain"])
+def test_settings_screen_survives_a_player_name_with_brackets(value):
+    d, buf = _real_display()
+    d.console.print("  " + d._format_row_value({"type": "text"}, value))
+    assert value in buf.getvalue()
+
+
+def test_text_without_brackets_is_not_touched():
+    """Escaping must be invisible for normal text: no stray backslashes anywhere."""
+    d, buf = _real_display()
+    d.show_node("A Plain Title", ["Some prose."], current_scene="The Hall")
+    d.show_choices([Choice(label="Open the door", next="x")], [Overlay(text="It is cold.", position="before")])
+    d.show_story_picker([{"index": 1, "type": "story", "label": "A Plain Title", "error": False, "author": "Someone", "version": "1.0"}])
+    assert "\\" not in buf.getvalue()
