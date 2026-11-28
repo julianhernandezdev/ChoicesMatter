@@ -255,6 +255,9 @@ class Display:
         self.console.print(
             f"\n  [bold red]Error loading '{escape(name)}':[/bold red] {escape(message)}\n"
         )
+        # The picker wipes the screen the moment we return. Without this wait the error
+        # was gone before anyone could read it, which made it a very private error.
+        self.console.input("  [dim]Press Enter to return.[/dim] ")
 
     # ------------------------------------------------------------------
     # In-game rendering
@@ -859,6 +862,8 @@ class Display:
                 if confirm in ("y", "yes"):
                     apply_section_defaults(draft, section)
                     self.console.print(f"  [dim green]✓ {section['label']} reset to defaults.[/dim green]")
+                    # This screen is redrawn from scratch next, so wait or the line is never seen.
+                    self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                 continue
             if raw.isdecimal():
                 n = int(raw)
@@ -867,6 +872,7 @@ class Display:
                     if row["type"] == "custom_chars":
                         if charset != "custom":
                             self.console.print("  [dim]Set character set to 'custom' first.[/dim]")
+                            self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                             continue
                         v = self.console.input("  Enter custom characters (or Enter to keep): ").strip()
                         if v:
@@ -931,6 +937,7 @@ class Display:
                 selected = [resettable[i] for i, c in enumerate(checked) if c]
                 if not selected:
                     self.console.print("  [dim]Nothing selected.[/dim]")
+                    self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                     continue
                 for section in selected:
                     apply_section_defaults(draft, section)
@@ -959,6 +966,7 @@ class Display:
 
     def show_clear_complete(self) -> None:
         self.console.print("  [dim green]✓ All save data cleared.[/dim green]\n")
+        self.console.input("  [dim]Press Enter to return.[/dim] ")
 
     def show_content_warnings(self, title: str, warnings: list[str]) -> bool:
         """Show warning panel. Returns True to proceed, False to go back."""

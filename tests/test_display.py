@@ -914,7 +914,7 @@ def test_section_subscreen_q_returns_discard_exit(display):
 
 def test_section_subscreen_r_resets_section(display):
     # R+Y resets values; S (save) confirms — draft keeps reset value.
-    display.console.input = MagicMock(side_effect=["r", "y", "s", ""])
+    display.console.input = MagicMock(side_effect=["r", "y", "", "s", ""])
     section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
     draft = _make_draft()
     draft["corruption"]["intensity"] = 0.1
@@ -926,7 +926,7 @@ def test_section_subscreen_r_resets_section(display):
 
 def test_section_subscreen_x_restores_snapshot(display):
     # X discards all changes made inside the subscreen, including resets.
-    display.console.input = MagicMock(side_effect=["r", "y", "x"])
+    display.console.input = MagicMock(side_effect=["r", "y", "", "x"])
     section = next(s for s in SETTINGS_SECTIONS if s["id"] == "corruption")
     draft = _make_draft()
     draft["corruption"]["intensity"] = 0.1
@@ -1173,7 +1173,7 @@ def test_show_reset_selector_cancel_returns_empty(display):
 
 def test_show_reset_selector_nothing_checked_is_noop(display):
     # Y with no checkboxes checked — returns empty, no changes
-    display.console.input = MagicMock(side_effect=["y", "x"])
+    display.console.input = MagicMock(side_effect=["y", "", "x"])
     draft = _make_draft()
     original_tw = copy.deepcopy(draft.get("typewriter", {}))
     result = display._show_reset_selector(draft)
@@ -1485,7 +1485,8 @@ def test_non_saga_error_row_renders_exactly_as_before():
 @pytest.mark.parametrize("text", ["Part [/x] One", "The [beta] Bridge"])
 def test_show_picker_error_escapes_author_text(text):
     d, buf = _real_display()
-    d.show_picker_error(text, f"multiple entry chapters: {text}")
+    with patch("builtins.input", return_value=""):
+        d.show_picker_error(text, f"multiple entry chapters: {text}")
     out = buf.getvalue()
     assert f"Error loading '{text}':" in out
     assert f"multiple entry chapters: {text}" in out
