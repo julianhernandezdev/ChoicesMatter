@@ -705,6 +705,10 @@ class Display:
 
             if raw == "s":
                 save_settings(draft)
+                # The file is not the only one who needs to know. The running game keeps its
+                # own copy, and the next visit to this screen starts from that copy. Leave it
+                # stale and the next save puts the old values right back.
+                self._cfg = copy.deepcopy(draft)
                 self.console.print("\n  [dim green]✓ Saved. Changes take effect next launch.[/dim green]")
                 self.console.input("\n  [dim]Press Enter to return.[/dim] ")
                 return
