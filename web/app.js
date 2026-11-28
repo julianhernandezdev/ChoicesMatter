@@ -1210,7 +1210,8 @@ function renderAccessibleGame() {
       '</section>';
   }
 
-  var timeStr = estimateTime(currentRun.entry);
+  // Ask about the story itself. The wrapper around it has no text, so every story came out as 5 minutes.
+  var timeStr = estimateTime(currentRun.story);
 
   app.innerHTML =
     '<main class="reader-screen">' +
@@ -1218,7 +1219,7 @@ function renderAccessibleGame() {
     beforeInsetsHtml +
     '<article class="r-panel" aria-label="Story: ' + escapeHtml(titleStr) + '">' +
     '<h1 class="r-story-title"><span>' + escapeHtml(titleStr) + '</span>' +
-    '<span class="r-time">~' + escapeHtml(timeStr) + '</span></h1>' +
+    '<span class="r-time">' + escapeHtml(timeStr) + '</span></h1>' +
     '<p class="r-prose">' + escapeHtml(_assembleText(node.text, { corruption: { enabled: false } })) + '</p>' +
     '</article>' +
     afterInsetsHtml +
