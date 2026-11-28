@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 _STYLE_FIELDS = ("color", "dim", "italic", "bold", "underline", "strike", "prefix")
@@ -220,17 +221,50 @@ def load_settings(path: Path = SETTINGS_PATH) -> dict:
         return _deep_copy(_DEFAULTS)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return _deep_copy(_DEFAULTS)
         return _merge(_DEFAULTS, data)
     except (json.JSONDecodeError, OSError):
         return _deep_copy(_DEFAULTS)
 
 
-def _merge(defaults: dict, overrides: dict) -> dict:
+# Settings the game counts with, like frames or stories per page. 2.5 frames is not a thing.
+_WHOLE_NUMBER_KEYS = {
+    row["key"]
+    for section in SETTINGS_SECTIONS
+    for row in section["rows"]
+    if row["type"] == "number"
+}
+
+
+def _same_kind(default, value) -> bool:
+    """True when a value from settings.json is the same kind of thing as its default."""
+    if isinstance(default, bool):
+        return isinstance(value, bool)
+    if isinstance(default, str):
+        return isinstance(value, str)
+    # What is left are the numbers, plus the "Auto" settings whose default is None.
+    if value is None:
+        return default is None
+    if isinstance(value, float):
+        return math.isfinite(value)
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _merge(defaults: dict, overrides: dict, path: str = "") -> dict:
+    # People edit settings.json by hand, and people type "ten" where a 10 belongs.
+    # A value of the wrong kind is skipped, so that one setting keeps its default
+    # and the rest of the file still counts. Keys we do not know pass through as before.
     result = _deep_copy(defaults)
     for key, value in overrides.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _merge(result[key], value)
-        else:
+        if key not in result:
+            result[key] = value
+        elif isinstance(result[key], dict):
+            if isinstance(value, dict):
+                result[key] = _merge(result[key], value, f"{path}{key}.")
+        elif _same_kind(result[key], value):
+            if isinstance(value, float) and f"{path}{key}" in _WHOLE_NUMBER_KEYS:
+                value = int(value)
             result[key] = value
     return result
 
