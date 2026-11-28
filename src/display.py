@@ -660,7 +660,10 @@ class Display:
                     return "next_page"
                 if raw == "0":
                     return "first_page"
-            if raw.isdigit() and raw != "0":
+            # isdecimal() on purpose, here and at every other number prompt below.
+            # isdigit() also says yes to lookalikes such as ², which int() then
+            # refuses to read, and the whole game fell over.
+            if raw.isdecimal() and raw != "0":
                 value = int(raw)
                 if 1 <= value <= count:
                     return value
@@ -710,7 +713,7 @@ class Display:
             if raw == "r":
                 reset_feedback = self._show_reset_selector(draft)
                 continue
-            if raw.isdigit():
+            if raw.isdecimal():
                 n = int(raw)
                 if n in row_map:
                     section, row = row_map[n]
@@ -762,7 +765,7 @@ class Display:
                 v = self.console.input(f"  Enter {unit or 'value'} ({lo}–{hi}, or Enter to keep): ").strip()
                 if v == "":
                     break
-                if v.isdigit() and lo <= int(v) <= hi:
+                if v.isdecimal() and lo <= int(v) <= hi:
                     _set_draft_value(draft, key, int(v))
                     break
                 self.console.print(f"  [red]Enter a number between {lo} and {hi}.[/red]")
@@ -853,7 +856,7 @@ class Display:
                     apply_section_defaults(draft, section)
                     self.console.print(f"  [dim green]✓ {section['label']} reset to defaults.[/dim green]")
                 continue
-            if raw.isdigit():
+            if raw.isdecimal():
                 n = int(raw)
                 if 1 <= n <= len(section["rows"]):
                     row = section["rows"][n - 1]
@@ -886,7 +889,7 @@ class Display:
             if raw == "6":
                 while True:
                     val = self.console.input("  Enter ms (5–200): ").strip()
-                    if val.isdigit() and 5 <= int(val) <= 200:
+                    if val.isdecimal() and 5 <= int(val) <= 200:
                         tw["delay_ms"] = int(val)
                         return
                     self.console.print("  [red]Enter a number between 5 and 200.[/red]")
@@ -928,7 +931,7 @@ class Display:
                 for section in selected:
                     apply_section_defaults(draft, section)
                 return "Reset: " + ", ".join(s["label"] for s in selected) + "."
-            if raw.isdigit():
+            if raw.isdecimal():
                 n = int(raw)
                 if 1 <= n <= len(resettable):
                     checked[n - 1] = not checked[n - 1]
@@ -1028,7 +1031,7 @@ class Display:
             raw = self.console.input("  [bold]Your choice (or Q to return to menu):[/bold] ").strip().lower()
             if raw == "q":
                 return None
-            if raw.isdigit():
+            if raw.isdecimal():
                 value = int(raw)
                 if 1 <= value <= len(choices):
                     return value
@@ -1057,7 +1060,7 @@ class Display:
                 return default_index
             if raw in ("b", "q", "back"):
                 return "back"
-            if raw.isdigit() and 1 <= int(raw) <= count:
+            if raw.isdecimal() and 1 <= int(raw) <= count:
                 return int(raw)
             self.console.print(f"  [red]Enter a number between 1 and {count}, or B to go back.[/red]")
 
