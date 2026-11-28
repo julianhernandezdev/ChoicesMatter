@@ -78,11 +78,17 @@ class SaveManager:
         return self.save_path(story_id).exists()
 
     def load(self, story_id: str) -> SaveState | None:
+        """Return the save for a story, or None when missing or unreadable."""
         path = self.save_path(story_id)
         if not path.exists():
             return None
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return SaveState.from_dict(data)
+        # A power cut can leave a save empty or cut off half way. That is bad luck, not a
+        # reason to crash. Same deal as the seed files below: cannot read it, no save.
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return SaveState.from_dict(data)
+        except (ValueError, KeyError, TypeError, OSError):
+            return None
 
     def write(self, state: SaveState) -> None:
         state.timestamp = datetime.now(timezone.utc).isoformat()
