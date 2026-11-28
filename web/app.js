@@ -1328,6 +1328,9 @@ function renderAccessibleSettings(feedback) {
       }
     } else if (row.type === 'cycle') {
       display = val;
+    } else if (row.type === 'nav') {
+      // These rows are doors to another screen. They have no value of their own, so show the arrow.
+      display = '→';
     } else {
       display = val + (row.unit ? ' ' + row.unit : '');
     }
